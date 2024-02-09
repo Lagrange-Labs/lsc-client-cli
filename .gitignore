@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+
+# IDE 
+.vscode
+__debug_bin
+
+# binary
+/dist/
+
+# config
+client_*.toml
