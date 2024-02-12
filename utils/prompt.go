@@ -24,6 +24,22 @@ func StringPrompt(label string) (string, error) {
 	return input, nil
 }
 
+// IntegerPrompt prompts the user for an integer input.
+func IntegerPrompt(label string) (int, error) {
+	var input int
+	for {
+		fmt.Fprint(os.Stderr, label)
+		if _, err := fmt.Fscanln(os.Stdin, &input); err != nil {
+			return 0, err
+		}
+		if input > 0 {
+			break
+		}
+		fmt.Fprintln(os.Stderr, "Input must be a positive integer")
+	}
+	return input, nil
+}
+
 // PasswordPrompt prompts the user for a password input.
 func PasswordPrompt(label string) (string, error) {
 	var password string

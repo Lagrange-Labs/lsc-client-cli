@@ -25,7 +25,7 @@ func PullDockerImage(imageName string) error {
 
 // RunDockerImage runs a Docker image.
 func RunDockerImage(imageName, configFileName string) error {
-	cmd := exec.Command("docker", "run", "-v", fmt.Sprintf("./%s:/app/%s", configFileName, configFileName), imageName, "/app/lagrange-node", "run-client", "-c", fmt.Sprintf("/app/%s", configFileName))
+	cmd := exec.Command("docker", "run", "--log-opt", "max-size=10m", "--log-opt", "max-file=10", "-v", fmt.Sprintf("./%s:/app/%s", configFileName, configFileName), imageName, "/app/lagrange-node", "run-client", "-c", fmt.Sprintf("/app/%s", configFileName))
 	if err := cmd.Start(); err != nil {
 		return err
 	}

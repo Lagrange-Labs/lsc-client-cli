@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -253,23 +252,15 @@ func clientDeploy(cfg *config.Config) error {
 			break
 		}
 	}
-	// Subscribe chains
-	for {
-		isConfirmed, err := utils.ConfirmPrompt("Do you want to subscribe to the dedicated chain? (y/n): ")
-		if err != nil {
-			return fmt.Errorf("failed to get answer: %w", err)
-		}
-		if !isConfirmed {
-			break
-		}
-		chainIDStr, err := utils.StringPrompt("Enter the Chain ID: ")
+	// Subscribe chain
+	isConfirmed, err = utils.ConfirmPrompt("Do you want to subscribe to the dedicated chain? (y/n): ")
+	if err != nil {
+		return fmt.Errorf("failed to get answer: %w", err)
+	}
+	if isConfirmed {
+		chainID, err := utils.IntegerPrompt("Enter the Chain ID: ")
 		if err != nil {
 			return fmt.Errorf("failed to get Chain ID: %s", err)
-		}
-		chainID, err := strconv.ParseUint(chainIDStr, 10, 32)
-		if err != nil {
-			logger.Warnf("Failed to convert Chain ID to uint32: %s", err)
-			continue
 		}
 		for {
 			if err := chainOps.Subscribe(cfg.LagrangeServiceSCAddr, uint32(chainID)); err != nil {
