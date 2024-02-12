@@ -6,7 +6,7 @@ DATE := $(shell LANG=US date +"%a, %d %b %Y %X %z")
 GOBASE := $(shell pwd)
 GOBIN := $(GOBASE)/dist
 GOARCH := $(ARCH)
-GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(GOARCH)
+GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=1 GOOS=$(OS) GOARCH=$(GOARCH)
 GOBINARY := lagrange-cli
 GOCMD := $(GOBASE)/cmd/
 
