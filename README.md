@@ -1,6 +1,10 @@
-# Lagrange Labs State Committees Client Node
+# CLI APP
 
-Lagrange Labs State Committees provide a mechanism for generating succinct zero-knowledge state proofs for optimistic rollups based on the use of either staked or restaked collateral. Each state committee is a group of validators that have either staked an optimistic rollup’s native token or dualstaked with EigenLayer. Each state committee node attests to the execution and finality of transaction batches submitted by optimistic sequencers to Ethereum.
+This CLI app provides the functionalities needed to run the a Lagrange Attestation Node.
+
+## Lagrange Labs State Committees Attestation Node
+
+Lagrange Labs State Committees provide a mechanism for generating succinct zero-knowledge state proofs for optimistic rollups based on the use of either staked or restaked collateral. Each state committee is a group of attestors/validators that have either staked an optimistic rollup’s native token or dualstaked with EigenLayer. Each state committee node attests to the execution and finality of transaction batches submitted by optimistic sequencers to Ethereum.
 
 Whenever a rollup block is considered either safe (OP stack) or has had its corresponding transaction batch settled on Ethereum (Arbitrum), each node is required to attest to the block using its BLS key.
 
@@ -72,7 +76,7 @@ docker login -u <username>
 
 ## Steps
 
-1. Create a new Ethereum address using a wallet like Metamask.
+1. Create a new Ethereum address using a wallet application like Metamask.
 2. Send the account address to Lagrange Labs team for allowlisting.
 3. Clone the [Lagrange CLI repository](https://github.com/Lagrange-Labs/client-cli) to your machine.
 
@@ -89,8 +93,6 @@ git config --global http.https://github.com/.extraheader "Authorization: Basic $
 5. The CLI app has a dependency on Lagrange's private repository so run the following commands to successfully download the dependencies.
 
 ```bash
-echo 'GOPRIVATE=github.com/Lagrange-Labs/' >> .profile
-source .profile
 export CGO_CFLAGS="-O -D__BLST_PORTABLE__"
 export CGO_CFLAGS_ALLOW="-O -D__BLST_PORTABLE__"
 cd client-cli
