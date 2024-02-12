@@ -1,8 +1,0 @@
-CommitteeSCAddress = "0xF2740f6A6333c7B405aD7EfC68c74adAd83cC30D"
-LagrangeServiceSCAddress = "0x3074DB604785eEeC6c4Fadf4226137024764faD5"
-StakeManagerAddress = "0x5bA2061A8ab6D0c61b3e29f5b49C37A5FDF4AE72"
-LagrangeServerGrpcURL = "127.0.0.1:9090"
-ChainRPCEndpoint = "http://localhost:8545"
-EthereumRPCURL = "http://localhost:8545"
-BLSCurve = "BN254"
-DockerImageTag = "v0.2.7"
