@@ -152,3 +152,7 @@ The following commands needs to run for every chain you want to register and dep
     - If the chain subscription fails with an error `The dedicated chain is already subscribed`, you can press `n` and then enter `e` to exit.
     - If the chain subscription fails with an error `The dedicated chain is locked`, please enter `y` to retry the subscription to that chain.
   - Re-run the above command for every chain you want to subcscribe the Lagrange Attestation Node.
+
+9. Check docker container logs to ensure successful deployment of the Lagrange Attestation Node. If you have deployed `n` nodes and each node is subscribed to `k` chains then there will be `n*k` containers running.
+
+> Note: The current epoch period for state committee rotation is 24 hours. The attestation node will start attesting to the blocks of the subscribed chain from the next epoch.
