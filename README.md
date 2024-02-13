@@ -66,7 +66,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 echo "deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make gcc
 echo '{ "log-opts": { "max-size": "10m", "max-file": "100" } }' | sudo tee /etc/docker/daemon.json
 sudo usermod -aG docker $USER
 newgrp docker
@@ -76,7 +76,8 @@ docker login -u <username>
 
 ## Steps
 
-1. Create a new Ethereum address using a wallet application like Metamask.
+1. Create a new (dummy) Ethereum address using a wallet application like Metamask to use as an operator.
+   > Note: Please avoid using your personal wallet address that contains real valued assets
 2. Send the account address to Lagrange Labs team for allowlisting.
 3. Clone the [Lagrange CLI repository](https://github.com/Lagrange-Labs/client-cli) to your machine.
 
@@ -84,13 +85,7 @@ docker login -u <username>
 git clone https://github.com/Lagrange-Labs/client-cli.git
 ```
 
-4. Configure GIT to use Personal Access Token (PAT).
-
-```bash
-git config --global http.https://github.com/.extraheader "Authorization: Basic $(echo -n username:your_token_here | base64)"
-```
-
-5. The CLI app has a dependency on Lagrange's private repository so run the following commands to successfully download the dependencies.
+4. Set environment variables and download dependencies.
 
 ```bash
 export CGO_CFLAGS="-O -D__BLST_PORTABLE__"
@@ -99,17 +94,17 @@ cd client-cli
 go mod download
 ```
 
-6. Create a go binary.
+5. Create a go binary.
 
 ```bash
 make build
 ```
 
-7. Update `ChainRPCEndpoint` and `EthereumRPCURL` in `config_<chain>.toml` for which you want to run Lagrange Attestation Node.
+6. Update `ChainRPCEndpoint` and `EthereumRPCURL` in `config_<chain>.toml` for which you want to run Lagrange Attestation Node.
 
-`ChainRPCEndpoint`: RPC endpoint for `Sepolia` network of the chain eg. `Optimism`, `Arbitrum`, `Mantle`
+`ChainRPCEndpoint`: RPC endpoint for `Sepolia` network based chain eg. `Optimism-Sepolia`, `Arbitrum-Sepolia`, `Mantle-Sepolia`
 
-`EthereumRPCURL`: RPC endpoint for `Ethereum Sepolia` network.
+`EthereumRPCURL`: RPC endpoint for `Sepolia` network.
 
 The repository contains `config_<chain>.toml` for each supported chain which contains the required configuration like smart contract addresses and sequencer gRPC URL.
 
@@ -127,14 +122,15 @@ For now, we only support the `BN254` curve for the `BLSScheme`.
 
   - Enter your `ECDSA private key`
 
-    > Note: Please enter the dummy Ethereum address created above and not your personal address that contains real valued assets.
+    > Note: Please enter the ECDSA private key of the operator/wallet created in step #1.
 
-  - Enter your token address.
   - Enter the staking amount.
 
 8. After successfully completing the staking process, start the Lagrange Attestation Node deployment process.
 
-The following commands needs to run for every chain you want to register and deploy the Lagrange Attestation Nodes.
+The following command should be run for every chain you want to register and deploy the Lagrange Attestation Node by changing the `config_<chain>.toml`
+
+> Note: Each Lagrange Attestation Node can be subscribed to multiple chains.
 
 ```bash
 ./dist/lagrange-cli run -c ./config_<chain>.toml
@@ -142,18 +138,19 @@ The following commands needs to run for every chain you want to register and dep
 
 - Enter `r` in the prompt to run the deployment steps.
   - Enter the chain name.
-    > Note: Make sure that the `config_<chain>.toml` should be for the same chain name in the command.
+    > Note: Make sure that the `config_<chain>.toml` is for the same chain name entered in this step.
   - Enter your `ECDSA private key`
-    > Note: Please enter the dummy Ethereum address created above and not your personal address that contains real valued assets.
+    > Note: Please enter the ECDSA private key of the operator/wallet created in step #1.
   - Enter `y` to let the CLI randomly generate a BLS key pair or else you can enter `n` and add an already available BLS private key.
     > Note: Each Lagrange Attestation Node should have a unique BLS key pair
   - Enter `y` to register the attestation node to the Lagrange State Committee.
-    > Each Lagrange Attestation Node can be subscribed to multiple chains.
   - Enter `y` to subscribe the attestation node to the chain you mentioned.
   - Enter the `chain id` for your chain.
     - If the chain subscription fails with an error `The dedicated chain is already subscribed`, you can press `n` and then enter `e` to exit.
     - If the chain subscription fails with an error `The dedicated chain is locked`, please enter `y` to retry the subscription to that chain.
-  - Re-run the above command for every chain you want to subcscribe the Lagrange Attestation Node.
+  - If the chain subscription and deployment is successful, you will see an `INFO` log printed on your screen stating that `config_<chain>_<private_key>` is created.
+    - If you are running a single operator node, enter `e` to exit. Re-run the command mentioned above in this step by changing the `config_<chain>.toml` file to register this same node to another chain.
+    - If you are running multiple operator nodes, enter `r` to start committee subscription and registration for other nodes to the same chain.
 
 9. Check docker container logs to ensure successful deployment of the Lagrange Attestation Node. If you have deployed `n` nodes and each node is subscribed to `k` chains then there will be `n*k` containers running.
 
