@@ -102,7 +102,7 @@ make build
 
 6. Update `ChainRPCEndpoint` and `EthereumRPCURL` in `config_<chain>.toml` for which you want to run Lagrange Attestation Node.
 
-`ChainRPCEndpoint`: RPC endpoint for `Sepolia` network of the chain eg. `Optimism`, `Arbitrum`, `Mantle`
+`ChainRPCEndpoint`: RPC endpoint for `Sepolia` network based chain eg. `Optimism-Sepolia`, `Arbitrum-Sepolia`, `Mantle-Sepolia`
 
 `EthereumRPCURL`: RPC endpoint for `Sepolia` network.
 
@@ -122,7 +122,7 @@ For now, we only support the `BN254` curve for the `BLSScheme`.
 
   - Enter your `ECDSA private key`
 
-    > Note: Please enter the dummy Ethereum address created above and not your personal address that contains real valued assets.
+    > Note: Please enter the ECDSA private key of the operator/wallet created in step #1.
 
   - Enter the staking amount.
 
