@@ -48,7 +48,22 @@ func (c *ChainOps) Deposit(smAddr, tokenAddr string, amount *big.Int) error {
 	if err != nil {
 		return err
 	}
-	tx, err := token.Approve(c.auth, common.HexToAddress(smAddr), amount)
+
+	auth := *(c.auth)
+	auth.Value = amount
+	defer func() {
+		auth.Value = nil
+	}()
+
+	tx, err := token.Deposit(&auth)
+	if err != nil {
+		return fmt.Errorf("failed to deposit to WETH: %v", err)
+	}
+	if err := c.WaitForMined(tx); err != nil {
+		return err
+	}
+
+	tx, err = token.Approve(c.auth, common.HexToAddress(smAddr), amount)
 	if err != nil {
 		return fmt.Errorf("failed to approve token transfer: %v", err)
 	}
