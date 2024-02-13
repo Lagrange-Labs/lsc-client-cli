@@ -24,6 +24,7 @@ type Config struct {
 	EthereumRPCURL        string `mapstructure:"EthereumRPCURL"`
 	BLSCurve              string `mapstructure:"BLSCurve"`
 	DockerImageTag        string `mapstructure:"DockerImageTag"`
+	WETHAddr              string `mapstructure:"WETHAddr"`
 }
 
 // ClientConfig is the configuration for the lagrange client.

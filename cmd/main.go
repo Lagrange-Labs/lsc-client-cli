@@ -115,22 +115,14 @@ func depositFunds(cfg *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %w", err)
 	}
-
-	tokenAddr, err := utils.StringPrompt("Enter the Token Address: ")
-	if err != nil {
-		return fmt.Errorf("failed to get Token Address: %w", err)
-	}
-	amount, err := utils.StringPrompt("Enter the Amount: ")
+	amount, err := utils.IntegerPrompt("Enter the Amount: ")
 	if err != nil {
 		logger.Fatalf("Failed to get Amount: %s", err)
 	}
-	amountInt, ok := new(big.Int).SetString(amount, 10)
-	if !ok {
-		return fmt.Errorf("failed to convert amount to big.Int")
-	}
+	amountInt := new(big.Int).SetInt64(int64(amount))
 
 	for {
-		if err = chainOps.Deposit(cfg.StakeManagerAddr, tokenAddr, amountInt); err != nil {
+		if err = chainOps.Deposit(cfg.StakeManagerAddr, cfg.WETHAddr, amountInt); err != nil {
 			logger.Infof("Failed to deposit funds: %s", err)
 			isRetry, err := utils.ConfirmPrompt("Do you want to retry? (y/n): ")
 			if err != nil {
@@ -149,12 +141,12 @@ func depositFunds(cfg *config.Config) error {
 
 	logger.Infof("Funds deposited successfully")
 
-	shares, err := chainOps.GetOperatorShares(cfg.StakeManagerAddr, tokenAddr)
+	shares, err := chainOps.GetOperatorShares(cfg.StakeManagerAddr, cfg.WETHAddr)
 	if err != nil {
 		return fmt.Errorf("failed to get operator shares: %w", err)
 	}
 
-	logger.Infof("The total amount: %s", shares)
+	logger.Infof("The total amount: %d", shares)
 
 	return nil
 }
