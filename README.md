@@ -125,6 +125,7 @@ For now, we only support the `BN254` curve for the `BLSScheme`.
     > Note: Please enter the ECDSA private key of the operator/wallet created in step #1.
 
   - Enter the staking amount.
+    > The unit of staking amount is `wei`. The voting power in the state committees is calculated based on the formula: `voting_power = stake_amount/1e9`. So stake amount value should be greater than `1e9`.
 
 8. After successfully completing the staking process, start the Lagrange Attestation Node deployment process.
 
