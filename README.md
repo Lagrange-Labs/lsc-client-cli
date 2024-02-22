@@ -116,7 +116,7 @@ For now, we only support the `BN254` curve for the `BLSScheme`.
 ./dist/lagrange-cli run -c ./config_<chain>.toml
 ```
 
-> Note: You can choose config of any chain in this step as the goal is to deposit sepolia ETH into the Lagrange staking contract.
+> Note: You can choose config of any chain in this step as the goal is to deposit sepolia ETH into the Lagrange staking contract for your operator.
 
 - Enter `d` in the prompt to start the deposit process which will add funds to the Lagrange Staking Contract.
 
@@ -131,7 +131,10 @@ For now, we only support the `BN254` curve for the `BLSScheme`.
 
 The following command should be run for every chain you want to register and deploy the Lagrange Attestation Node by changing the `config_<chain>.toml`
 
-> Note: Each Lagrange Attestation Node can be subscribed to multiple chains.
+> Note: Each Operator can be subscribed to multiple chains.
+
+`Operator`: Eth address of the wallet that is registered and to be subscribed to the chain.
+`Node`: an instance that is running for each subscribed chain corresponding to the operator.
 
 ```bash
 ./dist/lagrange-cli run -c ./config_<chain>.toml
@@ -142,8 +145,8 @@ The following command should be run for every chain you want to register and dep
     > Note: Make sure that the `config_<chain>.toml` is for the same chain name entered in this step.
   - Enter your `ECDSA private key`
     > Note: Please enter the ECDSA private key of the operator/wallet created in step #1.
-  - Enter `y` to let the CLI randomly generate a BLS key pair or else you can enter `n` and add an already available BLS private key.
-    > Note: Each Lagrange Attestation Node should have a unique BLS key pair
+  - Enter `y` to let the CLI randomly generate a BLS key pair or else you can enter `n` if you already created BLS private key for this operator.
+    > Note: Each operator has a unique BLS key pair
   - Enter `y` to register the attestation node to the Lagrange State Committee.
   - Enter `y` to subscribe the attestation node to the chain you mentioned.
   - Enter the `chain id` for your chain.
@@ -152,6 +155,8 @@ The following command should be run for every chain you want to register and dep
   - If the chain subscription and deployment is successful, you will see an `INFO` log printed on your screen stating that `config_<chain>_<private_key>` is created.
     - If you are running a single operator node, enter `e` to exit. Re-run the command mentioned above in this step by changing the `config_<chain>.toml` file to register this same node to another chain.
     - If you are running multiple operator nodes, enter `r` to start committee subscription and registration for other nodes to the same chain.
+
+  > When you have one Operator registered for Lagrange State Committees and subscribed to all three available chains, please use the same ECDSA key and BLS private key (unique to your operator) in the prompts for deploying all three nodes (specific to the chains).
 
 9. Check docker container logs to ensure successful deployment of the Lagrange Attestation Node. If you have deployed `n` nodes and each node is subscribed to `k` chains then there will be `n*k` containers running.
 
