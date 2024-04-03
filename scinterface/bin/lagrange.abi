@@ -1,283 +1,404 @@
 [
     {
+        "type": "constructor",
         "inputs": [
             {
-                "internalType": "contract ILagrangeCommittee",
                 "name": "_committee",
-                "type": "address"
+                "type": "address",
+                "internalType": "contract ILagrangeCommittee"
             },
             {
-                "internalType": "contract IStakeManager",
                 "name": "_stakeManager",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "uint8",
-                "name": "version",
-                "type": "uint8"
-            }
-        ],
-        "name": "Initialized",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
-            }
-        ],
-        "name": "OperatorDeregistered",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
+                "type": "address",
+                "internalType": "contract IStakeManager"
             },
             {
-                "indexed": false,
-                "internalType": "uint32",
-                "name": "serveUntilBlock",
-                "type": "uint32"
-            }
-        ],
-        "name": "OperatorRegistered",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
+                "name": "_avsDirectoryAddress",
+                "type": "address",
+                "internalType": "address"
             },
             {
-                "indexed": false,
-                "internalType": "uint32",
-                "name": "chainID",
-                "type": "uint32"
+                "name": "_voteWeigher",
+                "type": "address",
+                "internalType": "contract IVoteWeigher"
             }
         ],
-        "name": "OperatorSubscribed",
-        "type": "event"
+        "stateMutability": "nonpayable"
     },
     {
-        "anonymous": false,
+        "type": "function",
+        "name": "addBlsPubKeys",
         "inputs": [
             {
-                "indexed": false,
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint32",
-                "name": "chainID",
-                "type": "uint32"
+                "name": "additionalBlsPubKeys",
+                "type": "uint256[2][]",
+                "internalType": "uint256[2][]"
             }
         ],
-        "name": "OperatorUnsubscribed",
-        "type": "event"
+        "outputs": [],
+        "stateMutability": "nonpayable"
     },
     {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "previousOwner",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "newOwner",
-                "type": "address"
-            }
-        ],
-        "name": "OwnershipTransferred",
-        "type": "event"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address[]",
-                "name": "operators",
-                "type": "address[]"
-            }
-        ],
+        "type": "function",
         "name": "addOperatorsToWhitelist",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "committee",
-        "outputs": [
-            {
-                "internalType": "contract ILagrangeCommittee",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "deregister",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
-                "internalType": "address",
-                "name": "initialOwner",
-                "type": "address"
-            }
-        ],
-        "name": "initialize",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "name": "operatorWhitelist",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "owner",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256[2]",
-                "name": "_blsPubKey",
-                "type": "uint256[2]"
-            }
-        ],
-        "name": "register",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address[]",
                 "name": "operators",
-                "type": "address[]"
+                "type": "address[]",
+                "internalType": "address[]"
             }
         ],
-        "name": "removeOperatorsFromWhitelist",
         "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
+        "stateMutability": "nonpayable"
     },
     {
+        "type": "function",
+        "name": "avsDirectory",
         "inputs": [],
-        "name": "renounceOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "stakeManager",
         "outputs": [
             {
-                "internalType": "contract IStakeManager",
                 "name": "",
-                "type": "address"
+                "type": "address",
+                "internalType": "contract IAVSDirectory"
             }
         ],
-        "stateMutability": "view",
-        "type": "function"
+        "stateMutability": "view"
     },
     {
-        "inputs": [
+        "type": "function",
+        "name": "committee",
+        "inputs": [],
+        "outputs": [
             {
-                "internalType": "uint32",
-                "name": "chainID",
-                "type": "uint32"
+                "name": "",
+                "type": "address",
+                "internalType": "contract ILagrangeCommittee"
             }
         ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "deregister",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "getOperatorRestakedStrategies",
+        "inputs": [
+            {
+                "name": "operator",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address[]",
+                "internalType": "address[]"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "getRestakeableStrategies",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address[]",
+                "internalType": "address[]"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "initialize",
+        "inputs": [
+            {
+                "name": "initialOwner",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "operatorWhitelist",
+        "inputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "owner",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "register",
+        "inputs": [
+            {
+                "name": "signAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "blsPubKeys",
+                "type": "uint256[2][]",
+                "internalType": "uint256[2][]"
+            },
+            {
+                "name": "operatorSignature",
+                "type": "tuple",
+                "internalType": "struct ISignatureUtils.SignatureWithSaltAndExpiry",
+                "components": [
+                    {
+                        "name": "signature",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    },
+                    {
+                        "name": "salt",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "expiry",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    }
+                ]
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "removeOperatorsFromWhitelist",
+        "inputs": [
+            {
+                "name": "operators",
+                "type": "address[]",
+                "internalType": "address[]"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "renounceOwnership",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "stakeManager",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract IStakeManager"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
         "name": "subscribe",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
-                "internalType": "address",
-                "name": "newOwner",
-                "type": "address"
-            }
-        ],
-        "name": "transferOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint32",
                 "name": "chainID",
-                "type": "uint32"
+                "type": "uint32",
+                "internalType": "uint32"
             }
         ],
-        "name": "unsubscribe",
         "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "transferOwnership",
+        "inputs": [
+            {
+                "name": "newOwner",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "unsubscribe",
+        "inputs": [
+            {
+                "name": "chainID",
+                "type": "uint32",
+                "internalType": "uint32"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "updateAVSMetadataURI",
+        "inputs": [
+            {
+                "name": "_metadataURI",
+                "type": "string",
+                "internalType": "string"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "voteWeigher",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract IVoteWeigher"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "event",
+        "name": "Initialized",
+        "inputs": [
+            {
+                "name": "version",
+                "type": "uint8",
+                "indexed": false,
+                "internalType": "uint8"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "OperatorDeregistered",
+        "inputs": [
+            {
+                "name": "operator",
+                "type": "address",
+                "indexed": false,
+                "internalType": "address"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "OperatorRegistered",
+        "inputs": [
+            {
+                "name": "operator",
+                "type": "address",
+                "indexed": false,
+                "internalType": "address"
+            },
+            {
+                "name": "serveUntilBlock",
+                "type": "uint32",
+                "indexed": false,
+                "internalType": "uint32"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "OperatorSubscribed",
+        "inputs": [
+            {
+                "name": "operator",
+                "type": "address",
+                "indexed": false,
+                "internalType": "address"
+            },
+            {
+                "name": "chainID",
+                "type": "uint32",
+                "indexed": false,
+                "internalType": "uint32"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "OperatorUnsubscribed",
+        "inputs": [
+            {
+                "name": "operator",
+                "type": "address",
+                "indexed": false,
+                "internalType": "address"
+            },
+            {
+                "name": "chainID",
+                "type": "uint32",
+                "indexed": false,
+                "internalType": "uint32"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "OwnershipTransferred",
+        "inputs": [
+            {
+                "name": "previousOwner",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "newOwner",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            }
+        ],
+        "anonymous": false
     }
 ]
