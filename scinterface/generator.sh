@@ -10,4 +10,3 @@ gen() {
 
 gen lagrange
 gen avs
-gen committee
