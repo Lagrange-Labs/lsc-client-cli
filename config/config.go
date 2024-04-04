@@ -17,14 +17,11 @@ const (
 // Config is the configuration for CLI.
 type Config struct {
 	CommitteeSCAddr       string `mapstructure:"CommitteeSCAddress"`
+	OperatorPrivKey       string `mapstructure:"OperatorPrivateKey"`
 	LagrangeServiceSCAddr string `mapstructure:"LagrangeServiceSCAddress"`
-	StakeManagerAddr      string `mapstructure:"StakeManagerAddress"`
-	GRPCURL               string `mapstructure:"LagrangeServerGrpcURL"`
-	RPCEndpoint           string `mapstructure:"ChainRPCEndpoint"`
 	EthereumRPCURL        string `mapstructure:"EthereumRPCURL"`
 	BLSCurve              string `mapstructure:"BLSCurve"`
 	DockerImageTag        string `mapstructure:"DockerImageTag"`
-	WETHAddr              string `mapstructure:"WETHAddr"`
 }
 
 // ClientConfig is the configuration for the lagrange client.
@@ -32,11 +29,14 @@ type Config struct {
 type ClientConfig struct {
 	ChainName          string `json:"chain_name"`
 	ServerGrpcURL      string `json:"server_grpc_url"`
-	RPCEndpoint        string `json:"rpc_endpoint"`
+	L1RPCEndpoint      string `json:"l1_rpc_endpoint"`
+	L2RPCEndpoint      string `json:"l2_rpc_endpoint"`
 	EthereumRPCURL     string `json:"ethereum_rpc_url"`
 	CommitteeSCAddress string `json:"committee_sc_address"`
 	BLSPrivateKey      string `json:"bls_private_key"`
-	ECDSAPrivateKey    string `json"ecdsa_private_key"`
+	SignPrivateKey     string `json:"sign_private_key"`
+	BatchInbox         string `json:"batch_inbox"`
+	BatchSender        string `json:"batch_sender"`
 	BLSCurve           string `json:"bls_curve"`
 }
 

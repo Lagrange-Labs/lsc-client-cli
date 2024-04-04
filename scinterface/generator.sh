@@ -9,5 +9,4 @@ gen() {
 }
 
 gen lagrange
-gen staking
-gen ERC20
+gen avs

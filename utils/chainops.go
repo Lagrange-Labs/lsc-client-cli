@@ -2,97 +2,110 @@ package utils
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	ecrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/Lagrange-Labs/client-cli/crypto"
 	"github.com/Lagrange-Labs/client-cli/logger"
-	"github.com/Lagrange-Labs/client-cli/scinterface/ERC20"
+	"github.com/Lagrange-Labs/client-cli/scinterface/avs"
 	"github.com/Lagrange-Labs/client-cli/scinterface/lagrange"
-	"github.com/Lagrange-Labs/client-cli/scinterface/staking"
 )
 
 // ChainOps is a wrapper for Ethereum chain operations.
 type ChainOps struct {
-	client *ethclient.Client
-	auth   *bind.TransactOpts
+	client     *ethclient.Client
+	auth       *bind.TransactOpts
+	privateKey *ecdsa.PrivateKey
 }
 
 // NewChainOps creates a new ChainOps instance.
 func NewChainOps(rpcEndpoint string, privateKey string) (*ChainOps, error) {
+	privateKey = strings.TrimPrefix(privateKey, "0x")
+	privateKeyECDSA, err := ecrypto.HexToECDSA(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
 	client, err := ethclient.Dial(rpcEndpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	auth, err := crypto.GetSigner(context.Background(), client, privateKey)
+	auth, err := crypto.GetSigner(context.Background(), client, privateKeyECDSA)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ChainOps{
-		client: client,
-		auth:   auth,
+		client:     client,
+		auth:       auth,
+		privateKey: privateKeyECDSA,
 	}, nil
 }
 
-// Deposit deposits funds to the StakeManager contract.
-func (c *ChainOps) Deposit(smAddr, tokenAddr string, amount *big.Int) error {
-	// Approve token transfer
-	token, err := ERC20.NewERC20(common.HexToAddress(tokenAddr), c.client)
+// Register registers a new validator.
+func (c *ChainOps) Register(serviceAddr, signAddr string, blsPubKeys [][2]*big.Int) error {
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
 	}
-
-	auth := *(c.auth)
-	auth.Value = amount
-	defer func() {
-		auth.Value = nil
-	}()
-
-	tx, err := token.Deposit(&auth)
+	avsAddr, err := lagrangeService.AvsDirectory(nil)
 	if err != nil {
-		return fmt.Errorf("failed to deposit to WETH: %v", err)
-	}
-	if err := c.WaitForMined(tx); err != nil {
 		return err
 	}
-
-	tx, err = token.Approve(c.auth, common.HexToAddress(smAddr), amount)
+	avsDirectory, err := avs.NewAvs(avsAddr, c.client)
 	if err != nil {
-		return fmt.Errorf("failed to approve token transfer: %v", err)
-	}
-	if err := c.WaitForMined(tx); err != nil {
 		return err
 	}
-
-	// Deposit to StakeManager
-	sm, err := staking.NewStaking(common.HexToAddress(smAddr), c.client)
-	tx, err = sm.Deposit(c.auth, common.HexToAddress(tokenAddr), amount)
+	var salt [32]byte
+	salt[0] = 1
+	header, err := c.client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		return fmt.Errorf("failed to deposit to StakeManager: %v", err)
+		return err
+	}
+	expiry := header.Time + 300
+	digestHash, err := avsDirectory.CalculateOperatorAVSRegistrationDigestHash(nil, c.auth.From, common.HexToAddress(serviceAddr), salt, big.NewInt(int64(expiry)))
+	if err != nil {
+		return err
+	}
+	signature, err := ecrypto.Sign(digestHash[:], c.privateKey)
+	if err != nil {
+		return err
+	}
+	signature[64] += 27
+
+	tx, err := lagrangeService.Register(c.auth, common.HexToAddress(signAddr), blsPubKeys, lagrange.ISignatureUtilsSignatureWithSaltAndExpiry{
+		Signature: signature,
+		Salt:      salt,
+		Expiry:    big.NewInt(int64(expiry)),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to register: %v", err)
 	}
 
 	return c.WaitForMined(tx)
 }
 
-// Register registers a new validator.
-func (c *ChainOps) Register(serviceAddr string, blsPubKey [2]*big.Int) error {
+// AddBlsPubKeys adds BLS Public keys to the validator.
+func (c *ChainOps) AddBlsPubKeys(serviceAddr string, blsPubKeys [][2]*big.Int) error {
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
 	}
 
-	logger.Infof("Registering with BLS public key %s from %s", blsPubKey, c.auth.From.String())
+	logger.Infof("Adding BLS public keys %s from %s", blsPubKeys, c.auth.From.String())
 
-	tx, err := lagrangeService.Register(c.auth, blsPubKey)
+	tx, err := lagrangeService.AddBlsPubKeys(c.auth, blsPubKeys)
 	if err != nil {
-		return fmt.Errorf("failed to register: %v", err)
+		return fmt.Errorf("failed to add BLS keys: %v", err)
 	}
 
 	return c.WaitForMined(tx)
@@ -117,6 +130,7 @@ func (c *ChainOps) Subscribe(serviceAddr string, chainID uint32) error {
 
 // WaitForMined waits for a transaction to be mined.
 func (c *ChainOps) WaitForMined(tx *types.Transaction) error {
+	logger.Infof("Waiting for transaction %s to be mined", tx.Hash().String())
 	receipt, err := bind.WaitMined(context.Background(), c.client, tx)
 	if err != nil {
 		return fmt.Errorf("failed to wait for transaction to be mined: %v", err)
@@ -124,17 +138,6 @@ func (c *ChainOps) WaitForMined(tx *types.Transaction) error {
 	if receipt.Status != 1 {
 		return fmt.Errorf("transaction failed: %v", receipt)
 	}
+	logger.Infof("Transaction %s mined", tx.Hash().String())
 	return nil
-}
-
-// GetOperatorShares returns the operator shares for a given operator and token.
-func (c *ChainOps) GetOperatorShares(smAddr, tokenAddr string) (uint64, error) {
-	sm, err := staking.NewStaking(common.HexToAddress(smAddr), c.client)
-	if err != nil {
-		return 0, err
-	}
-
-	votingPower, err := sm.OperatorShares(nil, c.auth.From, common.HexToAddress(tokenAddr))
-
-	return votingPower.Uint64(), err
 }

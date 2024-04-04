@@ -6,9 +6,11 @@ import (
 	"math/big"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
+	ecrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 
 	"github.com/Lagrange-Labs/client-cli/config"
@@ -21,15 +23,26 @@ const (
 	clientConfigTemplate = `[Client]
 GrpcURL = "{{.ServerGrpcURL}}"
 Chain = "{{.ChainName}}"
-RPCEndpoint = "{{.RPCEndpoint}}"
 EthereumURL = "{{.EthereumRPCURL}}"
 CommitteeSCAddress = "{{.CommitteeSCAddress}}"
 BLSPrivateKey = "{{.BLSPrivateKey}}"
-ECDSAPrivateKey = "{{.ECDSAPrivateKey}}"
+ECDSAPrivateKey = "{{.SignPrivateKey}}"
 PullInterval = "100ms"
-BLSCurve = "{{.BLSCurve}}"`
+BLSCurve = "{{.BLSCurve}}"
+
+[RpcClient]
+
+	[RpcClient.Optimism]
+	RPCURL = "{{.L2RPCEndpoint}}"
+	L1RPCURL = "{{.L1RPCEndpoint}}"
+	BatchInbox = "{{.BatchInbox}}"
+	BatchSender = "{{.BatchSender}}"
+
+	[RpcClient.Mock]
+	RPCURL = "http://localhost:8545"`
 
 	dockerImageBase = "lagrangelabs/lagrange-node"
+	configDir       = ".lagrange/config"
 )
 
 var (
@@ -40,7 +53,19 @@ var (
 		Aliases: []string{"c"},
 	}
 
-	configFileName = "client_[chainName]_[blsPrivKey].toml"
+	batchConfig = map[string]struct {
+		BatchInbox  string
+		BatchSender string
+	}{
+		"optimism": {
+			BatchInbox:  "0xFF00000000000000000000000000000000000010",
+			BatchSender: "0x6887246668a3b87F54DeB3b94Ba47a6f63F32985",
+		},
+		"base": {
+			BatchInbox:  "0xFf00000000000000000000000000000000008453",
+			BatchSender: "0x5050F69a9786F081509234F1a7F4684b5E5b76C9",
+		},
+	}
 )
 
 func main() {
@@ -85,14 +110,22 @@ func run(c *cli.Context) error {
 	logger.Infof("Loaded configuration: %+v", cfg)
 
 	for {
-		choice, err := utils.StringPrompt("Enter the operation to perform (`d`eposit, `r`un, `e`xit): ")
+		choice, err := utils.StringPrompt("Enter the operation to perform (`r`un, re`g`ister, `s`ubscribe, `c`onfig, `e`xit): ")
 		if err != nil {
 			logger.Fatalf("Failed to get operation: %s", err)
 		}
 		switch strings.ToLower(choice) {
-		case "d", "deposit":
-			if err := depositFunds(cfg); err != nil {
-				logger.Infof("Failed to deposit funds: %v, going back to the main menu!", err)
+		case "g", "register":
+			if err := registerOperator(cfg); err != nil {
+				logger.Infof("Failed to register operator: %v, going back to the main menu!", err)
+			}
+		case "s", "subscribe":
+			if err := subscribeChain(cfg); err != nil {
+				logger.Infof("Failed to subscribe to the chain: %v, going back to the main menu!", err)
+			}
+		case "c", "config":
+			if err := generateConfig(cfg); err != nil {
+				logger.Infof("Failed to generate the config: %v, going back to the main menu!", err)
 			}
 		case "r", "run":
 			if err := clientDeploy(cfg); err != nil {
@@ -106,47 +139,258 @@ func run(c *cli.Context) error {
 	}
 }
 
-func depositFunds(cfg *config.Config) error {
-	privateKey, err := utils.PasswordPrompt("Enter the ECDSA Private Key: ")
+func registerOperator(cfg *config.Config) error {
+	operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
 	if err != nil {
-		logger.Fatalf("Failed to get Private Key: %s", err)
+		return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
 	}
-	chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, privateKey)
+	chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, operatorPrivKey)
 	if err != nil {
-		return fmt.Errorf("failed to create ChainOps instance: %w", err)
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	amount, err := utils.IntegerPrompt("Enter the Amount: ")
-	if err != nil {
-		logger.Fatalf("Failed to get Amount: %s", err)
-	}
-	amountInt := new(big.Int).SetInt64(int64(amount))
+	cfg.OperatorPrivKey = operatorPrivKey
 
+	// Generate new BLS Key Pairs
+	blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(cfg.BLSCurve))
 	for {
-		if err = chainOps.Deposit(cfg.StakeManagerAddr, cfg.WETHAddr, amountInt); err != nil {
-			logger.Infof("Failed to deposit funds: %s", err)
-			isRetry, err := utils.ConfirmPrompt("Do you want to retry? (y/n): ")
+		isConfirmed, err := utils.ConfirmPrompt("Do you want to add a new BLS Key Pair? (y/n): ")
+		if err != nil {
+			return fmt.Errorf("failed to get answer: %w", err)
+		}
+		if isConfirmed {
+			var privKey []byte
+			res, err := utils.StringPrompt("Do you want to generate a new Key Pair (y/bls_private_key): ")
 			if err != nil {
-				logger.Fatalf("Failed to get answer: %s", err)
+				return fmt.Errorf("failed to get answer: %w", err)
 			}
-			if isRetry {
+			if res == "y" {
+				privKey, err = blsScheme.GenerateRandomKey()
+				if err != nil {
+					return fmt.Errorf("failed to generate BLS Key Pair: %w", err)
+				}
+			} else {
+				privKey = crypto.Hex2Bytes(res)
+			}
+			pubRawKey, err := blsScheme.GetPublicKey(privKey, false)
+			if err != nil {
+				logger.Infof("Failed to get BLS Public Key: %s", err)
 				continue
 			}
+			if err := utils.SaveKeyStore("bls", utils.NewKeyStore(privKey, pubRawKey)); err != nil {
+				logger.Infof("Failed to save BLS Key Pair: %s", err)
+				continue
+			}
+		} else {
+			break
 		}
-		break
 	}
 
+	// Generate a new signer ECDSA private key
+	isConfirmed, err := utils.ConfirmPrompt("Do you want to generate a new signer private key? (y/n): ")
 	if err != nil {
-		return fmt.Errorf("failed to deposit funds: %w", err)
+		return fmt.Errorf("failed to get answer: %w", err)
+	}
+	if isConfirmed {
+		privKey, err := ecrypto.GenerateKey()
+		if err != nil {
+			return fmt.Errorf("failed to generate ECDSA Key Pair: %w", err)
+		}
+		addr := ecrypto.PubkeyToAddress(privKey.PublicKey)
+		signAddress := addr.Hex()
+		logger.Infof("Signer ECDSA Key Pair loaded address: %v", signAddress)
+		if err := utils.SaveKeyStore("ecdsa", utils.NewKeyStore(privKey.D.Bytes(), addr.Bytes())); err != nil {
+			logger.Infof("Failed to save ECDSA Key Pair: %s", err)
+		}
+	} else {
+		privRawKey, err := utils.StringPrompt("Enter the Signer ECDSA Private Key, if you want to use the stored key, just press `n`: ")
+		if err != nil {
+			return fmt.Errorf("failed to get Signer ECDSA Address: %w", err)
+		}
+		if len(privRawKey) > 1 {
+			privKey, err := ecrypto.HexToECDSA(privRawKey)
+			if err != nil {
+				return fmt.Errorf("failed to convert ECDSA Private Key: %w", err)
+			}
+			addr := ecrypto.PubkeyToAddress(privKey.PublicKey)
+			signAddress := addr.Hex()
+			logger.Infof("Signer ECDSA Key Pair loaded address: %v", signAddress)
+			if err := utils.SaveKeyStore("ecdsa", utils.NewKeyStore(privKey.D.Bytes(), addr.Bytes())); err != nil {
+				logger.Infof("Failed to save ECDSA Key Pair: %s", err)
+			}
+		}
 	}
 
-	logger.Infof("Funds deposited successfully")
-
-	shares, err := chainOps.GetOperatorShares(cfg.StakeManagerAddr, cfg.WETHAddr)
+	// Register to the committee
+	blsKeyStores, err := utils.LoadKeyStores("bls")
 	if err != nil {
-		return fmt.Errorf("failed to get operator shares: %w", err)
+		return fmt.Errorf("failed to load BLS Key Stores: %w", err)
+	}
+	signKeyStores, err := utils.LoadKeyStores("ecdsa")
+	if err != nil {
+		return fmt.Errorf("failed to load ECDSA Key Stores: %w", err)
+	}
+	pubRawKeys := make([][2]*big.Int, 0)
+	for _, blsKeyStore := range blsKeyStores {
+		pubKey, err := crypto.ConvertBLSKey(crypto.Hex2Bytes(blsKeyStore.PubKey))
+		if err != nil {
+			logger.Infof("Failed to convert BLS Public Key: %s", err)
+			continue
+		}
+		pubRawKeys = append(pubRawKeys, pubKey)
+	}
+	for {
+		logger.Infof("Registering with BLS public key: %s and sign address: %s", pubRawKeys, signKeyStores[0].PubKey)
+		isConfirmed, err := utils.ConfirmPrompt("Do you want to register to the committee? (y/n): ")
+		if err != nil {
+			return fmt.Errorf("failed to get answer: %w", err)
+		}
+		if !isConfirmed {
+			break
+		}
+		if err := chainOps.Register(cfg.LagrangeServiceSCAddr, signKeyStores[0].PubKey, pubRawKeys); err != nil {
+			logger.Infof("Failed to register to the committee: %s", err)
+		} else {
+			break
+		}
 	}
 
-	logger.Infof("The total amount: %d", shares)
+	return nil
+}
+
+func subscribeChain(cfg *config.Config) error {
+	if len(cfg.OperatorPrivKey) == 0 {
+		operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
+		if err != nil {
+			return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
+		}
+		cfg.OperatorPrivKey = operatorPrivKey
+	}
+	chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, cfg.OperatorPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+
+	// Subscribe chain
+	for {
+		chainID, err := utils.IntegerPrompt("Enter the Chain ID: ")
+		if err != nil {
+			return fmt.Errorf("failed to get Chain ID: %s", err)
+		}
+		if err := chainOps.Subscribe(cfg.LagrangeServiceSCAddr, uint32(chainID)); err != nil {
+			logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
+		}
+		isConfirmed, err := utils.ConfirmPrompt("Do you want to subscribe to another chain? (y/n): ")
+		if err != nil {
+			return fmt.Errorf("failed to get answer: %w", err)
+		}
+		if !isConfirmed {
+			break
+		}
+	}
+
+	return nil
+}
+
+func generateConfig(cfg *config.Config) error {
+	logger.Infof("Generating Client Config file")
+
+	clientCfg := new(config.ClientConfig)
+	clientCfg.EthereumRPCURL = cfg.EthereumRPCURL
+	clientCfg.CommitteeSCAddress = cfg.CommitteeSCAddr
+	clientCfg.BLSCurve = cfg.BLSCurve
+
+	// Get the Chain Name
+	var err error
+	clientCfg.ChainName, err = utils.StringPrompt("Enter the Chain Name: ")
+	if err != nil {
+		logger.Fatalf("Failed to get Chain Name: %s", err)
+	}
+	clientCfg.ChainName = strings.ToLower(clientCfg.ChainName)
+
+	// Get the RPC Endpoints
+	clientCfg.L1RPCEndpoint, err = utils.StringPrompt("Enter the L1 RPC Endpoint: ")
+	if err != nil {
+		logger.Fatalf("Failed to get L1 RPC Endpoint: %s", err)
+	}
+	clientCfg.L2RPCEndpoint, err = utils.StringPrompt("Enter the L2 RPC Endpoint: ")
+	if err != nil {
+		logger.Fatalf("Failed to get L2 RPC Endpoint: %s", err)
+	}
+
+	// Get the Server gRPC URL
+	clientCfg.ServerGrpcURL, err = utils.StringPrompt("Enter the Server gRPC URL: ")
+	if err != nil {
+		logger.Fatalf("Failed to get Server gRPC URL: %s", err)
+	}
+
+	// Select the BLS Key Pair
+	blsKeyStores, err := utils.LoadKeyStores("bls")
+	if err != nil {
+		return fmt.Errorf("failed to load BLS Key Stores: %w", err)
+	}
+	if len(blsKeyStores) == 0 {
+		clientCfg.BLSPrivateKey, err = utils.StringPrompt("No BLS Key Pair found, please enter the BLS Private Key: ")
+		if err != nil {
+			return fmt.Errorf("failed to get BLS Private Key: %w", err)
+		}
+	} else {
+		for i, blsKeyStore := range blsKeyStores {
+			logger.Infof("BLS Key Pair %d: %s", i+1, blsKeyStore.PubKey)
+		}
+		keyIndex, err := utils.IntegerPrompt("Select the BLS Key Pair (index): ")
+		if err != nil {
+			return fmt.Errorf("failed to get BLS Key Pair index: %w", err)
+		}
+		clientCfg.BLSPrivateKey = blsKeyStores[keyIndex-1].PrivKey
+	}
+
+	// Select the Signer ECDSA Private Key
+	signKeyStores, err := utils.LoadKeyStores("ecdsa")
+	if err != nil {
+		return fmt.Errorf("failed to load ECDSA Key Stores: %w", err)
+	}
+	if len(signKeyStores) == 0 {
+		clientCfg.SignPrivateKey, err = utils.StringPrompt("No Signer ECDSA Key Pair found, please enter the signer ECDSA Private Key: ")
+		if err != nil {
+			return fmt.Errorf("failed to get Signer ECDSA Private Key: %w", err)
+		}
+	} else {
+		clientCfg.SignPrivateKey = signKeyStores[0].PrivKey
+	}
+
+	clientCfg.BatchInbox = batchConfig[clientCfg.ChainName].BatchInbox
+	clientCfg.BatchSender = batchConfig["optimism"].BatchSender
+
+	// Create the Client Config file
+	tmplClient, err := template.New("client").Parse(clientConfigTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to parse client config template: %s", err)
+	}
+	blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(clientCfg.BLSCurve))
+	pubRawKey, err := blsScheme.GetPublicKey(crypto.Hex2Bytes(clientCfg.BLSPrivateKey), false)
+	if err != nil {
+		logger.Fatalf("Failed to get BLS Public Key: %s", err)
+	}
+	configFileName := fmt.Sprintf("client_%s_%x.toml", clientCfg.ChainName, pubRawKey)
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %s", err)
+	}
+	err = os.MkdirAll(filepath.Join(homeDir, configDir), 0700)
+	if err != nil {
+		return fmt.Errorf("failed to create config directory: %s", err)
+	}
+	configFilePath := filepath.Clean(filepath.Join(homeDir, configDir, configFileName))
+	clientConfigFile, err := os.Create(configFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create client config file: %s", err)
+	}
+	defer clientConfigFile.Close()
+	if err := tmplClient.Execute(clientConfigFile, clientCfg); err != nil {
+		return fmt.Errorf("failed to execute client config template: %s", err)
+	}
+
+	logger.Infof("Client Config file created: %s", configFilePath)
 
 	return nil
 }
@@ -169,122 +413,27 @@ func clientDeploy(cfg *config.Config) error {
 		}
 		logger.Infof("Docker image %s exists locally with digest: %s", dockerImageName, output)
 	}
-
-	clientCfg := new(config.ClientConfig)
-	clientCfg.ServerGrpcURL = cfg.GRPCURL
-	clientCfg.RPCEndpoint = cfg.RPCEndpoint
-	clientCfg.EthereumRPCURL = cfg.EthereumRPCURL
-	clientCfg.CommitteeSCAddress = cfg.CommitteeSCAddr
-	clientCfg.BLSCurve = cfg.BLSCurve
-
-	// Get the Chain Name and ECDSA Private Key
-	var err error
-	clientCfg.ChainName, err = utils.StringPrompt("Enter the Chain Name: ")
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		logger.Fatalf("Failed to get Chain Name: %s", err)
+		return fmt.Errorf("failed to get home directory: %s", err)
 	}
-	clientCfg.ECDSAPrivateKey, err = utils.PasswordPrompt("Enter the ECDSA Private Key: ")
+	configDirPath := filepath.Clean(filepath.Join(homeDir, configDir))
+	files, err := os.ReadDir(configDirPath)
 	if err != nil {
-		logger.Fatalf("Failed to get ECDSA Private Key: %s", err)
+		return fmt.Errorf("failed to read config directory: %s", err)
 	}
-
-	// Create the BLS Key Pair
-	blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(cfg.BLSCurve))
-	isConfirmed, err := utils.ConfirmPrompt("Do you want to generate a new BLS Key Pair? (y/n): ")
-	if err != nil {
-		return fmt.Errorf("failed to get answer: %w", err)
-	}
-	if !isConfirmed {
-		clientCfg.BLSPrivateKey, err = utils.StringPrompt("Enter the BLS Private Key: ")
-		if err != nil {
-			return fmt.Errorf("failed to get BLS Private Key: %w", err)
+	configFileNames := make([]string, 0)
+	for i, file := range files {
+		if file.IsDir() {
+			continue
 		}
-	} else {
-		privKey, err := blsScheme.GenerateRandomKey()
-		if err != nil {
-			return fmt.Errorf("failed to generate BLS Key Pair: %w", err)
-		}
-		clientCfg.BLSPrivateKey = crypto.Bytes2Hex(privKey)
-
+		logger.Infof("Config file %d: %s", i+1, file.Name())
+		configFileNames = append(configFileNames, filepath.Join(configDirPath, file.Name()))
 	}
-	pubRawKey, err := blsScheme.GetPublicKey(crypto.Hex2Bytes(clientCfg.BLSPrivateKey), false)
+	index, err := utils.IntegerPrompt("Select the Config file (index): ")
 	if err != nil {
-		logger.Fatalf("Failed to get BLS Public Key: %s", err)
-	}
-	logger.Infof("BLS Key Pair loaded, private key: %v public key: %v", clientCfg.BLSPrivateKey, crypto.Bytes2Hex(pubRawKey))
-
-	chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, strings.TrimLeft(clientCfg.ECDSAPrivateKey, "0x"))
-	if err != nil {
-		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+		return fmt.Errorf("failed to get Config file index: %s", err)
 	}
 
-	// yes/no prompt to ask the registration to the committee
-	// if no, need to register within this flow
-	isConfirmed, err = utils.ConfirmPrompt("Do you want to register to the committee now? (y/n): ")
-	if err != nil {
-		return fmt.Errorf("failed to get answer: %w", err)
-	}
-	if isConfirmed {
-		// register to the committee
-		pubKey, err := utils.ConvertBLSKey(pubRawKey)
-		if err != nil {
-			return fmt.Errorf("failed to convert BLS Public Key: %s", err)
-		}
-		for {
-			if err := chainOps.Register(cfg.LagrangeServiceSCAddr, pubKey); err != nil {
-				logger.Infof("Failed to register to the committee: %s", err)
-				isRetry, err := utils.ConfirmPrompt("Do you want to retry? (y/n): ")
-				if err != nil {
-					logger.Fatalf("failed to get answer: %w", err)
-				}
-				if isRetry {
-					continue
-				}
-			}
-			break
-		}
-	}
-	// Subscribe chain
-	isConfirmed, err = utils.ConfirmPrompt("Do you want to subscribe to the dedicated chain? (y/n): ")
-	if err != nil {
-		return fmt.Errorf("failed to get answer: %w", err)
-	}
-	if isConfirmed {
-		chainID, err := utils.IntegerPrompt("Enter the Chain ID: ")
-		if err != nil {
-			return fmt.Errorf("failed to get Chain ID: %s", err)
-		}
-		for {
-			if err := chainOps.Subscribe(cfg.LagrangeServiceSCAddr, uint32(chainID)); err != nil {
-				logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
-				isRetry, err := utils.ConfirmPrompt("Do you want to retry? (y/n): ")
-				if err != nil {
-					return fmt.Errorf("failed to get answer: %w", err)
-				}
-				if isRetry {
-					continue
-				}
-			}
-			break
-		}
-	}
-
-	// Create the Client Config file
-	tmplClient, err := template.New("client").Parse(clientConfigTemplate)
-	if err != nil {
-		return fmt.Errorf("failed to parse client config template: %s", err)
-	}
-	configFileName = fmt.Sprintf("client_%s_%s.toml", clientCfg.ChainName, clientCfg.BLSPrivateKey)
-	clientConfigFile, err := os.Create(configFileName)
-	if err != nil {
-		return fmt.Errorf("Failed to create client config file: %s", err)
-	}
-	defer clientConfigFile.Close()
-	if err := tmplClient.Execute(clientConfigFile, clientCfg); err != nil {
-		return fmt.Errorf("failed to execute client config template: %s", err)
-	}
-
-	logger.Infof("Client Config file created: %s", configFileName)
-
-	return utils.RunDockerImage(dockerImageName, configFileName)
+	return utils.RunDockerImage(dockerImageName, configFileNames[index-1])
 }
