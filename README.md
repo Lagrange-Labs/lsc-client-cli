@@ -76,7 +76,7 @@ docker login -u <username>
 
 ## Steps
 
-1. Send your EigenLayer operator Ethereum address to Lagrange Labs team for allowlisting.
+1. Send your EigenLayer operator Ethereum address to Lagrange Labs team for allowlisting. ([Form](https://docs.google.com/forms/d/1oJq1QddKb1Sa_Pe_C1Sa-9p_jN4jBEV2ARI3-M8yb8c/edit))
 
 2. Clone the [Lagrange CLI repository](https://github.com/Lagrange-Labs/client-cli) to your machine.
 
@@ -105,7 +105,7 @@ make build
 
 Currently, we only support the `BN254` curve for the `BLSScheme`.
 
-6. Run the following command to register you operator to Lagrange State Committees AVS.
+6. Run the following command to register your operator to Lagrange State Committees AVS.
 
 ```bash
 ./dist/lagrange-cli run -c ./config.toml
@@ -119,13 +119,15 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
   - Prompt: "Do you want to generate a new Key Pair?" - Enter `y` if you want the CLI to randomly generate a key pair or enter your own BLS private key.
   - Please re-run this step to add more BLS key pairs if you want to run more nodes.
 
-- Each EigenLayer operator that participates into Lagrange State Committees AVS needs to generate one signer private key.
+- Each EigenLayer operator that participates into Lagrange State Committees AVS needs to generate one signer ECDSA private key.
+
+  > Note: This signer ECDSA key is only used to verify the identity and signature. It is not used in governance and/or asset flow.
 
   - Enter `y` in the prompt for CLI to randomly generate a signer private key if you haven't already created it before.
 
 - Enter `y` to register to Lagrange State Committee if you haven't already registered.
 
-- Enter ECDSA key of your EigenLayer operator to complete registration.
+  - Enter ECDSA key of your EigenLayer operator to complete registration.
 
 7. Upon completion of the registration process, subscribe to the chain that you want to run the Lagrange Attestation Node.
 
