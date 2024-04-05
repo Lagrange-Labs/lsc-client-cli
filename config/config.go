@@ -29,6 +29,7 @@ type Config struct {
 type ClientConfig struct {
 	ChainName          string `json:"chain_name"`
 	ServerGrpcURL      string `json:"server_grpc_url"`
+	OperatorAddress    string `json:"operator_address"`
 	L1RPCEndpoint      string `json:"l1_rpc_endpoint"`
 	L2RPCEndpoint      string `json:"l2_rpc_endpoint"`
 	EthereumRPCURL     string `json:"ethereum_rpc_url"`

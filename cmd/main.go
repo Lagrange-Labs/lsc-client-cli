@@ -24,10 +24,11 @@ const (
 GrpcURL = "{{.ServerGrpcURL}}"
 Chain = "{{.ChainName}}"
 EthereumURL = "{{.EthereumRPCURL}}"
+OperatorAddress = "{{.OperatorAddress}}"
 CommitteeSCAddress = "{{.CommitteeSCAddress}}"
 BLSPrivateKey = "{{.BLSPrivateKey}}"
 ECDSAPrivateKey = "{{.SignPrivateKey}}"
-PullInterval = "100ms"
+PullInterval = "1000ms"
 BLSCurve = "{{.BLSCurve}}"
 
 [RpcClient]
@@ -140,16 +141,6 @@ func run(c *cli.Context) error {
 }
 
 func registerOperator(cfg *config.Config) error {
-	operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
-	if err != nil {
-		return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
-	}
-	chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, operatorPrivKey)
-	if err != nil {
-		return fmt.Errorf("failed to create ChainOps instance: %s", err)
-	}
-	cfg.OperatorPrivKey = operatorPrivKey
-
 	// Generate new BLS Key Pairs
 	blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(cfg.BLSCurve))
 	for {
@@ -247,6 +238,15 @@ func registerOperator(cfg *config.Config) error {
 		if !isConfirmed {
 			break
 		}
+		operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
+		if err != nil {
+			return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
+		}
+		chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, operatorPrivKey)
+		if err != nil {
+			return fmt.Errorf("failed to create ChainOps instance: %s", err)
+		}
+		cfg.OperatorPrivKey = operatorPrivKey
 		if err := chainOps.Register(cfg.LagrangeServiceSCAddr, signKeyStores[0].PubKey, pubRawKeys); err != nil {
 			logger.Infof("Failed to register to the committee: %s", err)
 		} else {
@@ -299,8 +299,13 @@ func generateConfig(cfg *config.Config) error {
 	clientCfg.CommitteeSCAddress = cfg.CommitteeSCAddr
 	clientCfg.BLSCurve = cfg.BLSCurve
 
-	// Get the Chain Name
 	var err error
+	// Get the Operator Address
+	clientCfg.OperatorAddress, err = utils.StringPrompt("Enter the Operator Address: ")
+	if err != nil {
+		logger.Fatalf("Failed to get Operator Address: %s", err)
+	}
+	// Get the Chain Name
 	clientCfg.ChainName, err = utils.StringPrompt("Enter the Chain Name: ")
 	if err != nil {
 		logger.Fatalf("Failed to get Chain Name: %s", err)
