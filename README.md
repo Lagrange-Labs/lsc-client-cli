@@ -6,13 +6,13 @@ This CLI app provides the functionalities needed to run the a Lagrange Attestati
 
 Lagrange Labs State Committees provide a mechanism for generating succinct zero-knowledge state proofs for optimistic rollups based on the use of either staked or restaked collateral. Each state committee is a group of attestors/validators that have either staked an optimistic rollup’s native token or dualstaked with EigenLayer. Each state committee node attests to the execution and finality of transaction batches submitted by optimistic sequencers to Ethereum.
 
-Whenever a rollup block is considered either safe (OP stack) or has had its corresponding transaction batch settled on Ethereum (Arbitrum), each node is required to attest to the block using its BLS key.
+Whenever a batch consisting of rollup blocks is considered either safe (OP stack) or has had its corresponding transaction batch settled on Ethereum (Arbitrum), each node is required to attest to the batch of blocks using its BLS key.
 
 Broadly, each signature is executed on a tuple containing 3 essential elements:
 
 ```
-struct block {
-    var block_header,
+struct batch {
+    var batch_header,
     var current_committee,
     var next_committee
 }
@@ -25,19 +25,19 @@ For a full breakdown of the architecture, please refer to the below two document
 
 ## Running a Lagrange Client Node
 
-For the purpose of demonstrating how to run a Lagrange Attestation Node, we've created a Lagrange Operator Network. The below commands will allow a developer to run a node and attest to the state of `Optimism`, `Arbitrum` and/or `Mantle` Sepolia Network.
+For the purpose of demonstrating how to run a Lagrange Attestation Node, we've created a Lagrange Holesky Network. The below commands will allow a developer to run a node and attest to the state of `Optimism` and `Base` chains.
 
 ### Chains
 
-- Optimism: `11155420`
-- Arbitrum: `421614`
-- Mantle: `5003`
+- Optimism: `10`
+- Base: `8453`
 
 ### Minimum Recommended Hardware
 
-- RAM: `1 GB`
+- VCPUs: `2`
+- RAM: `4 GB`
 - Storage: `8 GB`
-- AWS instance type: `t2.micro`
+- AWS instance type: `t3.medium`
 - Architecture: 64-bit ARM instance
 
 > Note: The commands in this README file are for 64-bit ARM AWS ubuntu instance.
@@ -76,16 +76,15 @@ docker login -u <username>
 
 ## Steps
 
-1. Create a new (dummy) Ethereum address using a wallet application like Metamask to use as an operator.
-   > Note: Please avoid using your personal wallet address that contains real valued assets
-2. Send the account address to Lagrange Labs team for allowlisting.
-3. Clone the [Lagrange CLI repository](https://github.com/Lagrange-Labs/client-cli) to your machine.
+1. Send your EigenLayer operator Ethereum address to Lagrange Labs team for allowlisting.
+
+2. Clone the [Lagrange CLI repository](https://github.com/Lagrange-Labs/client-cli) to your machine.
 
 ```bash
 git clone https://github.com/Lagrange-Labs/client-cli.git
 ```
 
-4. Set environment variables and download dependencies.
+3. Set environment variables and download dependencies.
 
 ```bash
 export CGO_CFLAGS="-O -D__BLST_PORTABLE__"
@@ -94,70 +93,70 @@ cd client-cli
 go mod download
 ```
 
-5. Create a go binary.
+4. Create a go binary.
 
 ```bash
 make build
 ```
 
-6. Update `ChainRPCEndpoint` and `EthereumRPCURL` in `config_<chain>.toml` for which you want to run Lagrange Attestation Node.
+5. Update `EthereumRPCURL` in `config.toml` file.
 
-`ChainRPCEndpoint`: RPC endpoint for `Sepolia` network based chain eg. `Optimism-Sepolia`, `Arbitrum-Sepolia`, `Mantle-Sepolia`
+`EthereumRPCURL`: RPC endpoint for `Holesky` network.
 
-`EthereumRPCURL`: RPC endpoint for `Sepolia` network.
+Currently, we only support the `BN254` curve for the `BLSScheme`.
 
-The repository contains `config_<chain>.toml` for each supported chain which contains the required configuration like smart contract addresses and sequencer gRPC URL.
-
-For now, we only support the `BN254` curve for the `BLSScheme`.
-
-7. Stake your tokens by depositing them into the Lagrange Staking contracts.
+6. Run the following command to register you operator to Lagrange State Committees AVS.
 
 ```bash
-./dist/lagrange-cli run -c ./config_<chain>.toml
+./dist/lagrange-cli run -c ./config.toml
 ```
 
-> Note: You can choose config of any chain in this step as the goal is to deposit sepolia ETH into the Lagrange staking contract for your operator.
+- Enter `g` in the prompt to start the registration.
 
-- Enter `d` in the prompt to start the deposit process which will add funds to the Lagrange Staking Contract.
+- Enter ECDSA key of your EigenLayer operator.
 
-  - Enter your `ECDSA private key`
+- Each Lagrange Attestation Node requires a BLS key pair to participate in the committee. Generate the BLS key pairs or insert your own keys in the prompt.
 
-    > Note: Please enter the ECDSA private key of the operator/wallet created in step #1.
+  - Prompt: "Do you want to add a new BLS Key Pair?" - Enter `y` if you want to add a BLS key pair
+  - Prompt: "Do you want to generate a new Key Pair?" - Enter `y` if you want the CLI to randomly generate a key pair or enter your own BLS private key.
+  - Please re-run this step to add more BLS key pairs if you want to run more nodes.
 
-  - Enter the staking amount.
-    > The unit of staking amount is `wei`. The voting power in the state committees is calculated based on the formula: `voting_power = stake_amount/1e9`. So stake amount value should be greater than `1e9`.
+- Each EigenLayer operator that participates into Lagrange State Committees AVS needs to generate one signer private key.
+  - Enter `y` in the prompt for CLI to randomly generate a signer private key if you haven't already created it before.
 
-8. After successfully completing the staking process, start the Lagrange Attestation Node deployment process.
+7. Upon completion of the registration process, subscribe to the chain that you want to run the Lagrange Attestation Node.
 
-The following command should be run for every chain you want to register and deploy the Lagrange Attestation Node by changing the `config_<chain>.toml`
+- Enter `s` in the prompt to start the subscription process.
+
+- Enter EigenLayer operator ECDSA key.
+
+- Enter CHAIN_ID (step #2) to subscribe to that chain.
 
 > Note: Each Operator can be subscribed to multiple chains.
 
-`Operator`: Eth address of the wallet that is registered and to be subscribed to the chain.
-`Node`: an instance that is running for each subscribed chain corresponding to the operator.
+8. Generate config for your Lagrange Attestation Node which will be used to deploy the container.
 
-```bash
-./dist/lagrange-cli run -c ./config_<chain>.toml
-```
+- Enter `c` in the prompt to start generating the config.
 
-- Enter `r` in the prompt to run the deployment steps.
-  - Enter the chain name.
-    > Note: Make sure that the `config_<chain>.toml` is for the same chain name entered in this step.
-  - Enter your `ECDSA private key`
-    > Note: Please enter the ECDSA private key of the operator/wallet created in step #1.
-  - Enter `y` to let the CLI randomly generate a BLS key pair or else you can enter `n` if you already created BLS private key for this operator.
-    > Note: Each operator has a unique BLS key pair
-  - Enter `y` to register the attestation node to the Lagrange State Committee.
-  - Enter `y` to subscribe the attestation node to the chain you mentioned.
-  - Enter the `chain id` for your chain.
-    - If the chain subscription fails with an error `The dedicated chain is already subscribed`, you can press `n` and then enter `e` to exit.
-    - If the chain subscription fails with an error `The dedicated chain is locked`, please enter `y` to retry the subscription to that chain.
-  - If the chain subscription and deployment is successful, you will see an `INFO` log printed on your screen stating that `config_<chain>_<private_key>` is created.
-    - If you are running a single operator node, enter `e` to exit. Re-run the command mentioned above in this step by changing the `config_<chain>.toml` file to register this same node to another chain.
-    - If you are running multiple operator nodes, enter `r` to start committee subscription and registration for other nodes to the same chain.
+- Enter L1 RPC endpoint, which will be ETH mainnet endpoint for this testnet.
 
-  > When you have one Operator registered for Lagrange State Committees and subscribed to all three available chains, please use the same ECDSA key and BLS private key (unique to your operator) in the prompts for deploying all three nodes (specific to the chains).
+- Enter L2 RPC endpoint, which will be the rollup chain's mainnet endpoint.
 
-9. Check docker container logs to ensure successful deployment of the Lagrange Attestation Node. If you have deployed `n` nodes and each node is subscribed to `k` chains then there will be `n*k` containers running.
+- Enter gRPC URL.
 
-> Note: The current epoch period for state committee rotation is 24 hours. The attestation node will start attesting to the blocks of the subscribed chain from the next epoch.
+  - Optimism: `44.210.11.64:9090`
+  - Base: `3.209.124.237:9090`
+
+- Select and enter index of the key pair from the list of available BLS key pairs (registered in step #6)
+
+> Note: We recommend using trusted providers like Alchemy, Quicknode, Infura if you don't run your own node.
+
+9. Deploy and run the Lagrange Attestation Node.
+
+- Enter `r` in the prompt.
+
+- Select index of the config file from the list of available configs to deploy the docker container.
+
+10. Check docker container logs to ensure successful deployment of the Lagrange Attestation Node. If you have deployed `n` nodes and each node is subscribed to `k` chains then there will be `n*k` containers running.
+
+> Note: The current epoch period for state committee rotation is 24 hours. The attestation node will start attesting to the batches of the subscribed chain from the next epoch.
