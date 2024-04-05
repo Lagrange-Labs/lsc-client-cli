@@ -6,7 +6,7 @@ This CLI app provides the functionalities needed to run the a Lagrange Attestati
 
 Lagrange Labs State Committees provide a mechanism for generating succinct zero-knowledge state proofs for optimistic rollups based on the use of either staked or restaked collateral. Each state committee is a group of attestors/validators that have either staked an optimistic rollup’s native token or dualstaked with EigenLayer. Each state committee node attests to the execution and finality of transaction batches submitted by optimistic sequencers to Ethereum.
 
-Whenever a batch consisting of rollup blocks is considered either safe (OP stack) or has had its corresponding transaction batch settled on Ethereum (Arbitrum), each node is required to attest to the batch of blocks using its BLS key.
+Whenever a batch consisting of rollup blocks is considered either safe (OP stack) or has had its corresponding transaction batch settled on Ethereum (Mainnet), each node is required to attest to the batch of blocks using its BLS key.
 
 Broadly, each signature is executed on a tuple containing 3 essential elements:
 
@@ -113,8 +113,6 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Enter `g` in the prompt to start the registration.
 
-- Enter ECDSA key of your EigenLayer operator.
-
 - Each Lagrange Attestation Node requires a BLS key pair to participate in the committee. Generate the BLS key pairs or insert your own keys in the prompt.
 
   - Prompt: "Do you want to add a new BLS Key Pair?" - Enter `y` if you want to add a BLS key pair
@@ -122,7 +120,12 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
   - Please re-run this step to add more BLS key pairs if you want to run more nodes.
 
 - Each EigenLayer operator that participates into Lagrange State Committees AVS needs to generate one signer private key.
+
   - Enter `y` in the prompt for CLI to randomly generate a signer private key if you haven't already created it before.
+
+- Enter `y` to register to Lagrange State Committee if you haven't already registered.
+
+- Enter ECDSA key of your EigenLayer operator to complete registration.
 
 7. Upon completion of the registration process, subscribe to the chain that you want to run the Lagrange Attestation Node.
 
@@ -140,7 +143,7 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Enter L1 RPC endpoint, which will be ETH mainnet endpoint for this testnet.
 
-- Enter L2 RPC endpoint, which will be the rollup chain's mainnet endpoint.
+- Enter L2 RPC endpoint, which will be the rollup chain's endpoint.
 
 - Enter gRPC URL.
 
