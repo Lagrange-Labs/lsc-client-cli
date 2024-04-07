@@ -22,6 +22,7 @@ type Config struct {
 	EthereumRPCURL        string `mapstructure:"EthereumRPCURL"`
 	BLSCurve              string `mapstructure:"BLSCurve"`
 	DockerImageTag        string `mapstructure:"DockerImageTag"`
+	ConcurrentFetchers    int    `mapstructure:"ConcurrentFetchers"`
 }
 
 // ClientConfig is the configuration for the lagrange client.
@@ -40,6 +41,7 @@ type ClientConfig struct {
 	BatchInbox         string `json:"batch_inbox"`
 	BatchSender        string `json:"batch_sender"`
 	BLSCurve           string `json:"bls_curve"`
+	ConcurrentFetchers int    `json:"concurrent_fetchers"`
 }
 
 // Load loads the configuration

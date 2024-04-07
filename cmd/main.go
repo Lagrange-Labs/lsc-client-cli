@@ -39,6 +39,7 @@ BLSCurve = "{{.BLSCurve}}"
 	BeaconURL = "{{.BeaconURL}}"
 	BatchInbox = "{{.BatchInbox}}"
 	BatchSender = "{{.BatchSender}}"
+	ConcurrentFetchers = "{{.ConcurrentFetchers}}"
 
 	[RpcClient.Mock]
 	RPCURL = "http://localhost:8545"`
@@ -299,6 +300,7 @@ func generateConfig(cfg *config.Config) error {
 	clientCfg.EthereumRPCURL = cfg.EthereumRPCURL
 	clientCfg.CommitteeSCAddress = cfg.CommitteeSCAddr
 	clientCfg.BLSCurve = cfg.BLSCurve
+	clientCfg.ConcurrentFetchers = cfg.ConcurrentFetchers
 
 	var err error
 	// Get the Operator Address
