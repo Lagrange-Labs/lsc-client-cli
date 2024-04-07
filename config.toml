@@ -2,4 +2,5 @@ CommitteeSCAddress = "0x57BAf26C77BBBa3D3A8Bd620c8d74B44Bfda8818"
 LagrangeServiceSCAddress = "0x18A74E66cc90F0B1744Da27E72Df338cEa0A542b"
 EthereumRPCURL = "--- Ethereum RPC URL (holesky or mainnet) ---"
 BLSCurve = "BN254"
-DockerImageTag = "v0.3.3"
+DockerImageTag = "v0.3.4"
+ConcurrentFetchers = 8

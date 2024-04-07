@@ -188,4 +188,6 @@ sudo docker logs <container_id>
 
 > Note: If you are seeing this error message `time= level=error msg=failed to join the network: failed to join the network: pc error: code = Unknown desc = the operator is not a committee member`, it means that the given attestation node setup is successful and it will start attesting from the next epoch. The current epoch period of the state committee rotation is 24 hours for Holesky testnet.
 
+- If you experience the rpc provider issue, it can be due to the rate limit of the provider. You can control the `ConcurrentFetchers` in the `config.toml` file to manage the rate limit.
+
 - If you face any issues while running the Lagrange Attestation Node, please reach out to the Lagrange Labs team on Telegram.
