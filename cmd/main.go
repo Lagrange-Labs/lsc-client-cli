@@ -36,6 +36,7 @@ BLSCurve = "{{.BLSCurve}}"
 	[RpcClient.Optimism]
 	RPCURL = "{{.L2RPCEndpoint}}"
 	L1RPCURL = "{{.L1RPCEndpoint}}"
+	BeaconURL = "{{.BeaconURL}}"
 	BatchInbox = "{{.BatchInbox}}"
 	BatchSender = "{{.BatchSender}}"
 
@@ -320,6 +321,10 @@ func generateConfig(cfg *config.Config) error {
 	clientCfg.L2RPCEndpoint, err = utils.StringPrompt("Enter the L2 RPC Endpoint: ")
 	if err != nil {
 		logger.Fatalf("Failed to get L2 RPC Endpoint: %s", err)
+	}
+	clientCfg.BeaconURL, err = utils.StringPrompt("Enter the Beacon URL: ")
+	if err != nil {
+		logger.Fatalf("Failed to get Beacon URL: %s", err)
 	}
 
 	// Get the Server gRPC URL

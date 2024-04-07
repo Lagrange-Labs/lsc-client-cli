@@ -32,6 +32,7 @@ type ClientConfig struct {
 	OperatorAddress    string `json:"operator_address"`
 	L1RPCEndpoint      string `json:"l1_rpc_endpoint"`
 	L2RPCEndpoint      string `json:"l2_rpc_endpoint"`
+	BeaconURL          string `json:"beacon_url"`
 	EthereumRPCURL     string `json:"ethereum_rpc_url"`
 	CommitteeSCAddress string `json:"committee_sc_address"`
 	BLSPrivateKey      string `json:"bls_private_key"`

@@ -49,8 +49,8 @@ For the purpose of demonstrating how to run a Lagrange Attestation Node, we've c
 ```bash
 sudo apt-get update
 sudo apt-get -y upgrade
-wget https://go.dev/dl/go1.20.14.linux-amd64.tar.gz
-sudo tar -xvf go1.20.14.linux-amd64.tar.gz -C /usr/local
+wget https://go.dev/dl/go1.21.9.linux-amd64.tar.gz
+sudo tar -xvf go1.21.9.linux-amd64.tar.gz -C /usr/local
 echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile
 export GOROOT=/usr/local/go
 source ~/.profile
@@ -71,7 +71,6 @@ echo '{ "log-opts": { "max-size": "10m", "max-file": "100" } }' | sudo tee /etc/
 sudo usermod -aG docker $USER
 newgrp docker
 sudo systemctl restart docker
-docker login -u <username>
 ```
 
 ## Steps
@@ -96,6 +95,8 @@ go mod download
 4. Create a go binary.
 
 ```bash
+sudo apt install make gcc
+
 make build
 ```
 
@@ -135,7 +136,7 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Enter EigenLayer operator ECDSA key.
 
-- Enter CHAIN_ID (step #2) to subscribe to that chain.
+- Enter CHAIN_ID to subscribe to that chain, [please check the above chain ids](#chains).
 
 > Note: Each Operator can be subscribed to multiple chains.
 
@@ -143,9 +144,15 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Enter `c` in the prompt to start generating the config.
 
+- Enter the operator address.
+
+- Enter the chain name which you want to run the Lagrange Attestation Node, [please check the above chains](#chains).
+
 - Enter L1 RPC endpoint, which will be ETH mainnet endpoint for this testnet.
 
 - Enter L2 RPC endpoint, which will be the rollup chain's endpoint.
+
+- Enter the Beacon RPC endpoint, which is used to fetch blobs data.
 
 - Enter gRPC URL.
 
@@ -154,7 +161,7 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Select and enter index of the key pair from the list of available BLS key pairs (registered in step #6)
 
-> Note: We recommend using trusted providers like Alchemy, Quicknode, Infura if you don't run your own node.
+> Note: We recommend using trusted providers like Alchemy, Quicknode, Infura if you don't run your own node. For the Beacon RPC endpoint, you should check if the given RPC provider supports the Beacon RPC API like `/eth/v1/beacon/genesis`. Quicknode supports this API.
 
 9. Deploy and run the Lagrange Attestation Node.
 
@@ -162,6 +169,23 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Select index of the config file from the list of available configs to deploy the docker container.
 
-10. Check docker container logs to ensure successful deployment of the Lagrange Attestation Node. If you have deployed `n` nodes and each node is subscribed to `k` chains then there will be `n*k` containers running.
+10. Repeat `config` and `run` commands to deploy more attestation nodes. If you subscribe to `k` chains and you have `n` BLS key-pairs then there will be `n*k` containers running.
 
-> Note: The current epoch period for state committee rotation is 24 hours. The attestation node will start attesting to the batches of the subscribed chain from the next epoch.
+### Post-Deployment
+
+- To check the status of the attestation node from the docker container logs, run the below command:
+
+```bash
+# to get the container id
+sudo docker ps
+
+# if you are not seeing any running containers, then run the below command to see all suspended containers
+sudo docker ps -a
+
+# to check the logs of the container
+sudo docker logs <container_id>
+```
+
+> Note: If you are seeing this error message `time= level=error msg=failed to join the network: failed to join the network: pc error: code = Unknown desc = the operator is not a committee member`, it means that the given attestation node setup is successful and it will start attesting from the next epoch. The current epoch period of the state committee rotation is 24 hours for Holesky testnet.
+
+- If you face any issues while running the Lagrange Attestation Node, please reach out to the Lagrange Labs team on Telegram.
