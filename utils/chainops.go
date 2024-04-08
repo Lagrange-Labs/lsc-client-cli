@@ -19,6 +19,8 @@ import (
 	"github.com/Lagrange-Labs/client-cli/scinterface/lagrange"
 )
 
+var lagrangeAVSSalt = []byte("lagrange-avs")
+
 // ChainOps is a wrapper for Ethereum chain operations.
 type ChainOps struct {
 	client     *ethclient.Client
@@ -66,7 +68,7 @@ func (c *ChainOps) Register(serviceAddr, signAddr string, blsPubKeys [][2]*big.I
 		return err
 	}
 	var salt [32]byte
-	salt[0] = 1
+	copy(salt[:], lagrangeAVSSalt)
 	header, err := c.client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		return err
