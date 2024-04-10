@@ -161,8 +161,12 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Enter gRPC URL.
 
-  - Optimism: `44.210.11.64:9090`
-  - Base: `3.209.124.237:9090`
+  - Mainnet
+    - Optimism: `34.202.191.166:9090`
+    - Base: `34.193.82.90:9090`
+  - Holesky Testnet
+    - Optimism: `44.210.11.64:9090`
+    - Base: `3.209.124.237:9090`
 
 - Select and enter index of the key pair from the list of available BLS key pairs (registered in step #6)
 
