@@ -371,7 +371,7 @@ func generateConfig(cfg *config.Config) error {
 	}
 
 	clientCfg.BatchInbox = batchConfig[clientCfg.ChainName].BatchInbox
-	clientCfg.BatchSender = batchConfig["optimism"].BatchSender
+	clientCfg.BatchSender = batchConfig[clientCfg.ChainName].BatchSender
 
 	// Create the Client Config file
 	tmplClient, err := template.New("client").Parse(clientConfigTemplate)

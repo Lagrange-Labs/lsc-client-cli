@@ -109,7 +109,12 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 6. Run the following command to register your operator to Lagrange State Committees AVS.
 
 ```bash
-./dist/lagrange-cli run -c ./config.toml
+# Holesky Testnet
+./dist/lagrange-cli run -c ./config_holesky.toml
+
+
+# Mainnet
+./dist/lagrange-cli run -c ./config_mainnet.toml
 ```
 
 - Enter `g` in the prompt to start the registration.
