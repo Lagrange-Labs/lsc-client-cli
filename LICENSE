@@ -1,6 +1,6 @@
 Copyright 2024 Lagrange, Inc.
 
-THIS SOFTWARE LICENSE IS A LEGALLY BINDING AGREEMENT BETWEEN LAGRANGE LABSINC. 
+THIS SOFTWARE LICENSE IS A LEGALLY BINDING AGREEMENT BETWEEN LAGRANGE LABS INC. 
 (“Lagrange”) AND THE LEGAL ENTITY YOU REPRESENT (“You”). IF YOU USE OR ARE 
 ENGAGING IN ACTIVITIES UNDER THIS AGREEMENT FOR A BUSINESS, COMPANY OR CORPORATE 
 ENTITY (“Company”), WHETHER AS AN EMPLOYEE OR CONTRACTOR, THE TERM “YOU” 
@@ -13,7 +13,7 @@ LAGRANGE IS WILLING TO PROVIDE A COPYRIGHT LICENSE TO CERTAIN SOFTWARE AND
 DOCUMENTATION (EACH DEFINED BELOW) TO YOU ONLY ON THE CONDITION THAT YOU ACCEPT 
 AND AGREE TO AND COMPLY WITH ALL OF THE TERMS AND CONDITIONS IN THIS AGREEMENT. 
 BY CLICKING THAT YOU ACCEPT THESE TERMS OR BY USING THE SOFTWARE, YOU 
-ACKNOWLEDGE AND AGREE THAT YOU HAVE READ THIS AGREEMENT, UNDERSTAND IT,AND AGREE 
+ACKNOWLEDGE AND AGREE THAT YOU HAVE READ THIS AGREEMENT, UNDERSTAND IT, AND AGREE 
 TO BE BOUND BY ITS TERMS AND CONDITIONS.
 
 1. DEFINED TERMS. In addition to other terms that may be defined herein, the 
@@ -48,9 +48,9 @@ nor imply any rights, to use third party programs. A separate and independent
 license for such use may be required and You will be solely responsible to 
 verify whether such license is needed in conjunction with Your use of such third 
 party programs. If applicable, certain third party notices may be made available 
-at www.lagrange.dev/license_3rdParty or accompanying the Software (e.g., 
+at https://www.lagrange.dev/license_3rdParty or accompanying the Software (e.g., 
 available in the Software readme files). The notices accompanying the Software 
-control over the notices posted at www.lagrange.dev/license_3rdParty with 
+control over the notices posted at https://www.lagrange.dev/license_3rdParty with 
 respect to the applicable third party programs.
 
 4. RESERVATION OF RIGHTS; NO GRANT OF PATENT RIGHTS. The Software is licensed 
@@ -91,7 +91,7 @@ including as the rights exist in or relate to the Software.
 
 6.1. YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT USE OF THE SOFTWARE, PLATFORM, AND 
 DOCUMENTATION IS AT YOUR SOLE RISK. THE SOFTWARE AND PLATFORM ARE PROVIDED “AS 
-IS”AND WITHOUT ANY WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY 
+IS ”AND WITHOUT ANY WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY 
 OR OTHERWISE. TO THE MAXIMUM EXTENT PERMITTED UNDER APPLICABLE LAW, LAGRANGE, 
 ITS SERVICE PROVIDERS, LICENSORS AND EACH OF THEIR RESPECTIVE AFFILIATES, 
 SPECIFICALLY DISCLAIMS ANY AND ALL STATUTORY OR IMPLIED WARRANTIES, INCLUDING 
@@ -127,21 +127,21 @@ and licensors, and each of their respective officers, directors, employees,
 agents and successors and assigns (each, a “Lagrange Indemnitee”), from and 
 against any and all claims, actions, suits, demands, causes of action, losses, 
 liabilities, damages, costs and expenses, incurred or otherwise suffered by each 
-Lagrange Indemnitee (including costs of defense, investigation,and reasonable 
+Lagrange Indemnitee (including costs of defense, investigation, and reasonable 
 attorneys’ fees) arising out of, resulting from, or related Your use of the 
 Software. If and as requested by Lagrange, You agree to defend, at Your cost, 
 each Lagrange Indemnitee in connection with any third party claims, demands, or 
 causes of action resulting from, arising out of or in connection with any of the 
 foregoing; provided that You will not settle any claim, action, or suit without 
-the prior written consent of Lagrange.LAGRANGE HAS NO OBLIGATION TO DEFEND, 
+the prior written consent of Lagrange. LAGRANGE HAS NO OBLIGATION TO DEFEND, 
 INDEMNIFY, OR HOLD YOU HARMLESS UNDER THIS AGREEMENT.
 
 8. TERM AND TERMINATION. This Agreement is effective upon acceptance by You and 
 continues until terminated as provided herein (the “Term”). You may terminate 
 this Agreement at any time by deleting and destroying all copies of the Software 
-and Documentation and all related information in Your possession or controland 
+and Documentation and all related information in Your possession or control and 
 providing Lagrange with written notice thereof. The licenses granted to you by 
-Lagrange under this Agreementand your right to access the Software terminate 
+Lagrange under this Agreement and your right to access the Software terminate 
 immediately and automatically, with or without notice, if You fail to comply 
 with any provision of this Agreement. Additionally, Lagrange may at any time 
 terminate this Agreement, either with or without cause, upon notice to you. 
@@ -167,7 +167,7 @@ Documentation, as applicable, are “commercial computer software” and “comm
 computer software documentation” developed exclusively at private expense by 
 Lagrange. Pursuant to FAR 12.212 or DFARS 227 7202 and their successors, as 
 applicable, use, reproduction, and disclosure of the Software is governed by the 
-terms of this Agreement. You mustnot delegate, transfer, or assign this 
+terms of this Agreement. You must not delegate, transfer, or assign this 
 Agreement or any of the rights, duties, or obligations hereunder (whether 
 voluntarily, by operation of law, or otherwise) without Lagrange’s prior written 
 consent. Except to the extent that Lagrange is expressly precluded by applicable 
