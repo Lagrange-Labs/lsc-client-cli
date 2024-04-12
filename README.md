@@ -186,16 +186,22 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 ```bash
 # to get the container id
-sudo docker ps
+docker ps
 
 # if you are not seeing any running containers, then run the below command to see all suspended containers
-sudo docker ps -a
+docker ps -a
 
 # to check the logs of the container
-sudo docker logs <container_id>
+docker logs <container_id>
+
+# to stop the container
+cd $HOME/.lagrange && docker compose -f <docker-compose-file> down --remove-orphans
+
 ```
 
 > Note: If you are seeing this error message `time= level=error msg=failed to join the network: failed to join the network: pc error: code = Unknown desc = the operator is not a committee member`, it means that the given attestation node setup is successful and it will start attesting from the next epoch. The current epoch period of the state committee rotation is 24 hours for Holesky testnet.
+
+> Note: You can check docker-compose files in the `~/.lagrange` directory and client configs in the `~/.lagrange/config` directory. The files are named as `docker-compose-<chain_name>-<bls_pub_key>.yml` and `client_<chain_name>_<bls_pub_key>.toml` respectively.
 
 - If you experience the rpc provider issue, it can be due to the rate limit of the provider. You can control the `ConcurrentFetchers` in the `config.toml` file to manage the rate limit.
 
