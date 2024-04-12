@@ -44,6 +44,14 @@ type ClientConfig struct {
 	ConcurrentFetchers int    `json:"concurrent_fetchers"`
 }
 
+// DockerComposeConfig is the configuration for the docker-compose.yml file.
+type DockerComposeConfig struct {
+	ChainName      string `json:"chain_name"`
+	BLSPubKey      string `json:"bls_pub_key"`
+	DockerImage    string `json:"docker_image"`
+	ConfigFilePath string `json:"config_file_path"`
+}
+
 // Load loads the configuration
 func Load(ctx *cli.Context) (*Config, error) {
 	var cfg Config
