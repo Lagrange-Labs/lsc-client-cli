@@ -123,9 +123,9 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 > Note: If you plan to run one node each for Optimism and Base, then you only need to generate one BLS key pair and use it for both of them.
 
-  - Prompt: "Do you want to add a new BLS Key Pair?" - Enter `y` if you want to add a BLS key pair
-  - Prompt: "Do you want to generate a new Key Pair?" - Enter `y` if you want the CLI to randomly generate a key pair or enter your own BLS private key.
-  - Please re-run this step to add more BLS key pairs if you want to run more nodes.
+- Prompt: "Do you want to add a new BLS Key Pair?" - Enter `y` if you want to add a BLS key pair
+- Prompt: "Do you want to generate a new Key Pair?" - Enter `y` if you want the CLI to randomly generate a key pair or enter your own BLS private key.
+- Please re-run this step to add more BLS key pairs if you want to run more nodes.
 
 - Each EigenLayer operator that participates into Lagrange State Committees AVS needs to generate one signer ECDSA private key.
 
@@ -143,7 +143,7 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Enter EigenLayer operator ECDSA key.
 
-- Enter CHAIN_ID to subscribe to that chain ([Chain ids](#chains)).
+- Enter CHAIN_ID to subscribe to that chain ([Chain ids](#chains) like `10` or `8453`).
 
 > Note: Each Operator can be subscribed to multiple chains.
 
@@ -153,7 +153,7 @@ Currently, we only support the `BN254` curve for the `BLSScheme`.
 
 - Enter the operator address.
 
-- Enter the chain name which you want to run the Lagrange Attestation Node ([Chain ids](#chains)).
+- Enter the chain name which you want to run the Lagrange Attestation Node ([Chain name](#chains) like `optimism` or `base`).
 
 - Enter L1 RPC endpoint, which will be ETH mainnet endpoint for this testnet.
 
@@ -210,7 +210,7 @@ cd $HOME/.lagrange && docker compose -f <docker-compose-file> down --remove-orph
 
 ```
 
-> Note: If you are seeing this error message `time= level=error msg=failed to join the network: failed to join the network: pc error: code = Unknown desc = the operator is not a committee member`, please check if that you are using a correct BLS key pair that you created in the `register` step because the node won't be able to join the committee with incorrect BLS keys. If you are using correct BLS keys then it means that the given attestation node setup is successful and it will start attesting from the next epoch. The current epoch period of the state committee rotation is 24 hours for Holesky testnet.
+> Note: If you are seeing this error message `time= level=error msg=failed to join the network: failed to join the network: pc error: code = Unknown desc = the operator is not a committee member`, please check if you are using a correct BLS key pair that you created in the `register` step because the node won't be able to join the committee with incorrect BLS keys. If you are using correct BLS keys then it means that the given attestation node setup is successful and it will start attesting from the next epoch. The current epoch period of the state committee rotation is 24 hours for Holesky testnet.
 
 > Note: You can check docker-compose files in the `~/.lagrange` directory and client configs in the `~/.lagrange/config` directory. The files are named as `docker-compose-<chain_name>-<bls_pub_key>.yml` and `client_<chain_name>_<bls_pub_key>.toml` respectively.
 
