@@ -113,7 +113,7 @@ func run(c *cli.Context) error {
 	logger.Infof("Loaded configuration with CommitteeSCAddr %s", cfg.CommitteeSCAddr)
 
 	for {
-		choice, err := utils.StringPrompt("Enter the operation to perform (`r`un, re`g`ister, `s`ubscribe, `c`onfig, `e`xit): ")
+		choice, err := utils.StringPrompt("Enter the operation to perform (`r`un, re`g`ister, `s`ubscribe, `u`nsubscribe, `c`onfig, `e`xit): ")
 		if err != nil {
 			logger.Fatalf("Failed to get operation: %s", err)
 		}
@@ -125,6 +125,10 @@ func run(c *cli.Context) error {
 		case "s", "subscribe":
 			if err := subscribeChain(cfg); err != nil {
 				logger.Infof("Failed to subscribe to the chain: %v, going back to the main menu!", err)
+			}
+		case "u", "unsubscribe":
+			if err := unsubscribeChain(cfg); err != nil {
+				logger.Infof("Failed to deregister operator: %v, going back to the main menu!", err)
 			}
 		case "c", "config":
 			if err := generateConfig(cfg); err != nil {
@@ -240,18 +244,54 @@ func registerOperator(cfg *config.Config) error {
 		if !isConfirmed {
 			break
 		}
+		if len(cfg.OperatorPrivKey) == 0 {
+			operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
+			if err != nil {
+				return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
+			}
+			cfg.OperatorPrivKey = operatorPrivKey
+		}
+		chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, cfg.OperatorPrivKey)
+		if err != nil {
+			return fmt.Errorf("failed to create ChainOps instance: %s", err)
+		}
+		if err := chainOps.Register(cfg.LagrangeServiceSCAddr, signKeyStores[0].PubKey, pubRawKeys); err != nil {
+			logger.Infof("Failed to register to the committee: %s", err)
+		} else {
+			break
+		}
+	}
+
+	return nil
+}
+
+func unsubscribeChain(cfg *config.Config) error {
+	if len(cfg.OperatorPrivKey) == 0 {
 		operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
 		if err != nil {
 			return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
 		}
-		chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, operatorPrivKey)
-		if err != nil {
-			return fmt.Errorf("failed to create ChainOps instance: %s", err)
-		}
 		cfg.OperatorPrivKey = operatorPrivKey
-		if err := chainOps.Register(cfg.LagrangeServiceSCAddr, signKeyStores[0].PubKey, pubRawKeys); err != nil {
-			logger.Infof("Failed to register to the committee: %s", err)
-		} else {
+	}
+	chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, cfg.OperatorPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+
+	// Unsubscribe from the chain
+	for {
+		chainID, err := utils.IntegerPrompt("Enter the Chain ID to unsubscribe: ")
+		if err != nil {
+			return fmt.Errorf("failed to get Chain ID: %s", err)
+		}
+		if err := chainOps.Unsubscribe(cfg.LagrangeServiceSCAddr, uint32(chainID)); err != nil {
+			logger.Infof("Failed to unsubscribe the dedicated chain: %s", err)
+		}
+		isConfirmed, err := utils.ConfirmPrompt("Do you want to unsubscribe another chain? (y/n): ")
+		if err != nil {
+			return fmt.Errorf("failed to get answer: %w", err)
+		}
+		if !isConfirmed {
 			break
 		}
 	}
@@ -274,7 +314,7 @@ func subscribeChain(cfg *config.Config) error {
 
 	// Subscribe chain
 	for {
-		chainID, err := utils.IntegerPrompt("Enter the Chain ID: ")
+		chainID, err := utils.IntegerPrompt("Enter the Chain ID to subscribe: ")
 		if err != nil {
 			return fmt.Errorf("failed to get Chain ID: %s", err)
 		}
