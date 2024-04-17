@@ -110,7 +110,7 @@ func run(c *cli.Context) error {
 		logger.Fatalf("Failed to load configuration: %s", err)
 	}
 
-	logger.Infof("Loaded configuration: %+v", cfg)
+	logger.Infof("Loaded configuration with CommitteeSCAddr %s", cfg.CommitteeSCAddr)
 
 	for {
 		choice, err := utils.StringPrompt("Enter the operation to perform (`r`un, re`g`ister, `s`ubscribe, `c`onfig, `e`xit): ")
