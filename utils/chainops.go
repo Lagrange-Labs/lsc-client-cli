@@ -130,6 +130,40 @@ func (c *ChainOps) Subscribe(serviceAddr string, chainID uint32) error {
 	return c.WaitForMined(tx)
 }
 
+// Unsubscribe unsubscribes the dedicated chain.
+func (c *ChainOps) Unsubscribe(serviceAddr string, chainID uint32) error {
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Unsubscribing chain %d from %s", chainID, c.auth.From.String())
+
+	tx, err := lagrangeService.Unsubscribe(c.auth, chainID)
+	if err != nil {
+		return fmt.Errorf("failed to unsubscribe: %v", err)
+	}
+
+	return c.WaitForMined(tx)
+}
+
+// Deregsiter deregisters the validator.
+func (c *ChainOps) Deregister(serviceAddr string) error {
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Deregistering from %s", c.auth.From.String())
+
+	tx, err := lagrangeService.Deregister(c.auth)
+	if err != nil {
+		return fmt.Errorf("failed to deregister: %v", err)
+	}
+
+	return c.WaitForMined(tx)
+}
+
 // WaitForMined waits for a transaction to be mined.
 func (c *ChainOps) WaitForMined(tx *types.Transaction) error {
 	logger.Infof("Waiting for transaction %s to be mined", tx.Hash().String())
