@@ -13,10 +13,10 @@ import (
 	ecrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/Lagrange-Labs/client-cli/crypto"
 	"github.com/Lagrange-Labs/client-cli/logger"
 	"github.com/Lagrange-Labs/client-cli/scinterface/avs"
 	"github.com/Lagrange-Labs/client-cli/scinterface/lagrange"
+	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
 var lagrangeAVSSalt = []byte("lagrange-avs")
@@ -30,18 +30,18 @@ type ChainOps struct {
 
 // NewChainOps creates a new ChainOps instance.
 func NewChainOps(rpcEndpoint string, privateKey string) (*ChainOps, error) {
-	privateKey = strings.TrimPrefix(privateKey, "0x")
-	privateKeyECDSA, err := ecrypto.HexToECDSA(privateKey)
-	if err != nil {
-		return nil, err
-	}
-
 	client, err := ethclient.Dial(rpcEndpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	auth, err := crypto.GetSigner(context.Background(), client, privateKeyECDSA)
+	auth, err := nutils.GetSigner(context.Background(), client, privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey = strings.TrimPrefix(privateKey, "0x")
+	privateKeyECDSA, err := ecrypto.HexToECDSA(privateKey)
 	if err != nil {
 		return nil, err
 	}
