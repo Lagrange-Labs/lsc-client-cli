@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strings"
 
-	ecrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 
 	"github.com/Lagrange-Labs/client-cli/config"
@@ -47,6 +46,10 @@ BLSCurve = "{{.BLSCurve}}"
 
 	dockerImageBase = "lagrangelabs/lagrange-node"
 	configDir       = ".lagrange/config"
+
+	flagKeyType     = "key-type"
+	flagKeyPassword = "password"
+	flagPrivateKey  = "private-key"
 )
 
 var (
@@ -55,6 +58,24 @@ var (
 		Value:   "config.toml",
 		Usage:   "Configuration `FILE`",
 		Aliases: []string{"c"},
+	}
+	keyTypeFlag = &cli.StringFlag{
+		Name:    flagKeyType,
+		Value:   "bls",
+		Usage:   "Key `TYPE` (bls/ecdsa)",
+		Aliases: []string{"t"},
+	}
+	keyPasswordFlag = &cli.StringFlag{
+		Name:    flagKeyPassword,
+		Value:   "",
+		Usage:   "Key `PASSWORD`",
+		Aliases: []string{"p"},
+	}
+	privateKeyFlag = &cli.StringFlag{
+		Name:    flagPrivateKey,
+		Value:   "",
+		Usage:   "Private `KEY`",
+		Aliases: []string{"k"},
 	}
 
 	batchConfig = map[string]struct {
@@ -89,12 +110,23 @@ func main() {
 			},
 		},
 		{
-			Name:  "run",
-			Usage: "Run the CLI with the given configuration file",
+			Name:  "generate-keystore",
+			Usage: "Generate a new keystore file for the given key type (bls/ecdsa)",
 			Flags: []cli.Flag{
-				configFileFlag,
+				keyTypeFlag,
+				keyPasswordFlag,
 			},
-			Action: run,
+			Action: generateKeystore,
+		},
+		{
+			Name:  "import-keystore",
+			Usage: "Import a private key to the keystore for the given key type (bls/ecdsa)",
+			Flags: []cli.Flag{
+				keyTypeFlag,
+				keyPasswordFlag,
+				privateKeyFlag,
+			},
+			Action: importKeystore,
 		},
 	}
 
@@ -105,119 +137,20 @@ func main() {
 	}
 }
 
-func run(c *cli.Context) error {
-	cfg, err := config.Load(c)
-	if err != nil {
-		logger.Fatalf("Failed to load configuration: %s", err)
-	}
+func generateKeystore(c *cli.Context) error {
+	keyType := strings.ToLower(c.String(flagKeyType))
+	password := c.String(flagKeyPassword)
+	return utils.GenerateKeystore(keyType, password)
+}
 
-	logger.Infof("Loaded configuration with CommitteeSCAddr %s", cfg.CommitteeSCAddr)
-
-	for {
-		choice, err := utils.StringPrompt("Enter the operation to perform (`r`un, re`g`ister, `s`ubscribe, `u`nsubscribe, `c`onfig, `e`xit): ")
-		if err != nil {
-			logger.Fatalf("Failed to get operation: %s", err)
-		}
-		switch strings.ToLower(choice) {
-		case "g", "register":
-			if err := registerOperator(cfg); err != nil {
-				logger.Infof("Failed to register operator: %v, going back to the main menu!", err)
-			}
-		case "s", "subscribe":
-			if err := subscribeChain(cfg); err != nil {
-				logger.Infof("Failed to subscribe to the chain: %v, going back to the main menu!", err)
-			}
-		case "u", "unsubscribe":
-			if err := unsubscribeChain(cfg); err != nil {
-				logger.Infof("Failed to deregister operator: %v, going back to the main menu!", err)
-			}
-		case "c", "config":
-			if err := generateConfig(cfg); err != nil {
-				logger.Infof("Failed to generate the config: %v, going back to the main menu!", err)
-			}
-		case "r", "run":
-			if err := clientDeploy(cfg); err != nil {
-				logger.Infof("Failed to deploy the client: %v, going back to the main menu!", err)
-			}
-		case "e", "exit":
-			return nil
-		default:
-			logger.Info("Invalid operation, please try again")
-		}
-	}
+func importKeystore(c *cli.Context) error {
+	keyType := strings.ToLower(c.String(flagKeyType))
+	password := c.String(flagKeyPassword)
+	privKey := nutils.Hex2Bytes(c.String(flagPrivateKey))
+	return utils.ImportFromPrivateKey(keyType, password, privKey)
 }
 
 func registerOperator(cfg *config.Config) error {
-	// Generate new BLS Key Pairs
-	blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(cfg.BLSCurve))
-	for {
-		isConfirmed, err := utils.ConfirmPrompt("Do you want to add a new BLS Key Pair? (y/n): ")
-		if err != nil {
-			return fmt.Errorf("failed to get answer: %w", err)
-		}
-		if isConfirmed {
-			var privKey []byte
-			res, err := utils.StringPrompt("Do you want to generate a new Key Pair (y/bls_private_key): ")
-			if err != nil {
-				return fmt.Errorf("failed to get answer: %w", err)
-			}
-			if res == "y" {
-				privKey, err = blsScheme.GenerateRandomKey()
-				if err != nil {
-					return fmt.Errorf("failed to generate BLS Key Pair: %w", err)
-				}
-			} else {
-				privKey = nutils.Hex2Bytes(res)
-			}
-			pubRawKey, err := blsScheme.GetPublicKey(privKey, false)
-			if err != nil {
-				logger.Infof("Failed to get BLS Public Key: %s", err)
-				continue
-			}
-			if err := utils.SaveKeyStore("bls", utils.NewKeyStore(privKey, pubRawKey)); err != nil {
-				logger.Infof("Failed to save BLS Key Pair: %s", err)
-				continue
-			}
-		} else {
-			break
-		}
-	}
-
-	// Generate a new signer ECDSA private key
-	isConfirmed, err := utils.ConfirmPrompt("Do you want to generate a new signer private key? (y/n): ")
-	if err != nil {
-		return fmt.Errorf("failed to get answer: %w", err)
-	}
-	if isConfirmed {
-		privKey, err := ecrypto.GenerateKey()
-		if err != nil {
-			return fmt.Errorf("failed to generate ECDSA Key Pair: %w", err)
-		}
-		addr := ecrypto.PubkeyToAddress(privKey.PublicKey)
-		signAddress := addr.Hex()
-		logger.Infof("Signer ECDSA Key Pair loaded address: %v", signAddress)
-		if err := utils.SaveKeyStore("ecdsa", utils.NewKeyStore(privKey.D.Bytes(), addr.Bytes())); err != nil {
-			logger.Infof("Failed to save ECDSA Key Pair: %s", err)
-		}
-	} else {
-		privRawKey, err := utils.StringPrompt("Enter the Signer ECDSA Private Key, if you want to use the stored key, just press `n`: ")
-		if err != nil {
-			return fmt.Errorf("failed to get Signer ECDSA Address: %w", err)
-		}
-		if len(privRawKey) > 1 {
-			privKey, err := ecrypto.HexToECDSA(privRawKey)
-			if err != nil {
-				return fmt.Errorf("failed to convert ECDSA Private Key: %w", err)
-			}
-			addr := ecrypto.PubkeyToAddress(privKey.PublicKey)
-			signAddress := addr.Hex()
-			logger.Infof("Signer ECDSA Key Pair loaded address: %v", signAddress)
-			if err := utils.SaveKeyStore("ecdsa", utils.NewKeyStore(privKey.D.Bytes(), addr.Bytes())); err != nil {
-				logger.Infof("Failed to save ECDSA Key Pair: %s", err)
-			}
-		}
-	}
-
 	// Register to the committee
 	blsKeyStores, err := utils.LoadKeyStores("bls")
 	if err != nil {
