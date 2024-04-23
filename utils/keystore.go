@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Lagrange-Labs/client-cli/crypto"
+	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
 const keystoreDir = ".lagrange/keystore"
@@ -20,8 +20,8 @@ type KeyStore struct {
 // NewKeyStore creates a new KeyStore instance.
 func NewKeyStore(privKey, pubKey []byte) *KeyStore {
 	return &KeyStore{
-		PrivKey: crypto.Bytes2Hex(privKey),
-		PubKey:  crypto.Bytes2Hex(pubKey),
+		PrivKey: nutils.Bytes2Hex(privKey),
+		PubKey:  nutils.Bytes2Hex(pubKey),
 	}
 }
 

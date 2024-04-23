@@ -14,9 +14,10 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/Lagrange-Labs/client-cli/config"
-	"github.com/Lagrange-Labs/client-cli/crypto"
 	"github.com/Lagrange-Labs/client-cli/logger"
 	"github.com/Lagrange-Labs/client-cli/utils"
+	"github.com/Lagrange-Labs/lagrange-node/crypto"
+	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
 const (
@@ -166,7 +167,7 @@ func registerOperator(cfg *config.Config) error {
 					return fmt.Errorf("failed to generate BLS Key Pair: %w", err)
 				}
 			} else {
-				privKey = crypto.Hex2Bytes(res)
+				privKey = nutils.Hex2Bytes(res)
 			}
 			pubRawKey, err := blsScheme.GetPublicKey(privKey, false)
 			if err != nil {
@@ -228,7 +229,7 @@ func registerOperator(cfg *config.Config) error {
 	}
 	pubRawKeys := make([][2]*big.Int, 0)
 	for _, blsKeyStore := range blsKeyStores {
-		pubKey, err := crypto.ConvertBLSKey(crypto.Hex2Bytes(blsKeyStore.PubKey))
+		pubKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(blsKeyStore.PubKey))
 		if err != nil {
 			logger.Infof("Failed to convert BLS Public Key: %s", err)
 			continue
@@ -419,7 +420,7 @@ func generateConfig(cfg *config.Config) error {
 		return fmt.Errorf("failed to parse client config template: %s", err)
 	}
 	blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(clientCfg.BLSCurve))
-	pubRawKey, err := blsScheme.GetPublicKey(crypto.Hex2Bytes(clientCfg.BLSPrivateKey), false)
+	pubRawKey, err := blsScheme.GetPublicKey(nutils.Hex2Bytes(clientCfg.BLSPrivateKey), false)
 	if err != nil {
 		logger.Fatalf("Failed to get BLS Public Key: %s", err)
 	}
