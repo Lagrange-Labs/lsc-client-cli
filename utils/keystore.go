@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	ecrypto "github.com/ethereum/go-ethereum/crypto"
@@ -72,30 +71,7 @@ func saveKeystore(keyType string, password string, pubKey, privKey []byte) error
 	return crypto.SaveKey(cryptoCurve, privKey, password, ksPath)
 }
 
-// LoadKeyStores loads all the keystore files from the keystore directory.
-func LoadKeyStores(keyType string) ([]string, error) {
-	homePath, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get home directory: %w", err)
-	}
-	keyDirPath := filepath.Clean(filepath.Join(homePath, keystoreDir))
-	files, err := os.ReadDir(keyDirPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read keystore directory: %w", err)
-	}
-	keystoreFiles := make([]string, 0)
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		if filepath.Ext(file.Name()) != ".key" {
-			continue
-		}
-		if keyType != "" && file.Name()[:len(keyType)] != keyType {
-			continue
-		}
-		keystoreFiles = append(keystoreFiles, filepath.Clean(filepath.Join(keyDirPath, file.Name())))
-	}
-
-	return keystoreFiles, nil
+// ReadPrivateKey reads the private key from the keystore file.
+func ReadPrivateKey(keyType, password, filePath string) ([]byte, error) {
+	return crypto.LoadPrivateKey(crypto.CryptoCurve(keyType), password, filePath)
 }
