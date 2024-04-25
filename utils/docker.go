@@ -16,7 +16,7 @@ const dockerComposeTemplate = `version: "3.5"
 
 services:
   client_{{.ChainName}}:
-    container_name: {{.ChainName}}_{{.BLSPubKey}}
+    container_name: lagrange_{{.ChainName}}_{{.BLSPubKeyPrefix}}
     image: {{.DockerImage}}
     restart: always
     command:
@@ -36,13 +36,21 @@ services:
 func CheckDockerImageExists(imageName string) error {
 	cmd := exec.Command("docker", "image", "inspect", imageName)
 	if err := cmd.Run(); err != nil {
-		return err
+		if err := pullDockerImage(imageName); err != nil {
+			return fmt.Errorf("failed to pull docker image %s: %s", imageName, err)
+		}
 	}
+	cmd = exec.Command("docker", "image", "inspect", imageName, "--format='{{index .RepoDigests 0}}'")
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to get docker image digest: %s", err)
+	}
+	logger.Infof("Docker image %s exists locally with digest: %s", imageName, output)
+
 	return nil
 }
 
-// PullDockerImage pulls a Docker image from the registry.
-func PullDockerImage(imageName string) error {
+func pullDockerImage(imageName string) error {
 	cmd := exec.Command("docker", "pull", imageName)
 	if err := cmd.Run(); err != nil {
 		return err
@@ -66,7 +74,7 @@ func RunDockerImage(imageName, configFilePath string) error {
 	configFileName := filepath.Base(configFilePath)
 	seps := strings.Split(configFileName, "_")
 	dockerConfig.ChainName = seps[1]
-	dockerConfig.BLSPubKey = strings.Split(seps[2], ".")[0]
+	dockerConfig.BLSPubKeyPrefix = strings.Split(seps[2], ".")[0]
 	dockerConfig.DockerImage = imageName
 	dockerConfig.ConfigFilePath = configFilePath
 
@@ -74,7 +82,7 @@ func RunDockerImage(imageName, configFilePath string) error {
 	if err != nil {
 		return err
 	}
-	dockerComposeFilePath := filepath.Join(workDir, fmt.Sprintf("docker-compose-%s-%s.yml", dockerConfig.ChainName, dockerConfig.BLSPubKey))
+	dockerComposeFilePath := filepath.Join(workDir, fmt.Sprintf("docker-compose-%s-%s.yml", dockerConfig.ChainName, dockerConfig.BLSPubKeyPrefix))
 	dockerConfigFile, err := os.Create(dockerComposeFilePath)
 	if err != nil {
 		return err

@@ -14,15 +14,22 @@ const (
 	FlagCfg = "config"
 )
 
-// Config is the configuration for CLI.
-type Config struct {
-	CommitteeSCAddr       string `mapstructure:"CommitteeSCAddress"`
-	OperatorPrivKey       string `mapstructure:"OperatorPrivateKey"`
-	LagrangeServiceSCAddr string `mapstructure:"LagrangeServiceSCAddress"`
-	EthereumRPCURL        string `mapstructure:"EthereumRPCURL"`
-	BLSCurve              string `mapstructure:"BLSCurve"`
-	DockerImageTag        string `mapstructure:"DockerImageTag"`
-	ConcurrentFetchers    int    `mapstructure:"ConcurrentFetchers"`
+// CLIConfig is the configuration for the lagrange CLI.
+type CLIConfig struct {
+	OperatorPrivateKey       string `mapstructure:"OperatorPrivateKey"`
+	OperatorKeystorePath     string `mapstructure:"OperatorKeyStorePath"`
+	OperatorKeystorePassword string `mapstructure:"OperatorKeyStorePassword"`
+	SignerPrivateKey         string `mapstructure:"SignerPrivateKey"`
+	SignerKeystorePath       string `mapstructure:"SignerKeyStorePath"`
+	SignerKeystorePassword   string `mapstructure:"SignerKeyStorePassword"`
+	BLSPrivateKey            string `mapstructure:"BLSPrivateKey"`
+	BLSKeystorePath          string `mapstructure:"BLSKeyStorePath"`
+	BLSKeystorePassword      string `mapstructure:"BLSKeyStorePassword"`
+	EthereumRPCURL           string `mapstructure:"EthereumRPCURL"`
+	L1RPCEndpoint            string `json:"l1_rpc_endpoint"`
+	BeaconURL                string `json:"beacon_url"`
+	BLSCurve                 string `mapstructure:"BLSCurve"`
+	ConcurrentFetchers       int    `mapstructure:"ConcurrentFetchers"`
 }
 
 // ClientConfig is the configuration for the lagrange client.
@@ -46,15 +53,15 @@ type ClientConfig struct {
 
 // DockerComposeConfig is the configuration for the docker-compose.yml file.
 type DockerComposeConfig struct {
-	ChainName      string `json:"chain_name"`
-	BLSPubKey      string `json:"bls_pub_key"`
-	DockerImage    string `json:"docker_image"`
-	ConfigFilePath string `json:"config_file_path"`
+	ChainName       string `json:"chain_name"`
+	BLSPubKeyPrefix string `json:"bls_pub_key"`
+	DockerImage     string `json:"docker_image"`
+	ConfigFilePath  string `json:"config_file_path"`
 }
 
-// Load loads the configuration
-func Load(ctx *cli.Context) (*Config, error) {
-	var cfg Config
+// LoadCLIConfig loads the lagrange CLI configuration.
+func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
+	var cfg CLIConfig
 	viper.SetConfigType("toml")
 
 	configFilePath := ctx.String(FlagCfg)

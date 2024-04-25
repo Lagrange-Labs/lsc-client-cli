@@ -13,6 +13,7 @@ import (
 	ecrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	"github.com/Lagrange-Labs/client-cli/config"
 	"github.com/Lagrange-Labs/client-cli/logger"
 	"github.com/Lagrange-Labs/client-cli/scinterface/avs"
 	"github.com/Lagrange-Labs/client-cli/scinterface/lagrange"
@@ -29,10 +30,17 @@ type ChainOps struct {
 }
 
 // NewChainOps creates a new ChainOps instance.
-func NewChainOps(rpcEndpoint string, privateKey string) (*ChainOps, error) {
+func NewChainOps(network, rpcEndpoint, privateKey string) (*ChainOps, error) {
 	client, err := ethclient.Dial(rpcEndpoint)
 	if err != nil {
 		return nil, err
+	}
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	if config.ChainBatchConfigs[network].ChainID != uint32(chainID.Int64()) {
+		return nil, fmt.Errorf("chain ID mismatch: expected %d, got %d", config.ChainBatchConfigs[network].ChainID, chainID.Int64())
 	}
 
 	auth, err := nutils.GetSigner(context.Background(), client, privateKey)
@@ -54,7 +62,8 @@ func NewChainOps(rpcEndpoint string, privateKey string) (*ChainOps, error) {
 }
 
 // Register registers a new validator.
-func (c *ChainOps) Register(serviceAddr, signAddr string, blsPubKeys [][2]*big.Int) error {
+func (c *ChainOps) Register(network, signAddr string, blsPubKeys [][2]*big.Int) error {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
@@ -114,7 +123,9 @@ func (c *ChainOps) AddBlsPubKeys(serviceAddr string, blsPubKeys [][2]*big.Int) e
 }
 
 // Suscribe subscribes the dedicated chain.
-func (c *ChainOps) Subscribe(serviceAddr string, chainID uint32) error {
+func (c *ChainOps) Subscribe(network, chain string) error {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
+	chainID := config.ChainBatchConfigs[chain].ChainID
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
@@ -131,7 +142,9 @@ func (c *ChainOps) Subscribe(serviceAddr string, chainID uint32) error {
 }
 
 // Unsubscribe unsubscribes the dedicated chain.
-func (c *ChainOps) Unsubscribe(serviceAddr string, chainID uint32) error {
+func (c *ChainOps) Unsubscribe(network, chain string) error {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
+	chainID := config.ChainBatchConfigs[chain].ChainID
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err

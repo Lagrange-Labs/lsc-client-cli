@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"math/big"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -47,6 +46,14 @@ BLSCurve = "{{.BLSCurve}}"
 
 	dockerImageBase = "lagrangelabs/lagrange-node"
 	configDir       = ".lagrange/config"
+
+	flagKeyType     = "key-type"
+	flagKeyPassword = "password"
+	flagPrivateKey  = "private-key"
+	flagNetwork     = "network"
+	flagChain       = "chain"
+	flagRollupRPC   = "rollup-rpc"
+	flagDockerImage = "docker-image"
 )
 
 var (
@@ -56,19 +63,47 @@ var (
 		Usage:   "Configuration `FILE`",
 		Aliases: []string{"c"},
 	}
-
-	batchConfig = map[string]struct {
-		BatchInbox  string
-		BatchSender string
-	}{
-		"optimism": {
-			BatchInbox:  "0xFF00000000000000000000000000000000000010",
-			BatchSender: "0x6887246668a3b87F54DeB3b94Ba47a6f63F32985",
-		},
-		"base": {
-			BatchInbox:  "0xFf00000000000000000000000000000000008453",
-			BatchSender: "0x5050F69a9786F081509234F1a7F4684b5E5b76C9",
-		},
+	keyTypeFlag = &cli.StringFlag{
+		Name:    flagKeyType,
+		Value:   "bls",
+		Usage:   "Key `TYPE` (bls/ecdsa)",
+		Aliases: []string{"t"},
+	}
+	keyPasswordFlag = &cli.StringFlag{
+		Name:    flagKeyPassword,
+		Value:   "",
+		Usage:   "Key `PASSWORD`",
+		Aliases: []string{"p"},
+	}
+	privateKeyFlag = &cli.StringFlag{
+		Name:    flagPrivateKey,
+		Value:   "",
+		Usage:   "Private `KEY`",
+		Aliases: []string{"k"},
+	}
+	networkFlag = &cli.StringFlag{
+		Name:    flagNetwork,
+		Value:   "mainnet",
+		Usage:   "Network `NAME` (mainnet/holesky)",
+		Aliases: []string{"n"},
+	}
+	chainFlag = &cli.StringFlag{
+		Name:    flagChain,
+		Value:   "optimism",
+		Usage:   "Chain `NAME` (optimism/base)",
+		Aliases: []string{"h"},
+	}
+	rollupRPCFlag = &cli.StringFlag{
+		Name:    flagRollupRPC,
+		Value:   "",
+		Usage:   "Rollup RPC `URL`",
+		Aliases: []string{"r"},
+	}
+	dockerImageFlag = &cli.StringFlag{
+		Name:    flagDockerImage,
+		Value:   "lagrangelabs/lagrange-node:v0.3.13",
+		Usage:   "Docker `IMAGE`",
+		Aliases: []string{"i"},
 	}
 )
 
@@ -89,12 +124,72 @@ func main() {
 			},
 		},
 		{
-			Name:  "run",
-			Usage: "Run the CLI with the given configuration file",
+			Name:  "generate-keystore",
+			Usage: "Generate a new keystore file for the given key type (bls/ecdsa)",
+			Flags: []cli.Flag{
+				keyTypeFlag,
+				keyPasswordFlag,
+			},
+			Action: generateKeystore,
+		},
+		{
+			Name:  "import-keystore",
+			Usage: "Import a private key to the keystore for the given key type (bls/ecdsa)",
+			Flags: []cli.Flag{
+				keyTypeFlag,
+				keyPasswordFlag,
+				privateKeyFlag,
+			},
+			Action: importKeystore,
+		},
+		{
+			Name:  "register-operator",
+			Usage: "Register the operator to the committee",
 			Flags: []cli.Flag{
 				configFileFlag,
+				networkFlag,
+				chainFlag,
 			},
-			Action: run,
+			Action: registerOperator,
+		},
+		{
+			Name:  "subscribe-chain",
+			Usage: "Subscribe to a chain for the given `CHAIN_ID`",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+				chainFlag,
+			},
+			Action: subscribeChain,
+		},
+		{
+			Name:  "unsubscribe-chain",
+			Usage: "Unsubscribe from a chain for the given `CHAIN_ID`",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+			},
+			Action: unsubscribeChain,
+		},
+		{
+			Name:  "generate-config",
+			Usage: "Generate a client config file",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+				chainFlag,
+				rollupRPCFlag,
+			},
+			Action: generateConfig,
+		},
+		{
+			Name:  "deploy",
+			Usage: "Deploy the Lagrange Node Client with the given config file",
+			Flags: []cli.Flag{
+				configFileFlag,
+				dockerImageFlag,
+			},
+			Action: clientDeploy,
 		},
 	}
 
@@ -105,314 +200,198 @@ func main() {
 	}
 }
 
-func run(c *cli.Context) error {
-	cfg, err := config.Load(c)
-	if err != nil {
-		logger.Fatalf("Failed to load configuration: %s", err)
-	}
-
-	logger.Infof("Loaded configuration with CommitteeSCAddr %s", cfg.CommitteeSCAddr)
-
-	for {
-		choice, err := utils.StringPrompt("Enter the operation to perform (`r`un, re`g`ister, `s`ubscribe, `u`nsubscribe, `c`onfig, `e`xit): ")
-		if err != nil {
-			logger.Fatalf("Failed to get operation: %s", err)
-		}
-		switch strings.ToLower(choice) {
-		case "g", "register":
-			if err := registerOperator(cfg); err != nil {
-				logger.Infof("Failed to register operator: %v, going back to the main menu!", err)
-			}
-		case "s", "subscribe":
-			if err := subscribeChain(cfg); err != nil {
-				logger.Infof("Failed to subscribe to the chain: %v, going back to the main menu!", err)
-			}
-		case "u", "unsubscribe":
-			if err := unsubscribeChain(cfg); err != nil {
-				logger.Infof("Failed to deregister operator: %v, going back to the main menu!", err)
-			}
-		case "c", "config":
-			if err := generateConfig(cfg); err != nil {
-				logger.Infof("Failed to generate the config: %v, going back to the main menu!", err)
-			}
-		case "r", "run":
-			if err := clientDeploy(cfg); err != nil {
-				logger.Infof("Failed to deploy the client: %v, going back to the main menu!", err)
-			}
-		case "e", "exit":
-			return nil
-		default:
-			logger.Info("Invalid operation, please try again")
-		}
-	}
+func generateKeystore(c *cli.Context) error {
+	keyType := strings.ToLower(c.String(flagKeyType))
+	password := c.String(flagKeyPassword)
+	return utils.GenerateKeystore(keyType, password)
 }
 
-func registerOperator(cfg *config.Config) error {
-	// Generate new BLS Key Pairs
-	blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(cfg.BLSCurve))
-	for {
-		isConfirmed, err := utils.ConfirmPrompt("Do you want to add a new BLS Key Pair? (y/n): ")
-		if err != nil {
-			return fmt.Errorf("failed to get answer: %w", err)
-		}
-		if isConfirmed {
-			var privKey []byte
-			res, err := utils.StringPrompt("Do you want to generate a new Key Pair (y/bls_private_key): ")
-			if err != nil {
-				return fmt.Errorf("failed to get answer: %w", err)
-			}
-			if res == "y" {
-				privKey, err = blsScheme.GenerateRandomKey()
-				if err != nil {
-					return fmt.Errorf("failed to generate BLS Key Pair: %w", err)
-				}
-			} else {
-				privKey = nutils.Hex2Bytes(res)
-			}
-			pubRawKey, err := blsScheme.GetPublicKey(privKey, false)
-			if err != nil {
-				logger.Infof("Failed to get BLS Public Key: %s", err)
-				continue
-			}
-			if err := utils.SaveKeyStore("bls", utils.NewKeyStore(privKey, pubRawKey)); err != nil {
-				logger.Infof("Failed to save BLS Key Pair: %s", err)
-				continue
-			}
-		} else {
-			break
-		}
-	}
+func importKeystore(c *cli.Context) error {
+	keyType := strings.ToLower(c.String(flagKeyType))
+	password := c.String(flagKeyPassword)
+	privKey := nutils.Hex2Bytes(c.String(flagPrivateKey))
+	return utils.ImportFromPrivateKey(keyType, password, privKey)
+}
 
-	// Generate a new signer ECDSA private key
-	isConfirmed, err := utils.ConfirmPrompt("Do you want to generate a new signer private key? (y/n): ")
+func registerOperator(c *cli.Context) error {
+	network := c.String(flagNetwork)
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+	cliCfg, err := config.LoadCLIConfig(c)
 	if err != nil {
-		return fmt.Errorf("failed to get answer: %w", err)
+		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	if isConfirmed {
-		privKey, err := ecrypto.GenerateKey()
+	// loads the operator private key
+	if len(cliCfg.OperatorPrivateKey) == 0 {
+		operatorPrivKey, err := utils.ReadPrivateKey("ECDSA", cliCfg.OperatorKeystorePassword, cliCfg.OperatorKeystorePath)
 		if err != nil {
-			return fmt.Errorf("failed to generate ECDSA Key Pair: %w", err)
+			return fmt.Errorf("failed to load Operator Key Stores: %w", err)
 		}
-		addr := ecrypto.PubkeyToAddress(privKey.PublicKey)
-		signAddress := addr.Hex()
-		logger.Infof("Signer ECDSA Key Pair loaded address: %v", signAddress)
-		if err := utils.SaveKeyStore("ecdsa", utils.NewKeyStore(privKey.D.Bytes(), addr.Bytes())); err != nil {
-			logger.Infof("Failed to save ECDSA Key Pair: %s", err)
-		}
-	} else {
-		privRawKey, err := utils.StringPrompt("Enter the Signer ECDSA Private Key, if you want to use the stored key, just press `n`: ")
-		if err != nil {
-			return fmt.Errorf("failed to get Signer ECDSA Address: %w", err)
-		}
-		if len(privRawKey) > 1 {
-			privKey, err := ecrypto.HexToECDSA(privRawKey)
-			if err != nil {
-				return fmt.Errorf("failed to convert ECDSA Private Key: %w", err)
-			}
-			addr := ecrypto.PubkeyToAddress(privKey.PublicKey)
-			signAddress := addr.Hex()
-			logger.Infof("Signer ECDSA Key Pair loaded address: %v", signAddress)
-			if err := utils.SaveKeyStore("ecdsa", utils.NewKeyStore(privKey.D.Bytes(), addr.Bytes())); err != nil {
-				logger.Infof("Failed to save ECDSA Key Pair: %s", err)
-			}
-		}
+		cliCfg.OperatorPrivateKey = nutils.Bytes2Hex(operatorPrivKey)
 	}
-
-	// Register to the committee
-	blsKeyStores, err := utils.LoadKeyStores("bls")
+	// loads the BLS private key
+	blsPrivKey, err := utils.ReadPrivateKey("BN254", cliCfg.BLSKeystorePassword, cliCfg.BLSKeystorePath)
 	if err != nil {
 		return fmt.Errorf("failed to load BLS Key Stores: %w", err)
 	}
-	signKeyStores, err := utils.LoadKeyStores("ecdsa")
+	blsScheme := crypto.NewBLSScheme(crypto.BN254)
+	blsPubKey, err := blsScheme.GetPublicKey(blsPrivKey, false)
+	blsPubRawKeys := make([][2]*big.Int, 0)
+	pubRawKey, err := utils.ConvertBLSKey(blsPubKey)
 	if err != nil {
-		return fmt.Errorf("failed to load ECDSA Key Stores: %w", err)
+		return fmt.Errorf("failed to convert BLS Public Key: %w", err)
 	}
-	pubRawKeys := make([][2]*big.Int, 0)
-	for _, blsKeyStore := range blsKeyStores {
-		pubKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(blsKeyStore.PubKey))
-		if err != nil {
-			logger.Infof("Failed to convert BLS Public Key: %s", err)
-			continue
-		}
-		pubRawKeys = append(pubRawKeys, pubKey)
+	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
+	// loads the Signer private key
+	signerPrivKey, err := utils.ReadPrivateKey("ECDSA", cliCfg.SignerKeystorePassword, cliCfg.SignerKeystorePath)
+	if err != nil {
+		return fmt.Errorf("failed to load Signer Key Stores: %w", err)
 	}
-	for {
-		logger.Infof("Registering with BLS public key: %s and sign address: %s", pubRawKeys, signKeyStores[0].PubKey)
-		isConfirmed, err := utils.ConfirmPrompt("Do you want to register to the committee? (y/n): ")
-		if err != nil {
-			return fmt.Errorf("failed to get answer: %w", err)
-		}
-		if !isConfirmed {
-			break
-		}
-		if len(cfg.OperatorPrivKey) == 0 {
-			operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
-			if err != nil {
-				return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
-			}
-			cfg.OperatorPrivKey = operatorPrivKey
-		}
-		chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, cfg.OperatorPrivKey)
-		if err != nil {
-			return fmt.Errorf("failed to create ChainOps instance: %s", err)
-		}
-		if err := chainOps.Register(cfg.LagrangeServiceSCAddr, signKeyStores[0].PubKey, pubRawKeys); err != nil {
-			logger.Infof("Failed to register to the committee: %s", err)
-		} else {
-			break
-		}
+	signerPrivateKey, err := ecrypto.ToECDSA(signerPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to convert private key to ECDSA: %w", err)
+	}
+	signerAddr := ecrypto.PubkeyToAddress(signerPrivateKey.PublicKey)
+	// register the operator to the committee
+	logger.Infof("Registering with BLS public key: %s and sign address: %s", blsPubRawKeys, signerAddr.Hex())
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivateKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+	if err := chainOps.Register(network, signerAddr.Hex(), blsPubRawKeys); err != nil {
+		logger.Infof("Failed to register to the committee: %s", err)
 	}
 
 	return nil
 }
 
-func unsubscribeChain(cfg *config.Config) error {
-	if len(cfg.OperatorPrivKey) == 0 {
-		operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
-		if err != nil {
-			return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
-		}
-		cfg.OperatorPrivKey = operatorPrivKey
+func subscribeChain(c *cli.Context) error {
+	network := c.String(flagNetwork)
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
 	}
-	chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, cfg.OperatorPrivKey)
+	chain := c.String(flagChain)
+	if _, ok := config.ChainBatchConfigs[chain]; !ok {
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+	}
+	cliCfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+	// loads the operator private key
+	if len(cliCfg.OperatorPrivateKey) == 0 {
+		operatorPrivKey, err := utils.ReadPrivateKey("ECDSA", cliCfg.OperatorKeystorePassword, cliCfg.OperatorKeystorePath)
+		if err != nil {
+			return fmt.Errorf("failed to load Operator Key Stores: %w", err)
+		}
+		cliCfg.OperatorPrivateKey = nutils.Bytes2Hex(operatorPrivKey)
+	}
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
 
-	// Unsubscribe from the chain
-	for {
-		chainID, err := utils.IntegerPrompt("Enter the Chain ID to unsubscribe: ")
-		if err != nil {
-			return fmt.Errorf("failed to get Chain ID: %s", err)
-		}
-		if err := chainOps.Unsubscribe(cfg.LagrangeServiceSCAddr, uint32(chainID)); err != nil {
-			logger.Infof("Failed to unsubscribe the dedicated chain: %s", err)
-		}
-		isConfirmed, err := utils.ConfirmPrompt("Do you want to unsubscribe another chain? (y/n): ")
-		if err != nil {
-			return fmt.Errorf("failed to get answer: %w", err)
-		}
-		if !isConfirmed {
-			break
-		}
+	// subscribe chain
+	if err := chainOps.Subscribe(network, chain); err != nil {
+		logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
 	}
 
 	return nil
 }
 
-func subscribeChain(cfg *config.Config) error {
-	if len(cfg.OperatorPrivKey) == 0 {
-		operatorPrivKey, err := utils.PasswordPrompt("Enter the Operator ECDSA Private Key: ")
-		if err != nil {
-			return fmt.Errorf("failed to get Operator ECDSA Private Key: %w", err)
-		}
-		cfg.OperatorPrivKey = operatorPrivKey
+func unsubscribeChain(c *cli.Context) error {
+	network := c.String(flagNetwork)
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
 	}
-	chainOps, err := utils.NewChainOps(cfg.EthereumRPCURL, cfg.OperatorPrivKey)
+	chain := c.String(flagChain)
+	if _, ok := config.ChainBatchConfigs[chain]; !ok {
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+	}
+	cliCfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+	// loads the operator private key
+	if len(cliCfg.OperatorPrivateKey) == 0 {
+		operatorPrivKey, err := utils.ReadPrivateKey("ECDSA", cliCfg.OperatorKeystorePassword, cliCfg.OperatorKeystorePath)
+		if err != nil {
+			return fmt.Errorf("failed to load Operator Key Stores: %w", err)
+		}
+		cliCfg.OperatorPrivateKey = nutils.Bytes2Hex(operatorPrivKey)
+	}
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
 
-	// Subscribe chain
-	for {
-		chainID, err := utils.IntegerPrompt("Enter the Chain ID to subscribe: ")
-		if err != nil {
-			return fmt.Errorf("failed to get Chain ID: %s", err)
-		}
-		if err := chainOps.Subscribe(cfg.LagrangeServiceSCAddr, uint32(chainID)); err != nil {
-			logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
-		}
-		isConfirmed, err := utils.ConfirmPrompt("Do you want to subscribe to another chain? (y/n): ")
-		if err != nil {
-			return fmt.Errorf("failed to get answer: %w", err)
-		}
-		if !isConfirmed {
-			break
-		}
+	// subscribe chain
+	if err := chainOps.Unsubscribe(network, chain); err != nil {
+		logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
 	}
 
 	return nil
 }
 
-func generateConfig(cfg *config.Config) error {
-	logger.Infof("Generating Client Config file")
-
+func generateConfig(c *cli.Context) error {
+	network := c.String(flagNetwork)
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+	chain := c.String(flagChain)
+	if _, ok := config.ChainBatchConfigs[chain]; !ok {
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+	}
+	cfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
 	clientCfg := new(config.ClientConfig)
 	clientCfg.EthereumRPCURL = cfg.EthereumRPCURL
-	clientCfg.CommitteeSCAddress = cfg.CommitteeSCAddr
+	clientCfg.CommitteeSCAddress = config.NetworkConfigs[network].CommitteeSCAddress
 	clientCfg.BLSCurve = cfg.BLSCurve
 	clientCfg.ConcurrentFetchers = cfg.ConcurrentFetchers
-
-	var err error
-	// Get the Operator Address
-	clientCfg.OperatorAddress, err = utils.StringPrompt("Enter the Operator Address: ")
-	if err != nil {
-		logger.Fatalf("Failed to get Operator Address: %s", err)
-	}
-	// Get the Chain Name
-	clientCfg.ChainName, err = utils.StringPrompt("Enter the Chain Name: ")
-	if err != nil {
-		logger.Fatalf("Failed to get Chain Name: %s", err)
-	}
-	clientCfg.ChainName = strings.ToLower(clientCfg.ChainName)
-
-	// Get the RPC Endpoints
-	clientCfg.L1RPCEndpoint, err = utils.StringPrompt("Enter the L1 RPC Endpoint: ")
-	if err != nil {
-		logger.Fatalf("Failed to get L1 RPC Endpoint: %s", err)
-	}
-	clientCfg.L2RPCEndpoint, err = utils.StringPrompt("Enter the L2 RPC Endpoint: ")
-	if err != nil {
-		logger.Fatalf("Failed to get L2 RPC Endpoint: %s", err)
-	}
-	clientCfg.BeaconURL, err = utils.StringPrompt("Enter the Beacon URL: ")
-	if err != nil {
-		logger.Fatalf("Failed to get Beacon URL: %s", err)
-	}
-
-	// Get the Server gRPC URL
-	clientCfg.ServerGrpcURL, err = utils.StringPrompt("Enter the Server gRPC URL: ")
-	if err != nil {
-		logger.Fatalf("Failed to get Server gRPC URL: %s", err)
-	}
-
-	// Select the BLS Key Pair
-	blsKeyStores, err := utils.LoadKeyStores("bls")
-	if err != nil {
-		return fmt.Errorf("failed to load BLS Key Stores: %w", err)
-	}
-	if len(blsKeyStores) == 0 {
-		clientCfg.BLSPrivateKey, err = utils.StringPrompt("No BLS Key Pair found, please enter the BLS Private Key: ")
+	clientCfg.ChainName = chain
+	clientCfg.ServerGrpcURL = config.NetworkConfigs[network].GRPCServerURLs[chain]
+	clientCfg.L1RPCEndpoint = cfg.L1RPCEndpoint
+	clientCfg.L2RPCEndpoint = c.String(flagRollupRPC)
+	clientCfg.BeaconURL = cfg.BeaconURL
+	clientCfg.BatchInbox = config.ChainBatchConfigs[chain].BatchInbox
+	clientCfg.BatchSender = config.ChainBatchConfigs[chain].BatchSender
+	// loads the operator private key
+	if len(cfg.OperatorPrivateKey) == 0 {
+		operatorPrivKey, err := utils.ReadPrivateKey("ECDSA", cfg.OperatorKeystorePassword, cfg.OperatorKeystorePath)
 		if err != nil {
-			return fmt.Errorf("failed to get BLS Private Key: %w", err)
+			return fmt.Errorf("failed to load Operator Key Stores: %w", err)
 		}
-	} else {
-		for i, blsKeyStore := range blsKeyStores {
-			logger.Infof("BLS Key Pair %d: %s", i+1, blsKeyStore.PubKey)
-		}
-		keyIndex, err := utils.IntegerPrompt("Select the BLS Key Pair (index): ")
-		if err != nil {
-			return fmt.Errorf("failed to get BLS Key Pair index: %w", err)
-		}
-		clientCfg.BLSPrivateKey = blsKeyStores[keyIndex-1].PrivKey
+		cfg.OperatorPrivateKey = nutils.Bytes2Hex(operatorPrivKey)
 	}
-
-	// Select the Signer ECDSA Private Key
-	signKeyStores, err := utils.LoadKeyStores("ecdsa")
+	opPrivateKey, err := ecrypto.ToECDSA(nutils.Hex2Bytes(cfg.OperatorPrivateKey))
 	if err != nil {
-		return fmt.Errorf("failed to load ECDSA Key Stores: %w", err)
+		return fmt.Errorf("failed to convert private key to ECDSA: %w", err)
 	}
-	if len(signKeyStores) == 0 {
-		clientCfg.SignPrivateKey, err = utils.StringPrompt("No Signer ECDSA Key Pair found, please enter the signer ECDSA Private Key: ")
-		if err != nil {
-			return fmt.Errorf("failed to get Signer ECDSA Private Key: %w", err)
-		}
-	} else {
-		clientCfg.SignPrivateKey = signKeyStores[0].PrivKey
-	}
+	opAddr := ecrypto.PubkeyToAddress(opPrivateKey.PublicKey)
+	clientCfg.OperatorAddress = opAddr.Hex()
 
-	clientCfg.BatchInbox = batchConfig[clientCfg.ChainName].BatchInbox
-	clientCfg.BatchSender = batchConfig[clientCfg.ChainName].BatchSender
+	// loads the BLS private key
+	if len(cfg.BLSPrivateKey) == 0 {
+		blsPrivKey, err := utils.ReadPrivateKey("BN254", cfg.BLSKeystorePassword, cfg.BLSKeystorePath)
+		if err != nil {
+			return fmt.Errorf("failed to load BLS Key Stores: %w", err)
+		}
+		cfg.BLSPrivateKey = nutils.Bytes2Hex(blsPrivKey)
+	}
+	clientCfg.BLSPrivateKey = cfg.BLSPrivateKey
+	// loads the Signer private key
+	if len(cfg.SignerPrivateKey) == 0 {
+		signerPrivKey, err := utils.ReadPrivateKey("ECDSA", cfg.SignerKeystorePassword, cfg.SignerKeystorePath)
+		if err != nil {
+			return fmt.Errorf("failed to load Signer Key Stores: %w", err)
+		}
+		cfg.SignerPrivateKey = nutils.Bytes2Hex(signerPrivKey)
+	}
+	clientCfg.SignPrivateKey = cfg.SignerPrivateKey
 
 	// Create the Client Config file
 	tmplClient, err := template.New("client").Parse(clientConfigTemplate)
@@ -424,7 +403,7 @@ func generateConfig(cfg *config.Config) error {
 	if err != nil {
 		logger.Fatalf("Failed to get BLS Public Key: %s", err)
 	}
-	configFileName := fmt.Sprintf("client_%s_%x.toml", clientCfg.ChainName, pubRawKey)
+	configFileName := fmt.Sprintf("client_%s_%x.toml", clientCfg.ChainName, pubRawKey[:6])
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get home directory: %s", err)
@@ -448,45 +427,13 @@ func generateConfig(cfg *config.Config) error {
 	return nil
 }
 
-func clientDeploy(cfg *config.Config) error {
-	dockerImageName := fmt.Sprintf("%s:%s", dockerImageBase, cfg.DockerImageTag)
+func clientDeploy(c *cli.Context) error {
+	dockerImageName := c.String(flagDockerImage)
 	logger.Infof("Deploying Lagrange Node Client with Image: %s", dockerImageName)
-
-	// Check if the docker image exists locally
+	// check if the docker image exists locally
 	if err := utils.CheckDockerImageExists(dockerImageName); err != nil {
-		logger.Infof("Docker image %s does not exist locally, pulling started", dockerImageName)
-		if err := utils.PullDockerImage(dockerImageName); err != nil {
-			return fmt.Errorf("failed to pull docker image %s: %s", dockerImageName, err)
-		}
-	} else {
-		cmd := exec.Command("docker", "image", "inspect", dockerImageName, "--format='{{index .RepoDigests 0}}'")
-		output, err := cmd.Output()
-		if err != nil {
-			return fmt.Errorf("failed to get docker image digest: %s", err)
-		}
-		logger.Infof("Docker image %s exists locally with digest: %s", dockerImageName, output)
-	}
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %s", err)
-	}
-	configDirPath := filepath.Clean(filepath.Join(homeDir, configDir))
-	files, err := os.ReadDir(configDirPath)
-	if err != nil {
-		return fmt.Errorf("failed to read config directory: %s", err)
-	}
-	configFileNames := make([]string, 0)
-	for i, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		logger.Infof("Config file %d: %s", i+1, file.Name())
-		configFileNames = append(configFileNames, filepath.Join(configDirPath, file.Name()))
-	}
-	index, err := utils.IntegerPrompt("Select the Config file (index): ")
-	if err != nil {
-		return fmt.Errorf("failed to get Config file index: %s", err)
+		return fmt.Errorf("failed to check docker image: %s", err)
 	}
 
-	return utils.RunDockerImage(dockerImageName, configFileNames[index-1])
+	return utils.RunDockerImage(dockerImageName, c.String(config.FlagCfg))
 }
