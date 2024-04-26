@@ -60,6 +60,9 @@ func Load(ctx *cli.Context) (*Config, error) {
 	configFilePath := ctx.String(FlagCfg)
 	if configFilePath != "" {
 		dirName, fileName := filepath.Split(configFilePath)
+		if dirName == "" {
+			dirName = "./"
+		}
 
 		fileExtension := strings.TrimPrefix(filepath.Ext(fileName), ".")
 		fileNameWithoutExtension := strings.TrimSuffix(fileName, "."+fileExtension)
