@@ -4,6 +4,8 @@ github.com/Lagrange-Labs/lagrange-node v0.0.0-20240421220813-116b6287b559 h1:90r
 github.com/Lagrange-Labs/lagrange-node v0.0.0-20240421220813-116b6287b559/go.mod h1:jE8fxdA5EXQ4HoY9CNhDpRdmoC0Fu+JPqDArjwbE8Vw=
 github.com/Lagrange-Labs/lagrange-node v0.0.0-20240424003136-9f779c0b59d4 h1:nShy3v3Eua6KmipXmMAgmJD11/2md9twQOEkxZ9a4tM=
 github.com/Lagrange-Labs/lagrange-node v0.0.0-20240424003136-9f779c0b59d4/go.mod h1:jE8fxdA5EXQ4HoY9CNhDpRdmoC0Fu+JPqDArjwbE8Vw=
+github.com/Lagrange-Labs/lagrange-node v0.0.0-20240426131021-6b661e56957a h1:+hqIb7GwOuSNCwHZVjV5xqxeRAKZmNE5ChHt+O5D3lM=
+github.com/Lagrange-Labs/lagrange-node v0.0.0-20240426131021-6b661e56957a/go.mod h1:jE8fxdA5EXQ4HoY9CNhDpRdmoC0Fu+JPqDArjwbE8Vw=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=

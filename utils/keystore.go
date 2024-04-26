@@ -60,6 +60,18 @@ func ImportFromPrivateKey(keyType, password string, privKey []byte) error {
 	}
 }
 
+// ExportKeystore exports the private key from the keystore file.
+func ExportKeystore(keyType, password, filePath string) ([]byte, error) {
+	switch keyType {
+	case "ecdsa":
+		return crypto.LoadPrivateKey(crypto.CryptoCurve("ECDSA"), password, filePath)
+	case "bls":
+		return crypto.LoadPrivateKey(crypto.CryptoCurve("BN254"), password, filePath)
+	default:
+		return nil, fmt.Errorf("invalid key type: %s", keyType)
+	}
+}
+
 func saveKeystore(keyType string, password string, pubKey, privKey []byte) error {
 	ksPath := filepath.Join(keystoreDir, fmt.Sprintf("%s_%x.key", keyType, pubKey[:6]))
 	var cryptoCurve crypto.CryptoCurve

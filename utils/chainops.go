@@ -14,9 +14,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/Lagrange-Labs/client-cli/config"
-	"github.com/Lagrange-Labs/client-cli/logger"
 	"github.com/Lagrange-Labs/client-cli/scinterface/avs"
 	"github.com/Lagrange-Labs/client-cli/scinterface/lagrange"
+	"github.com/Lagrange-Labs/lagrange-node/logger"
 	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
@@ -30,7 +30,7 @@ type ChainOps struct {
 }
 
 // NewChainOps creates a new ChainOps instance.
-func NewChainOps(network, rpcEndpoint, privateKey string) (*ChainOps, error) {
+func NewChainOps(network, rpcEndpoint string, privateKey string) (*ChainOps, error) {
 	client, err := ethclient.Dial(rpcEndpoint)
 	if err != nil {
 		return nil, err
