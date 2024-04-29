@@ -2,54 +2,24 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"math/big"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
-	ecrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 
 	"github.com/Lagrange-Labs/client-cli/config"
-	"github.com/Lagrange-Labs/client-cli/logger"
 	"github.com/Lagrange-Labs/client-cli/utils"
-	"github.com/Lagrange-Labs/lagrange-node/crypto"
+	"github.com/Lagrange-Labs/lagrange-node/logger"
 	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
 const (
-	clientConfigTemplate = `[Client]
-GrpcURL = "{{.ServerGrpcURL}}"
-Chain = "{{.ChainName}}"
-EthereumURL = "{{.EthereumRPCURL}}"
-OperatorAddress = "{{.OperatorAddress}}"
-CommitteeSCAddress = "{{.CommitteeSCAddress}}"
-BLSPrivateKey = "{{.BLSPrivateKey}}"
-ECDSAPrivateKey = "{{.SignPrivateKey}}"
-PullInterval = "1000ms"
-BLSCurve = "{{.BLSCurve}}"
-
-[RpcClient]
-
-	[RpcClient.Optimism]
-	RPCURL = "{{.L2RPCEndpoint}}"
-	L1RPCURL = "{{.L1RPCEndpoint}}"
-	BeaconURL = "{{.BeaconURL}}"
-	BatchInbox = "{{.BatchInbox}}"
-	BatchSender = "{{.BatchSender}}"
-	ConcurrentFetchers = "{{.ConcurrentFetchers}}"
-
-	[RpcClient.Mock]
-	RPCURL = "http://localhost:8545"`
-
-	dockerImageBase = "lagrangelabs/lagrange-node"
-	configDir       = ".lagrange/config"
-
 	flagKeyType     = "key-type"
 	flagKeyPassword = "password"
 	flagPrivateKey  = "private-key"
+	flagKeyPath     = "key-path"
 	flagNetwork     = "network"
 	flagChain       = "chain"
 	flagRollupRPC   = "rollup-rpc"
@@ -74,6 +44,12 @@ var (
 		Value:   "",
 		Usage:   "Key `PASSWORD`",
 		Aliases: []string{"p"},
+	}
+	keyPathFlag = &cli.StringFlag{
+		Name:    flagKeyPath,
+		Value:   "",
+		Usage:   "Key `PATH`",
+		Aliases: []string{"f"},
 	}
 	privateKeyFlag = &cli.StringFlag{
 		Name:    flagPrivateKey,
@@ -141,6 +117,16 @@ func main() {
 				privateKeyFlag,
 			},
 			Action: importKeystore,
+		},
+		{
+			Name:  "export-keystore",
+			Usage: "Export a private key from the keystore",
+			Flags: []cli.Flag{
+				keyTypeFlag,
+				keyPasswordFlag,
+				keyPathFlag,
+			},
+			Action: exportKeystore,
 		},
 		{
 			Name:  "register-operator",
@@ -213,6 +199,18 @@ func importKeystore(c *cli.Context) error {
 	return utils.ImportFromPrivateKey(keyType, password, privKey)
 }
 
+func exportKeystore(c *cli.Context) error {
+	keyType := strings.ToLower(c.String(flagKeyType))
+	password := c.String(flagKeyPassword)
+	keyPath := c.String(flagKeyPath)
+	privKey, err := utils.ExportKeystore(keyType, password, keyPath)
+	if err != nil {
+		return err
+	}
+	logger.Infof("Private Key: %s", nutils.Bytes2Hex(privKey))
+	return nil
+}
+
 func registerOperator(c *cli.Context) error {
 	network := c.String(flagNetwork)
 	if _, ok := config.NetworkConfigs[network]; !ok {
@@ -222,44 +220,20 @@ func registerOperator(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	// loads the operator private key
-	if len(cliCfg.OperatorPrivateKey) == 0 {
-		operatorPrivKey, err := utils.ReadPrivateKey("ECDSA", cliCfg.OperatorKeystorePassword, cliCfg.OperatorKeystorePath)
-		if err != nil {
-			return fmt.Errorf("failed to load Operator Key Stores: %w", err)
-		}
-		cliCfg.OperatorPrivateKey = nutils.Bytes2Hex(operatorPrivKey)
-	}
-	// loads the BLS private key
-	blsPrivKey, err := utils.ReadPrivateKey("BN254", cliCfg.BLSKeystorePassword, cliCfg.BLSKeystorePath)
-	if err != nil {
-		return fmt.Errorf("failed to load BLS Key Stores: %w", err)
-	}
-	blsScheme := crypto.NewBLSScheme(crypto.BN254)
-	blsPubKey, err := blsScheme.GetPublicKey(blsPrivKey, false)
 	blsPubRawKeys := make([][2]*big.Int, 0)
-	pubRawKey, err := utils.ConvertBLSKey(blsPubKey)
+	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
 	if err != nil {
-		return fmt.Errorf("failed to convert BLS Public Key: %w", err)
+		return fmt.Errorf("failed to convert BLS public key: %w", err)
 	}
 	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
-	// loads the Signer private key
-	signerPrivKey, err := utils.ReadPrivateKey("ECDSA", cliCfg.SignerKeystorePassword, cliCfg.SignerKeystorePath)
-	if err != nil {
-		return fmt.Errorf("failed to load Signer Key Stores: %w", err)
-	}
-	signerPrivateKey, err := ecrypto.ToECDSA(signerPrivKey)
-	if err != nil {
-		return fmt.Errorf("failed to convert private key to ECDSA: %w", err)
-	}
-	signerAddr := ecrypto.PubkeyToAddress(signerPrivateKey.PublicKey)
+
 	// register the operator to the committee
-	logger.Infof("Registering with BLS public key: %s and sign address: %s", blsPubRawKeys, signerAddr.Hex())
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivateKey)
+	logger.Infof("Registering with BLS public key: %s and sign address: %s", blsPubRawKeys, cliCfg.SignerAddress)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.Register(network, signerAddr.Hex(), blsPubRawKeys); err != nil {
+	if err := chainOps.Register(network, cliCfg.SignerAddress, blsPubRawKeys); err != nil {
 		logger.Infof("Failed to register to the committee: %s", err)
 	}
 
@@ -279,15 +253,7 @@ func subscribeChain(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	// loads the operator private key
-	if len(cliCfg.OperatorPrivateKey) == 0 {
-		operatorPrivKey, err := utils.ReadPrivateKey("ECDSA", cliCfg.OperatorKeystorePassword, cliCfg.OperatorKeystorePath)
-		if err != nil {
-			return fmt.Errorf("failed to load Operator Key Stores: %w", err)
-		}
-		cliCfg.OperatorPrivateKey = nutils.Bytes2Hex(operatorPrivKey)
-	}
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivateKey)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
@@ -313,15 +279,7 @@ func unsubscribeChain(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	// loads the operator private key
-	if len(cliCfg.OperatorPrivateKey) == 0 {
-		operatorPrivKey, err := utils.ReadPrivateKey("ECDSA", cliCfg.OperatorKeystorePassword, cliCfg.OperatorKeystorePath)
-		if err != nil {
-			return fmt.Errorf("failed to load Operator Key Stores: %w", err)
-		}
-		cliCfg.OperatorPrivateKey = nutils.Bytes2Hex(operatorPrivKey)
-	}
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivateKey)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
@@ -359,67 +317,18 @@ func generateConfig(c *cli.Context) error {
 	clientCfg.BeaconURL = cfg.BeaconURL
 	clientCfg.BatchInbox = config.ChainBatchConfigs[chain].BatchInbox
 	clientCfg.BatchSender = config.ChainBatchConfigs[chain].BatchSender
-	// loads the operator private key
-	if len(cfg.OperatorPrivateKey) == 0 {
-		operatorPrivKey, err := utils.ReadPrivateKey("ECDSA", cfg.OperatorKeystorePassword, cfg.OperatorKeystorePath)
-		if err != nil {
-			return fmt.Errorf("failed to load Operator Key Stores: %w", err)
-		}
-		cfg.OperatorPrivateKey = nutils.Bytes2Hex(operatorPrivKey)
-	}
-	opPrivateKey, err := ecrypto.ToECDSA(nutils.Hex2Bytes(cfg.OperatorPrivateKey))
-	if err != nil {
-		return fmt.Errorf("failed to convert private key to ECDSA: %w", err)
-	}
-	opAddr := ecrypto.PubkeyToAddress(opPrivateKey.PublicKey)
-	clientCfg.OperatorAddress = opAddr.Hex()
+	clientCfg.OperatorAddress = cfg.OperatorAddress
+	clientCfg.BLSPubKey = cfg.BLSPublicKey
+	clientCfg.BLSKeystorePath = cfg.BLSKeystorePath
+	clientCfg.BLSKeystorePassword = cfg.BLSKeystorePassword
+	clientCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
+	clientCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
+	clientCfg.SignerECDSAKeystorePassword = cfg.SignerECDSAKeystorePassword
+	clientCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
 
-	// loads the BLS private key
-	if len(cfg.BLSPrivateKey) == 0 {
-		blsPrivKey, err := utils.ReadPrivateKey("BN254", cfg.BLSKeystorePassword, cfg.BLSKeystorePath)
-		if err != nil {
-			return fmt.Errorf("failed to load BLS Key Stores: %w", err)
-		}
-		cfg.BLSPrivateKey = nutils.Bytes2Hex(blsPrivKey)
-	}
-	clientCfg.BLSPrivateKey = cfg.BLSPrivateKey
-	// loads the Signer private key
-	if len(cfg.SignerPrivateKey) == 0 {
-		signerPrivKey, err := utils.ReadPrivateKey("ECDSA", cfg.SignerKeystorePassword, cfg.SignerKeystorePath)
-		if err != nil {
-			return fmt.Errorf("failed to load Signer Key Stores: %w", err)
-		}
-		cfg.SignerPrivateKey = nutils.Bytes2Hex(signerPrivKey)
-	}
-	clientCfg.SignPrivateKey = cfg.SignerPrivateKey
-
-	// Create the Client Config file
-	tmplClient, err := template.New("client").Parse(clientConfigTemplate)
+	configFilePath, err := config.GenerateClientConfig(clientCfg)
 	if err != nil {
-		return fmt.Errorf("failed to parse client config template: %s", err)
-	}
-	blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(clientCfg.BLSCurve))
-	pubRawKey, err := blsScheme.GetPublicKey(nutils.Hex2Bytes(clientCfg.BLSPrivateKey), false)
-	if err != nil {
-		logger.Fatalf("Failed to get BLS Public Key: %s", err)
-	}
-	configFileName := fmt.Sprintf("client_%s_%x.toml", clientCfg.ChainName, pubRawKey[:6])
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %s", err)
-	}
-	err = os.MkdirAll(filepath.Join(homeDir, configDir), 0700)
-	if err != nil {
-		return fmt.Errorf("failed to create config directory: %s", err)
-	}
-	configFilePath := filepath.Clean(filepath.Join(homeDir, configDir, configFileName))
-	clientConfigFile, err := os.Create(configFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to create client config file: %s", err)
-	}
-	defer clientConfigFile.Close()
-	if err := tmplClient.Execute(clientConfigFile, clientCfg); err != nil {
-		return fmt.Errorf("failed to execute client config template: %s", err)
+		return fmt.Errorf("failed to generate client config: %w", err)
 	}
 
 	logger.Infof("Client Config file created: %s", configFilePath)
