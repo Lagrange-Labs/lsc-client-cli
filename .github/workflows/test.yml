@@ -1,0 +1,24 @@
+name: Test
+on:
+  push:
+    branches:
+      - develop
+      - main
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*" # Push events to matching tags v1.0.0, v1.0.1, v1.1.0, v2.0.0, etc.
+  pull_request:
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21" # The Go version to download (if necessary) and use.
+      - name: test & coverage report creation
+        run: |
+          make test
+        env:
+          CGO_CFLAGS: "-O -D__BLST_PORTABLE__"
+          CGO_CFLAGS_ALLOW: "-O -D__BLST_PORTABLE__"

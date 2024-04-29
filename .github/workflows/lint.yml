@@ -1,0 +1,27 @@
+name: Lint
+# Lint runs golangci-lint over the entire repository
+# This workflow is run on every pull request and push to master
+# The `golangci` will pass without running if no *.{go, mod, sum} files have been changed.
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*" # Push events to matching tags v1.0.0, v1.0.1, v1.1.0, v2.0.0, etc.
+
+jobs:
+  golangci:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.55.2
+          args: --timeout=10m
