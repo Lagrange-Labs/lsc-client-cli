@@ -15,8 +15,8 @@ import (
 const dockerComposeTemplate = `version: "3.5"
 
 services:
-  client_{{.ChainName}}:
-    container_name: lagrange_{{.ChainName}}_{{.BLSPubKeyPrefix}}
+  lagrange_client_{{.Network}}_{{.ChainName}}:
+    container_name: lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}
     image: {{.DockerImage}}
     restart: always
     command:
@@ -73,8 +73,9 @@ func RunDockerImage(imageName, configFilePath string) error {
 	// Get chain name and bls pub key from config file path
 	configFileName := filepath.Base(configFilePath)
 	seps := strings.Split(configFileName, "_")
-	dockerConfig.ChainName = seps[1]
-	dockerConfig.BLSPubKeyPrefix = strings.Split(seps[2], ".")[0]
+	dockerConfig.Network = seps[1]
+	dockerConfig.ChainName = seps[2]
+	dockerConfig.BLSPubKeyPrefix = strings.Split(seps[3], ".")[0]
 	dockerConfig.DockerImage = imageName
 	dockerConfig.ConfigFilePath = configFilePath
 
@@ -82,7 +83,7 @@ func RunDockerImage(imageName, configFilePath string) error {
 	if err != nil {
 		return err
 	}
-	dockerComposeFilePath := filepath.Join(workDir, fmt.Sprintf("docker-compose-%s-%s.yml", dockerConfig.ChainName, dockerConfig.BLSPubKeyPrefix))
+	dockerComposeFilePath := filepath.Join(workDir, fmt.Sprintf("docker-compose_%s_%s_%s.yml", dockerConfig.Network, dockerConfig.ChainName, dockerConfig.BLSPubKeyPrefix))
 	dockerConfigFile, err := os.Create(dockerComposeFilePath)
 	if err != nil {
 		return err
