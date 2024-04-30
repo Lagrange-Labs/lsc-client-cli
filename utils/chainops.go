@@ -161,7 +161,8 @@ func (c *ChainOps) Unsubscribe(network, chain string) error {
 }
 
 // Deregsiter deregisters the validator.
-func (c *ChainOps) Deregister(serviceAddr string) error {
+func (c *ChainOps) Deregister(network string) error {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
@@ -172,6 +173,60 @@ func (c *ChainOps) Deregister(serviceAddr string) error {
 	tx, err := lagrangeService.Deregister(c.auth)
 	if err != nil {
 		return fmt.Errorf("failed to deregister: %v", err)
+	}
+
+	return c.WaitForMined(tx)
+}
+
+// UpdateBlsPubKey updates the BLS public key at the given index.
+func (c *ChainOps) UpdateBlsPubKey(network string, index uint32, blsPubKey [2]*big.Int) error {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Updating BLS public key at index %d from %s", index, c.auth.From.String())
+
+	tx, err := lagrangeService.UpdateBlsPubKey(c.auth, index, blsPubKey)
+	if err != nil {
+		return fmt.Errorf("failed to update BLS key: %v", err)
+	}
+
+	return c.WaitForMined(tx)
+}
+
+// RemoveBlsPubKeys removes the BLS public keys at the given indices.
+func (c *ChainOps) RemoveBlsPubKeys(network string, indices []uint32) error {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Removing BLS public keys at indices %v from %s", indices, c.auth.From.String())
+
+	tx, err := lagrangeService.RemoveBlsPubKeys(c.auth, indices)
+	if err != nil {
+		return fmt.Errorf("failed to remove BLS keys: %v", err)
+	}
+
+	return c.WaitForMined(tx)
+}
+
+// UpdateSignerAddress updates the signer address.
+func (c *ChainOps) UpdateSignerAddress(network, newSignerAddr string) error {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Updating signer address to %s from %s", newSignerAddr, c.auth.From.String())
+
+	tx, err := lagrangeService.UpdateSignAddress(c.auth, common.HexToAddress(newSignerAddr))
+	if err != nil {
+		return fmt.Errorf("failed to update signer address: %v", err)
 	}
 
 	return c.WaitForMined(tx)

@@ -203,6 +203,19 @@
     },
     {
         "type": "function",
+        "name": "removeBlsPubKeys",
+        "inputs": [
+            {
+                "name": "indices",
+                "type": "uint32[]",
+                "internalType": "uint32[]"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
         "name": "removeOperatorsFromWhitelist",
         "inputs": [
             {
@@ -288,6 +301,37 @@
     },
     {
         "type": "function",
+        "name": "updateBlsPubKey",
+        "inputs": [
+            {
+                "name": "index",
+                "type": "uint32",
+                "internalType": "uint32"
+            },
+            {
+                "name": "blsPubKey",
+                "type": "uint256[2]",
+                "internalType": "uint256[2]"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "updateSignAddress",
+        "inputs": [
+            {
+                "name": "newSignAddress",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
         "name": "voteWeigher",
         "inputs": [],
         "outputs": [
@@ -319,7 +363,7 @@
             {
                 "name": "operator",
                 "type": "address",
-                "indexed": false,
+                "indexed": true,
                 "internalType": "address"
             }
         ],
@@ -332,7 +376,7 @@
             {
                 "name": "operator",
                 "type": "address",
-                "indexed": false,
+                "indexed": true,
                 "internalType": "address"
             },
             {
@@ -351,13 +395,13 @@
             {
                 "name": "operator",
                 "type": "address",
-                "indexed": false,
+                "indexed": true,
                 "internalType": "address"
             },
             {
                 "name": "chainID",
                 "type": "uint32",
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32"
             }
         ],
@@ -370,13 +414,13 @@
             {
                 "name": "operator",
                 "type": "address",
-                "indexed": false,
+                "indexed": true,
                 "internalType": "address"
             },
             {
                 "name": "chainID",
                 "type": "uint32",
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint32"
             }
         ],
