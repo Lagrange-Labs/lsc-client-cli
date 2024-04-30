@@ -24,6 +24,7 @@ const (
 	flagChain       = "chain"
 	flagRollupRPC   = "rollup-rpc"
 	flagDockerImage = "docker-image"
+	flagKeyIndex    = "key-index"
 )
 
 var (
@@ -81,6 +82,12 @@ var (
 		Usage:   "Docker `IMAGE`",
 		Aliases: []string{"i"},
 	}
+	keyIndexFlag = &cli.IntFlag{
+		Name:    flagKeyIndex,
+		Value:   0,
+		Usage:   "Key `INDEX`",
+		Aliases: []string{"i"},
+	}
 )
 
 func main() {
@@ -134,9 +141,46 @@ func main() {
 			Flags: []cli.Flag{
 				configFileFlag,
 				networkFlag,
-				chainFlag,
 			},
 			Action: registerOperator,
+		},
+		{
+			Name:  "deregsiter-operator",
+			Usage: "Deregister the operator from the committee",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+			},
+			Action: deregisterOperator,
+		},
+		{
+			Name:  "update-bls-pub-key",
+			Usage: "Update the BLS public key at the given index",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+				keyIndexFlag,
+			},
+			Action: updateBlsPubKey,
+		},
+		{
+			Name:  "update-signer-address",
+			Usage: "Update the signer address",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+			},
+			Action: updateSignerAddress,
+		},
+		{
+			Name:  "remove-bls-pub-key",
+			Usage: "Remove the BLS public key at the given index",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+				keyIndexFlag,
+			},
+			Action: removeBlsPubKey,
 		},
 		{
 			Name:  "subscribe-chain",
@@ -235,6 +279,106 @@ func registerOperator(c *cli.Context) error {
 	}
 	if err := chainOps.Register(network, cliCfg.SignerAddress, blsPubRawKeys); err != nil {
 		logger.Infof("Failed to register to the committee: %s", err)
+	}
+
+	return nil
+}
+
+func deregisterOperator(c *cli.Context) error {
+	network := strings.ToLower(c.String(flagNetwork))
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+	cliCfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+
+	// deregister the operator from the committee
+	logger.Infof("Deregistering with sign address: %s", cliCfg.SignerAddress)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+	if err := chainOps.Deregister(network); err != nil {
+		logger.Infof("Failed to deregister from the committee: %s", err)
+	}
+
+	return nil
+}
+
+func updateBlsPubKey(c *cli.Context) error {
+	network := strings.ToLower(c.String(flagNetwork))
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+	index := uint32(c.Int(flagKeyIndex))
+	cliCfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+	blsPubRawKeys := make([][2]*big.Int, 0)
+	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
+	if err != nil {
+		return fmt.Errorf("failed to convert BLS public key: %w", err)
+	}
+	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
+
+	// update the BLS public key
+	logger.Infof("Updating BLS public key with BLS public key: %s", blsPubRawKeys)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+	if err := chainOps.UpdateBlsPubKey(network, index, blsPubRawKeys[0]); err != nil {
+		logger.Infof("Failed to update BLS public key: %s", err)
+	}
+
+	return nil
+}
+
+func updateSignerAddress(c *cli.Context) error {
+	network := strings.ToLower(c.String(flagNetwork))
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+	cliCfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+
+	// update the signer address
+	logger.Infof("Updating signer address with signer address: %s", cliCfg.SignerAddress)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+	if err := chainOps.UpdateSignerAddress(network, cliCfg.SignerAddress); err != nil {
+		logger.Infof("Failed to update signer address: %s", err)
+	}
+
+	return nil
+}
+
+func removeBlsPubKey(c *cli.Context) error {
+	network := strings.ToLower(c.String(flagNetwork))
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+	index := uint32(c.Int(flagKeyIndex))
+	cliCfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+
+	// remove the BLS public key
+	logger.Infof("Removing BLS public key at index: %d", index)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+	if err := chainOps.RemoveBlsPubKeys(network, []uint32{index}); err != nil {
+		logger.Infof("Failed to remove BLS public key: %s", err)
 	}
 
 	return nil
