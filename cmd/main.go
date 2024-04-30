@@ -212,7 +212,7 @@ func exportKeystore(c *cli.Context) error {
 }
 
 func registerOperator(c *cli.Context) error {
-	network := c.String(flagNetwork)
+	network := strings.ToLower(c.String(flagNetwork))
 	if _, ok := config.NetworkConfigs[network]; !ok {
 		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
 	}
@@ -241,7 +241,7 @@ func registerOperator(c *cli.Context) error {
 }
 
 func subscribeChain(c *cli.Context) error {
-	network := c.String(flagNetwork)
+	network := strings.ToLower(c.String(flagNetwork))
 	if _, ok := config.NetworkConfigs[network]; !ok {
 		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
 	}
@@ -267,7 +267,7 @@ func subscribeChain(c *cli.Context) error {
 }
 
 func unsubscribeChain(c *cli.Context) error {
-	network := c.String(flagNetwork)
+	network := strings.ToLower(c.String(flagNetwork))
 	if _, ok := config.NetworkConfigs[network]; !ok {
 		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
 	}
@@ -293,7 +293,7 @@ func unsubscribeChain(c *cli.Context) error {
 }
 
 func generateConfig(c *cli.Context) error {
-	network := c.String(flagNetwork)
+	network := strings.ToLower(c.String(flagNetwork))
 	if _, ok := config.NetworkConfigs[network]; !ok {
 		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
 	}
@@ -326,7 +326,7 @@ func generateConfig(c *cli.Context) error {
 	clientCfg.SignerECDSAKeystorePassword = cfg.SignerECDSAKeystorePassword
 	clientCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
 
-	configFilePath, err := config.GenerateClientConfig(clientCfg)
+	configFilePath, err := config.GenerateClientConfig(clientCfg, network)
 	if err != nil {
 		return fmt.Errorf("failed to generate client config: %w", err)
 	}

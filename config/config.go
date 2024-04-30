@@ -100,6 +100,7 @@ type ClientConfig struct {
 
 // DockerComposeConfig is the configuration for the docker-compose.yml file.
 type DockerComposeConfig struct {
+	Network         string `json:"network"`
 	ChainName       string `json:"chain_name"`
 	BLSPubKeyPrefix string `json:"bls_pub_key"`
 	DockerImage     string `json:"docker_image"`
@@ -224,13 +225,13 @@ func readPasswordFromFile(filePath string) (string, error) {
 }
 
 // GenerateClientConfig generates the client.toml file.
-func GenerateClientConfig(clientCfg *ClientConfig) (string, error) {
+func GenerateClientConfig(clientCfg *ClientConfig, network string) (string, error) {
 	// Create the Client Config file
 	tmplClient, err := template.New("client").Parse(clientConfigTemplate)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse client config template: %s", err)
 	}
-	configFileName := fmt.Sprintf("client_%s_%s.toml", clientCfg.ChainName, clientCfg.BLSPubKey[:12])
+	configFileName := fmt.Sprintf("client_%s_%s_%s.toml", network, clientCfg.ChainName, clientCfg.BLSPubKey[:12])
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %s", err)
