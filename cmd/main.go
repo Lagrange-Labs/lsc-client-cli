@@ -31,61 +31,61 @@ var (
 	configFileFlag = &cli.StringFlag{
 		Name:    config.FlagCfg,
 		Value:   "config.toml",
-		Usage:   "`Configuration FILE`",
+		Usage:   "Configuration `FILE`",
 		Aliases: []string{"c"},
 	}
 	keyTypeFlag = &cli.StringFlag{
 		Name:    flagKeyType,
 		Value:   "bls",
-		Usage:   "`Key TYPE` (bls/ecdsa)",
+		Usage:   "Key `TYPE` (bls/ecdsa)",
 		Aliases: []string{"t"},
 	}
 	keyPasswordFlag = &cli.StringFlag{
 		Name:    flagKeyPassword,
 		Value:   "",
-		Usage:   "`Keystore PASSWORD`",
+		Usage:   "Keystore `PASSWORD`",
 		Aliases: []string{"p"},
 	}
 	keyPathFlag = &cli.StringFlag{
 		Name:    flagKeyPath,
 		Value:   "",
-		Usage:   "`Key PATH`",
+		Usage:   "Key `PATH`",
 		Aliases: []string{"f"},
 	}
 	privateKeyFlag = &cli.StringFlag{
 		Name:    flagPrivateKey,
 		Value:   "",
-		Usage:   "`Private KEY`",
+		Usage:   "Private `KEY`",
 		Aliases: []string{"k"},
 	}
 	networkFlag = &cli.StringFlag{
 		Name:    flagNetwork,
 		Value:   "mainnet",
-		Usage:   "`Network NAME` (mainnet/holesky)",
+		Usage:   "Network `NAME` (mainnet/holesky)",
 		Aliases: []string{"n"},
 	}
 	chainFlag = &cli.StringFlag{
 		Name:    flagChain,
 		Value:   "optimism",
-		Usage:   "`Chain NAME` (optimism/base)",
+		Usage:   "Chain `NAME` (optimism/base)",
 		Aliases: []string{"r"},
 	}
 	rollupRPCFlag = &cli.StringFlag{
 		Name:    flagRollupRPC,
 		Value:   "",
-		Usage:   "`Rollup RPC URL`",
+		Usage:   "Rollup RPC `URL`",
 		Aliases: []string{"u"},
 	}
 	dockerImageFlag = &cli.StringFlag{
 		Name:    flagDockerImage,
 		Value:   "lagrangelabs/lagrange-node:v0.3.13",
-		Usage:   "`Docker IMAGE`",
+		Usage:   "Docker `IMAGE`",
 		Aliases: []string{"i"},
 	}
 	keyIndexFlag = &cli.IntFlag{
 		Name:    flagKeyIndex,
 		Value:   0,
-		Usage:   "`BLS Key INDEX`",
+		Usage:   "BLS Key `INDEX`",
 		Aliases: []string{"i"},
 	}
 )
