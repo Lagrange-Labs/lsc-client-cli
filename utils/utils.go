@@ -27,7 +27,9 @@ func DisplayWarningMessage(keyType, privateKey, ksPath string) {
 	// Clear the screen
 	cmd := exec.Command("clear") // For Windows use "cls"
 	cmd.Stdout = os.Stdout
-	cmd.Run()
+	if err := cmd.Run(); err != nil {
+		fmt.Println("failed to clear the screen: ", err)
+	}
 
 	// Display warning message with ASCII art and colored text
 	fmt.Println("\033[1m\x1b[36m#########################################################################\033[0m")
