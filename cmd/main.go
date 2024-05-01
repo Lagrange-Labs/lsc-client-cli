@@ -333,7 +333,7 @@ func updateBlsPubKey(c *cli.Context) error {
 	}
 
 	// update the BLS public key
-	logger.Infof("Updating BLS public key  at index: %d with BLS public key: %s ", index, pubRawKey)
+	logger.Infof("Updating BLS public key  at index: %d with BLS public key: %s", index, pubRawKey)
 	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
