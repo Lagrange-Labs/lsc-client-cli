@@ -19,12 +19,21 @@ services:
     container_name: lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}
     image: {{.DockerImage}}
     restart: always
+    environment:
+      - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPATH=/app/config/keystore/bls.key
+      - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPASSWORDPATH=/app/config/keystore/bls.pass
+      - LAGRANGE_NODE_CLIENT_SIGNERECDSAKEYSTOREPATH=/app/config/keystore/signer.key
+      - LAGRANGE_NODE_CLIENT_SIGNERECDSAKEYSTOREPASSWORDPATH=/app/config/keystore/signer.pass
     command:
       - "/bin/sh"
       - "-c"
       - "/app/lagrange-node run-client -c /app/config/client.toml"
     volumes:
       - {{.ConfigFilePath}}:/app/config/client.toml
+      - {{.BLSKeystorePath}}:/app/config/keystore/bls.key
+      - {{.BLSKeystorePasswordPath}}:/app/config/keystore/bls.pass
+      - {{.SignerECDSAKeystorePath}}:/app/config/keystore/signer.key
+      - {{.SignerECDSAKeystorePasswordPath}}:/app/config/keystore/signer.pass
     logging:
       driver: "json-file"
       options:
@@ -78,6 +87,16 @@ func RunDockerImage(imageName, configFilePath string) error {
 	dockerConfig.BLSPubKeyPrefix = strings.Split(seps[3], ".")[0]
 	dockerConfig.DockerImage = imageName
 	dockerConfig.ConfigFilePath = configFilePath
+
+	// Load the client config
+	clientCfg, err := config.LoadClientConfig(configFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to load client config: %s", err)
+	}
+	dockerConfig.BLSKeystorePath = clientCfg.BLSKeystorePath
+	dockerConfig.BLSKeystorePasswordPath = clientCfg.BLSKeystorePasswordPath
+	dockerConfig.SignerECDSAKeystorePath = clientCfg.SignerECDSAKeystorePath
+	dockerConfig.SignerECDSAKeystorePasswordPath = clientCfg.SignerECDSAKeystorePasswordPath
 
 	tmpDocker, err := template.New("docker-compose").Parse(dockerComposeTemplate)
 	if err != nil {

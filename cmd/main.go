@@ -31,61 +31,61 @@ var (
 	configFileFlag = &cli.StringFlag{
 		Name:    config.FlagCfg,
 		Value:   "config.toml",
-		Usage:   "Configuration `FILE`",
+		Usage:   "`Configuration FILE`",
 		Aliases: []string{"c"},
 	}
 	keyTypeFlag = &cli.StringFlag{
 		Name:    flagKeyType,
 		Value:   "bls",
-		Usage:   "Key `TYPE` (bls/ecdsa)",
+		Usage:   "`Key TYPE` (bls/ecdsa)",
 		Aliases: []string{"t"},
 	}
 	keyPasswordFlag = &cli.StringFlag{
 		Name:    flagKeyPassword,
 		Value:   "",
-		Usage:   "Key `PASSWORD`",
+		Usage:   "`Keystore PASSWORD`",
 		Aliases: []string{"p"},
 	}
 	keyPathFlag = &cli.StringFlag{
 		Name:    flagKeyPath,
 		Value:   "",
-		Usage:   "Key `PATH`",
+		Usage:   "`Key PATH`",
 		Aliases: []string{"f"},
 	}
 	privateKeyFlag = &cli.StringFlag{
 		Name:    flagPrivateKey,
 		Value:   "",
-		Usage:   "Private `KEY`",
+		Usage:   "`Private KEY`",
 		Aliases: []string{"k"},
 	}
 	networkFlag = &cli.StringFlag{
 		Name:    flagNetwork,
 		Value:   "mainnet",
-		Usage:   "Network `NAME` (mainnet/holesky)",
+		Usage:   "`Network NAME` (mainnet/holesky)",
 		Aliases: []string{"n"},
 	}
 	chainFlag = &cli.StringFlag{
 		Name:    flagChain,
 		Value:   "optimism",
-		Usage:   "Chain `NAME` (optimism/base)",
-		Aliases: []string{"h"},
+		Usage:   "`Chain NAME` (optimism/base)",
+		Aliases: []string{"r"},
 	}
 	rollupRPCFlag = &cli.StringFlag{
 		Name:    flagRollupRPC,
 		Value:   "",
-		Usage:   "Rollup RPC `URL`",
-		Aliases: []string{"r"},
+		Usage:   "`Rollup RPC URL`",
+		Aliases: []string{"u"},
 	}
 	dockerImageFlag = &cli.StringFlag{
 		Name:    flagDockerImage,
 		Value:   "lagrangelabs/lagrange-node:v0.3.13",
-		Usage:   "Docker `IMAGE`",
+		Usage:   "`Docker IMAGE`",
 		Aliases: []string{"i"},
 	}
 	keyIndexFlag = &cli.IntFlag{
 		Name:    flagKeyIndex,
 		Value:   0,
-		Usage:   "Key `INDEX`",
+		Usage:   "`BLS Key INDEX`",
 		Aliases: []string{"i"},
 	}
 )
@@ -145,7 +145,7 @@ func main() {
 			Action: registerOperator,
 		},
 		{
-			Name:  "deregsiter-operator",
+			Name:  "deregister-operator",
 			Usage: "Deregister the operator from the committee",
 			Flags: []cli.Flag{
 				configFileFlag,
@@ -173,6 +173,15 @@ func main() {
 			Action: updateSignerAddress,
 		},
 		{
+			Name:  "add-bls-pub-key",
+			Usage: "Add the BLS public key to the operator",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+			},
+			Action: addBlsPubKey,
+		},
+		{
 			Name:  "remove-bls-pub-key",
 			Usage: "Remove the BLS public key at the given index",
 			Flags: []cli.Flag{
@@ -198,6 +207,7 @@ func main() {
 			Flags: []cli.Flag{
 				configFileFlag,
 				networkFlag,
+				chainFlag,
 			},
 			Action: unsubscribeChain,
 		},
@@ -317,20 +327,18 @@ func updateBlsPubKey(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	blsPubRawKeys := make([][2]*big.Int, 0)
 	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
 	if err != nil {
 		return fmt.Errorf("failed to convert BLS public key: %w", err)
 	}
-	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
 
 	// update the BLS public key
-	logger.Infof("Updating BLS public key with BLS public key: %s", blsPubRawKeys)
+	logger.Infof("Updating BLS public key  at index: %d with BLS public key: %s ", index, pubRawKey)
 	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.UpdateBlsPubKey(network, index, blsPubRawKeys[0]); err != nil {
+	if err := chainOps.UpdateBlsPubKey(network, index, pubRawKey); err != nil {
 		logger.Infof("Failed to update BLS public key: %s", err)
 	}
 
@@ -355,6 +363,35 @@ func updateSignerAddress(c *cli.Context) error {
 	}
 	if err := chainOps.UpdateSignerAddress(network, cliCfg.SignerAddress); err != nil {
 		logger.Infof("Failed to update signer address: %s", err)
+	}
+
+	return nil
+}
+
+func addBlsPubKey(c *cli.Context) error {
+	network := strings.ToLower(c.String(flagNetwork))
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+	cliCfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+	blsPubRawKeys := make([][2]*big.Int, 0)
+	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
+	if err != nil {
+		return fmt.Errorf("failed to convert BLS public key: %w", err)
+	}
+	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
+
+	// add the BLS public key
+	logger.Infof("Adding BLS public key with BLS public key: %s", pubRawKey)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+	if err := chainOps.AddBlsPubKeys(network, blsPubRawKeys); err != nil {
+		logger.Infof("Failed to add BLS public key: %s", err)
 	}
 
 	return nil
@@ -403,6 +440,7 @@ func subscribeChain(c *cli.Context) error {
 	}
 
 	// subscribe chain
+	logger.Infof("Subscribing to the dedicated chain: %s", chain)
 	if err := chainOps.Subscribe(network, chain); err != nil {
 		logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
 	}
@@ -429,6 +467,7 @@ func unsubscribeChain(c *cli.Context) error {
 	}
 
 	// subscribe chain
+	logger.Infof("Unsubscribing from the dedicated chain: %s", chain)
 	if err := chainOps.Unsubscribe(network, chain); err != nil {
 		logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
 	}
@@ -464,10 +503,8 @@ func generateConfig(c *cli.Context) error {
 	clientCfg.OperatorAddress = cfg.OperatorAddress
 	clientCfg.BLSPubKey = cfg.BLSPublicKey
 	clientCfg.BLSKeystorePath = cfg.BLSKeystorePath
-	clientCfg.BLSKeystorePassword = cfg.BLSKeystorePassword
 	clientCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
 	clientCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
-	clientCfg.SignerECDSAKeystorePassword = cfg.SignerECDSAKeystorePassword
 	clientCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
 
 	configFilePath, err := config.GenerateClientConfig(clientCfg, network)

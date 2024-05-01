@@ -1,5 +1,38 @@
 package config
 
+const (
+	// FlagCfg is the flag for cfg.
+	FlagCfg = "config"
+
+	clientConfigTemplate = `[Client]
+GrpcURL = "{{.ServerGrpcURL}}"
+Chain = "{{.ChainName}}"
+EthereumURL = "{{.EthereumRPCURL}}"
+OperatorAddress = "{{.OperatorAddress}}"
+CommitteeSCAddress = "{{.CommitteeSCAddress}}"
+BLSKeystorePath = "{{.BLSKeystorePath}}"
+BLSKeystorePasswordPath = "{{.BLSKeystorePasswordPath}}"
+SignerECDSAKeystorePath = "{{.SignerECDSAKeystorePath}}"
+SignerECDSAKeystorePasswordPath = "{{.SignerECDSAKeystorePasswordPath}}"
+PullInterval = "1000ms"
+BLSCurve = "{{.BLSCurve}}"
+
+[RpcClient]
+
+	[RpcClient.Optimism]
+	RPCURL = "{{.L2RPCEndpoint}}"
+	L1RPCURL = "{{.L1RPCEndpoint}}"
+	BeaconURL = "{{.BeaconURL}}"
+	BatchInbox = "{{.BatchInbox}}"
+	BatchSender = "{{.BatchSender}}"
+	ConcurrentFetchers = "{{.ConcurrentFetchers}}"
+
+	[RpcClient.Mock]
+	RPCURL = "{{.L2RPCEndpoint}}"`
+
+	configDir = ".lagrange/config"
+)
+
 var (
 	NetworkConfigs = map[string]NetworkConfig{
 		"holesky": {
@@ -20,6 +53,14 @@ var (
 				"base":     "34.193.82.90:9090",
 			},
 		},
+		"local": {
+			ChainID:                  1337,
+			CommitteeSCAddress:       "0xBF4E09354df24900e3d2A1e9057a9F7601fbDD06",
+			LagrangeServiceSCAddress: "0xBda41273d671bb33374F7b9C4Ae8746c712727f7",
+			GRPCServerURLs: map[string]string{
+				"mock": "localhost:9090",
+			},
+		},
 	}
 
 	ChainBatchConfigs = map[string]ChainBatchConfig{
@@ -32,6 +73,9 @@ var (
 			ChainID:     8453,
 			BatchInbox:  "0xFf00000000000000000000000000000000008453",
 			BatchSender: "0x5050F69a9786F081509234F1a7F4684b5E5b76C9",
+		},
+		"mock": {
+			ChainID: 1337,
 		},
 	}
 )
