@@ -7,5 +7,6 @@ BLSKeystorePasswordPath = "--- BLS Keystore Password Path ---"
 EthereumRPCURL = "--- Ethereum RPC URL (mainnet / holesky) ---"
 L1RPCEndpoint = "--- L1 RPC Endpoint (mainnet) ---"
 BeaconURL = "--- Beacon Endpoint (mainnet) ---"
+L2RPCEndpoint = "--- L2 RPC Endpoint (optimism / base) ---"
 BLSCurve = "BN254"
 ConcurrentFetchers = 8

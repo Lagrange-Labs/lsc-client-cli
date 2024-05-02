@@ -22,7 +22,6 @@ const (
 	flagKeyPath     = "key-path"
 	flagNetwork     = "network"
 	flagChain       = "chain"
-	flagRollupRPC   = "rollup-rpc"
 	flagDockerImage = "docker-image"
 	flagKeyIndex    = "key-index"
 )
@@ -69,12 +68,6 @@ var (
 		Value:   "optimism",
 		Usage:   "Chain `NAME` (optimism/base)",
 		Aliases: []string{"r"},
-	}
-	rollupRPCFlag = &cli.StringFlag{
-		Name:    flagRollupRPC,
-		Value:   "",
-		Usage:   "Rollup RPC `URL`",
-		Aliases: []string{"u"},
 	}
 	dockerImageFlag = &cli.StringFlag{
 		Name:    flagDockerImage,
@@ -218,7 +211,6 @@ func main() {
 				configFileFlag,
 				networkFlag,
 				chainFlag,
-				rollupRPCFlag,
 			},
 			Action: generateConfig,
 		},
@@ -496,7 +488,7 @@ func generateConfig(c *cli.Context) error {
 	clientCfg.ChainName = chain
 	clientCfg.ServerGrpcURL = config.NetworkConfigs[network].GRPCServerURLs[chain]
 	clientCfg.L1RPCEndpoint = cfg.L1RPCEndpoint
-	clientCfg.L2RPCEndpoint = c.String(flagRollupRPC)
+	clientCfg.L2RPCEndpoint = cfg.L2RPCEndpoint
 	clientCfg.BeaconURL = cfg.BeaconURL
 	clientCfg.BatchInbox = config.ChainBatchConfigs[chain].BatchInbox
 	clientCfg.BatchSender = config.ChainBatchConfigs[chain].BatchSender

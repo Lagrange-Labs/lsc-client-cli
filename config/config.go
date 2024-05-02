@@ -34,6 +34,7 @@ type CLIConfig struct {
 	EthereumRPCURL                  string `mapstructure:"EthereumRPCURL"`
 	L1RPCEndpoint                   string `mapstructure:"L1RPCEndpoint"`
 	BeaconURL                       string `mapstructure:"BeaconURL"`
+	L2RPCEndpoint                   string `mapstructure:"L2RPCEndpoint"`
 	BLSCurve                        string `mapstructure:"BLSCurve"`
 	ConcurrentFetchers              int    `mapstructure:"ConcurrentFetchers"`
 }
