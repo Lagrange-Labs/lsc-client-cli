@@ -2,11 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	ecrypto "github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/Lagrange-Labs/lagrange-node/crypto"
+	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
 const keystoreDir = ".lagrange/keystore"
@@ -73,13 +75,18 @@ func ExportKeystore(keyType, password, filePath string) ([]byte, error) {
 }
 
 func saveKeystore(keyType string, password string, pubKey, privKey []byte) error {
-	ksPath := filepath.Join(keystoreDir, fmt.Sprintf("%s_%x.key", keyType, pubKey[:6]))
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %w", err)
+	}
+	ksPath := filepath.Join(homeDir, keystoreDir, fmt.Sprintf("%s_%x.key", keyType, pubKey[:6]))
 	var cryptoCurve crypto.CryptoCurve
 	if keyType == "ecdsa" {
 		cryptoCurve = crypto.CryptoCurve("ECDSA")
 	} else if keyType == "bls" {
 		cryptoCurve = crypto.CryptoCurve("BN254")
 	}
+	DisplayWarningMessage(keyType, nutils.Bytes2Hex(privKey), ksPath)
 	return crypto.SaveKey(cryptoCurve, privKey, password, ksPath)
 }
 

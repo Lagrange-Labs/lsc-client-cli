@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -39,7 +40,7 @@ func NewChainOps(network, rpcEndpoint string, privateKey string) (*ChainOps, err
 	if err != nil {
 		return nil, err
 	}
-	if config.ChainBatchConfigs[network].ChainID != uint32(chainID.Int64()) {
+	if config.NetworkConfigs[network].ChainID != uint32(chainID.Int64()) {
 		return nil, fmt.Errorf("chain ID mismatch: expected %d, got %d", config.ChainBatchConfigs[network].ChainID, chainID.Int64())
 	}
 
@@ -78,6 +79,9 @@ func (c *ChainOps) Register(network, signAddr string, blsPubKeys [][2]*big.Int) 
 	}
 	var salt [32]byte
 	copy(salt[:], lagrangeAVSSalt)
+	// add timestamp to salt
+	t := time.Now().UnixNano()
+	copy(salt[len(lagrangeAVSSalt):], big.NewInt(t).Bytes())
 	header, err := c.client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		return err
@@ -106,13 +110,12 @@ func (c *ChainOps) Register(network, signAddr string, blsPubKeys [][2]*big.Int) 
 }
 
 // AddBlsPubKeys adds BLS Public keys to the validator.
-func (c *ChainOps) AddBlsPubKeys(serviceAddr string, blsPubKeys [][2]*big.Int) error {
+func (c *ChainOps) AddBlsPubKeys(network string, blsPubKeys [][2]*big.Int) error {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
 	}
-
-	logger.Infof("Adding BLS public keys %s from %s", blsPubKeys, c.auth.From.String())
 
 	tx, err := lagrangeService.AddBlsPubKeys(c.auth, blsPubKeys)
 	if err != nil {
@@ -131,8 +134,6 @@ func (c *ChainOps) Subscribe(network, chain string) error {
 		return err
 	}
 
-	logger.Infof("Subscribing to chain %d from %s", chainID, c.auth.From.String())
-
 	tx, err := lagrangeService.Subscribe(c.auth, chainID)
 	if err != nil {
 		return fmt.Errorf("failed to subscribe: %v", err)
@@ -150,8 +151,6 @@ func (c *ChainOps) Unsubscribe(network, chain string) error {
 		return err
 	}
 
-	logger.Infof("Unsubscribing chain %d from %s", chainID, c.auth.From.String())
-
 	tx, err := lagrangeService.Unsubscribe(c.auth, chainID)
 	if err != nil {
 		return fmt.Errorf("failed to unsubscribe: %v", err)
@@ -167,8 +166,6 @@ func (c *ChainOps) Deregister(network string) error {
 	if err != nil {
 		return err
 	}
-
-	logger.Infof("Deregistering from %s", c.auth.From.String())
 
 	tx, err := lagrangeService.Deregister(c.auth)
 	if err != nil {
@@ -186,8 +183,6 @@ func (c *ChainOps) UpdateBlsPubKey(network string, index uint32, blsPubKey [2]*b
 		return err
 	}
 
-	logger.Infof("Updating BLS public key at index %d from %s", index, c.auth.From.String())
-
 	tx, err := lagrangeService.UpdateBlsPubKey(c.auth, index, blsPubKey)
 	if err != nil {
 		return fmt.Errorf("failed to update BLS key: %v", err)
@@ -204,8 +199,6 @@ func (c *ChainOps) RemoveBlsPubKeys(network string, indices []uint32) error {
 		return err
 	}
 
-	logger.Infof("Removing BLS public keys at indices %v from %s", indices, c.auth.From.String())
-
 	tx, err := lagrangeService.RemoveBlsPubKeys(c.auth, indices)
 	if err != nil {
 		return fmt.Errorf("failed to remove BLS keys: %v", err)
@@ -221,8 +214,6 @@ func (c *ChainOps) UpdateSignerAddress(network, newSignerAddr string) error {
 	if err != nil {
 		return err
 	}
-
-	logger.Infof("Updating signer address to %s from %s", newSignerAddr, c.auth.From.String())
 
 	tx, err := lagrangeService.UpdateSignAddress(c.auth, common.HexToAddress(newSignerAddr))
 	if err != nil {

@@ -16,60 +16,25 @@ import (
 	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
-const (
-	// FlagCfg is the flag for cfg.
-	FlagCfg = "config"
-
-	clientConfigTemplate = `[Client]
-GrpcURL = "{{.ServerGrpcURL}}"
-Chain = "{{.ChainName}}"
-EthereumURL = "{{.EthereumRPCURL}}"
-OperatorAddress = "{{.OperatorAddress}}"
-CommitteeSCAddress = "{{.CommitteeSCAddress}}"
-BLSKeystorePath = "{{.BLSKeystorePath}}"
-BLSKeystorePassword = "{{.BLSKeystorePassword}}"
-BLSKeystorePasswordPath = "{{.BLSKeystorePasswordPath}}"
-SignerECDSAKeystorePath = "{{.SignerECDSAKeystorePath}}"
-SignerECDSAKeystorePassword = "{{.SignerECDSAKeystorePassword}}"
-SignerECDSAKeystorePasswordPath = "{{.SignerECDSAKeystorePasswordPath}}"
-
-PullInterval = "1000ms"
-BLSCurve = "{{.BLSCurve}}"
-
-[RpcClient]
-
-	[RpcClient.Optimism]
-	RPCURL = "{{.L2RPCEndpoint}}"
-	L1RPCURL = "{{.L1RPCEndpoint}}"
-	BeaconURL = "{{.BeaconURL}}"
-	BatchInbox = "{{.BatchInbox}}"
-	BatchSender = "{{.BatchSender}}"
-	ConcurrentFetchers = "{{.ConcurrentFetchers}}"
-
-	[RpcClient.Mock]
-	RPCURL = "http://localhost:8545"`
-
-	configDir = ".lagrange/config"
-)
-
 // CLIConfig is the configuration for the lagrange CLI.
 type CLIConfig struct {
 	OperatorPrivKey                 string
 	OperatorAddress                 string
 	OperatorKeystorePath            string `mapstructure:"OperatorKeyStorePath"`
-	OperatorKeystorePassword        string `mapstructure:"OperatorKeyStorePassword"`
+	OperatorKeystorePassword        string
 	OperatorKeystorePasswordPath    string `mapstructure:"OperatorKeyStorePasswordPath"`
 	SignerAddress                   string
 	SignerECDSAKeystorePath         string `mapstructure:"SignerECDSAKeystorePath"`
-	SignerECDSAKeystorePassword     string `mapstructure:"SignerECDSAKeystorePassword"`
+	SignerECDSAKeystorePassword     string
 	SignerECDSAKeystorePasswordPath string `mapstructure:"SignerECDSAKeystorePasswordPath"`
 	BLSPublicKey                    string
 	BLSKeystorePath                 string `mapstructure:"BLSKeyStorePath"`
-	BLSKeystorePassword             string `mapstructure:"BLSKeyStorePassword"`
+	BLSKeystorePassword             string
 	BLSKeystorePasswordPath         string `mapstructure:"BLSKeyStorePasswordPath"`
 	EthereumRPCURL                  string `mapstructure:"EthereumRPCURL"`
-	L1RPCEndpoint                   string `json:"L1RPCEndpoint"`
-	BeaconURL                       string `json:"BeaconURL"`
+	L1RPCEndpoint                   string `mapstructure:"L1RPCEndpoint"`
+	BeaconURL                       string `mapstructure:"BeaconURL"`
+	L2RPCEndpoint                   string `mapstructure:"L2RPCEndpoint"`
 	BLSCurve                        string `mapstructure:"BLSCurve"`
 	ConcurrentFetchers              int    `mapstructure:"ConcurrentFetchers"`
 }
@@ -77,34 +42,36 @@ type CLIConfig struct {
 // ClientConfig is the configuration for the lagrange client.
 // This is used to generate the client.toml file.
 type ClientConfig struct {
-	ChainName                       string `json:"chain_name"`
-	ServerGrpcURL                   string `json:"server_grpc_url"`
-	OperatorAddress                 string `json:"operator_address"`
-	L1RPCEndpoint                   string `json:"l1_rpc_endpoint"`
-	L2RPCEndpoint                   string `json:"l2_rpc_endpoint"`
-	BeaconURL                       string `json:"beacon_url"`
-	EthereumRPCURL                  string `json:"ethereum_rpc_url"`
-	CommitteeSCAddress              string `json:"committee_sc_address"`
-	BLSPubKey                       string `json:"bls_pub_key"`
-	BLSKeystorePath                 string `json:"bls_keystore_path"`
-	BLSKeystorePassword             string `json:"bls_keystore_password"`
-	BLSKeystorePasswordPath         string `json:"bls_keystore_password_path"`
-	SignerECDSAKeystorePath         string `json:"signer_ecdsa_keystore_path"`
-	SignerECDSAKeystorePassword     string `json:"signer_ecdsa_keystore_password"`
-	SignerECDSAKeystorePasswordPath string `json:"signer_ecdsa_keystore_password_path"`
-	BatchInbox                      string `json:"batch_inbox"`
-	BatchSender                     string `json:"batch_sender"`
-	BLSCurve                        string `json:"bls_curve"`
-	ConcurrentFetchers              int    `json:"concurrent_fetchers"`
+	ChainName                       string
+	ServerGrpcURL                   string
+	OperatorAddress                 string
+	L1RPCEndpoint                   string
+	L2RPCEndpoint                   string
+	BeaconURL                       string
+	EthereumRPCURL                  string
+	CommitteeSCAddress              string
+	BLSPubKey                       string
+	BLSKeystorePath                 string `mapstructure:"BLSKeystorePath"`
+	BLSKeystorePasswordPath         string `mapstructure:"BLSKeystorePasswordPath"`
+	SignerECDSAKeystorePath         string `mapstructure:"SignerECDSAKeystorePath"`
+	SignerECDSAKeystorePasswordPath string `mapstructure:"SignerECDSAKeystorePasswordPath"`
+	BatchInbox                      string
+	BatchSender                     string
+	BLSCurve                        string
+	ConcurrentFetchers              int
 }
 
 // DockerComposeConfig is the configuration for the docker-compose.yml file.
 type DockerComposeConfig struct {
-	Network         string `json:"network"`
-	ChainName       string `json:"chain_name"`
-	BLSPubKeyPrefix string `json:"bls_pub_key"`
-	DockerImage     string `json:"docker_image"`
-	ConfigFilePath  string `json:"config_file_path"`
+	Network                         string `json:"network"`
+	ChainName                       string `json:"chain_name"`
+	BLSPubKeyPrefix                 string `json:"bls_pub_key"`
+	DockerImage                     string `json:"docker_image"`
+	ConfigFilePath                  string `json:"config_file_path"`
+	BLSKeystorePath                 string `json:"bls_keystore_path"`
+	BLSKeystorePasswordPath         string `json:"bls_keystore_password_path"`
+	SignerECDSAKeystorePath         string `json:"signer_ecdsa_keystore_path"`
+	SignerECDSAKeystorePasswordPath string `json:"signer_ecdsa_keystore_password_path"`
 }
 
 // LoadCLIConfig loads the lagrange CLI configuration.
@@ -226,6 +193,13 @@ func readPasswordFromFile(filePath string) (string, error) {
 
 // GenerateClientConfig generates the client.toml file.
 func GenerateClientConfig(clientCfg *ClientConfig, network string) (string, error) {
+	// Validate the client config
+	if len(clientCfg.BLSKeystorePath) == 0 {
+		return "", fmt.Errorf("BLS keystore path is required")
+	}
+	if len(clientCfg.SignerECDSAKeystorePath) == 0 {
+		return "", fmt.Errorf("signer ECDSA keystore path is required")
+	}
 	// Create the Client Config file
 	tmplClient, err := template.New("client").Parse(clientConfigTemplate)
 	if err != nil {
@@ -251,4 +225,25 @@ func GenerateClientConfig(clientCfg *ClientConfig, network string) (string, erro
 	}
 
 	return configFilePath, nil
+}
+
+// LoadClientConfig loads the client config from the client.toml file.
+func LoadClientConfig(configFilePath string) (*ClientConfig, error) {
+	var cfg struct {
+		Client ClientConfig
+	}
+
+	viper.SetConfigFile(configFilePath)
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, err
+	}
+	decodeHooks := []viper.DecoderConfigOption{
+		// this allows arrays to be decoded from env var separated by ",", example: MY_VAR="value1,value2,value3"
+		viper.DecodeHook(mapstructure.ComposeDecodeHookFunc(mapstructure.TextUnmarshallerHookFunc(), mapstructure.StringToSliceHookFunc(","))),
+	}
+	if err := viper.Unmarshal(&cfg, decodeHooks...); err != nil {
+		return nil, err
+	}
+
+	return &cfg.Client, nil
 }

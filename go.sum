@@ -1,9 +1,5 @@
 github.com/DataDog/zstd v1.5.2 h1:vUG4lAyuPCXO0TLbXvPv7EB7cNK1QV/luu55UHLrrn8=
 github.com/DataDog/zstd v1.5.2/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwSAmyw=
-github.com/Lagrange-Labs/lagrange-node v0.0.0-20240421220813-116b6287b559 h1:90rC0DO1J8lXuwbYbBcIig+zjTBjX7/8eySncGMeLrU=
-github.com/Lagrange-Labs/lagrange-node v0.0.0-20240421220813-116b6287b559/go.mod h1:jE8fxdA5EXQ4HoY9CNhDpRdmoC0Fu+JPqDArjwbE8Vw=
-github.com/Lagrange-Labs/lagrange-node v0.0.0-20240424003136-9f779c0b59d4 h1:nShy3v3Eua6KmipXmMAgmJD11/2md9twQOEkxZ9a4tM=
-github.com/Lagrange-Labs/lagrange-node v0.0.0-20240424003136-9f779c0b59d4/go.mod h1:jE8fxdA5EXQ4HoY9CNhDpRdmoC0Fu+JPqDArjwbE8Vw=
 github.com/Lagrange-Labs/lagrange-node v0.0.0-20240426131021-6b661e56957a h1:+hqIb7GwOuSNCwHZVjV5xqxeRAKZmNE5ChHt+O5D3lM=
 github.com/Lagrange-Labs/lagrange-node v0.0.0-20240426131021-6b661e56957a/go.mod h1:jE8fxdA5EXQ4HoY9CNhDpRdmoC0Fu+JPqDArjwbE8Vw=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
@@ -80,8 +76,8 @@ github.com/golang-jwt/jwt/v4 v4.5.0 h1:7cYmW1XlMY7h7ii7UhUyChSgS5wUJEnm9uZVTGqOW
 github.com/golang-jwt/jwt/v4 v4.5.0/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
 github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb h1:PBC98N2aIaM3XXiurYmW7fx4GZkL8feAMVq7nEjURHk=
 github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
-github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
-github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
+github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/gofuzz v1.2.1-0.20220503160820-4a35382e8fc8 h1:Ep/joEub9YwcjRY6ND3+Y/w0ncE540RtGatVhtZL0/Q=
 github.com/google/gofuzz v1.2.1-0.20220503160820-4a35382e8fc8/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=

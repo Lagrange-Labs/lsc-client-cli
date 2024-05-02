@@ -22,7 +22,6 @@ const (
 	flagKeyPath     = "key-path"
 	flagNetwork     = "network"
 	flagChain       = "chain"
-	flagRollupRPC   = "rollup-rpc"
 	flagDockerImage = "docker-image"
 	flagKeyIndex    = "key-index"
 )
@@ -43,7 +42,7 @@ var (
 	keyPasswordFlag = &cli.StringFlag{
 		Name:    flagKeyPassword,
 		Value:   "",
-		Usage:   "Key `PASSWORD`",
+		Usage:   "Keystore `PASSWORD`",
 		Aliases: []string{"p"},
 	}
 	keyPathFlag = &cli.StringFlag{
@@ -68,12 +67,6 @@ var (
 		Name:    flagChain,
 		Value:   "optimism",
 		Usage:   "Chain `NAME` (optimism/base)",
-		Aliases: []string{"h"},
-	}
-	rollupRPCFlag = &cli.StringFlag{
-		Name:    flagRollupRPC,
-		Value:   "",
-		Usage:   "Rollup RPC `URL`",
 		Aliases: []string{"r"},
 	}
 	dockerImageFlag = &cli.StringFlag{
@@ -85,7 +78,7 @@ var (
 	keyIndexFlag = &cli.IntFlag{
 		Name:    flagKeyIndex,
 		Value:   0,
-		Usage:   "Key `INDEX`",
+		Usage:   "BLS Key `INDEX`",
 		Aliases: []string{"i"},
 	}
 )
@@ -145,7 +138,7 @@ func main() {
 			Action: registerOperator,
 		},
 		{
-			Name:  "deregsiter-operator",
+			Name:  "deregister-operator",
 			Usage: "Deregister the operator from the committee",
 			Flags: []cli.Flag{
 				configFileFlag,
@@ -173,6 +166,15 @@ func main() {
 			Action: updateSignerAddress,
 		},
 		{
+			Name:  "add-bls-pub-key",
+			Usage: "Add the BLS public key to the operator",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+			},
+			Action: addBlsPubKey,
+		},
+		{
 			Name:  "remove-bls-pub-key",
 			Usage: "Remove the BLS public key at the given index",
 			Flags: []cli.Flag{
@@ -198,6 +200,7 @@ func main() {
 			Flags: []cli.Flag{
 				configFileFlag,
 				networkFlag,
+				chainFlag,
 			},
 			Action: unsubscribeChain,
 		},
@@ -208,7 +211,6 @@ func main() {
 				configFileFlag,
 				networkFlag,
 				chainFlag,
-				rollupRPCFlag,
 			},
 			Action: generateConfig,
 		},
@@ -317,20 +319,18 @@ func updateBlsPubKey(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	blsPubRawKeys := make([][2]*big.Int, 0)
 	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
 	if err != nil {
 		return fmt.Errorf("failed to convert BLS public key: %w", err)
 	}
-	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
 
 	// update the BLS public key
-	logger.Infof("Updating BLS public key with BLS public key: %s", blsPubRawKeys)
+	logger.Infof("Updating BLS public key  at index: %d with BLS public key: %s", index, pubRawKey)
 	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.UpdateBlsPubKey(network, index, blsPubRawKeys[0]); err != nil {
+	if err := chainOps.UpdateBlsPubKey(network, index, pubRawKey); err != nil {
 		logger.Infof("Failed to update BLS public key: %s", err)
 	}
 
@@ -355,6 +355,35 @@ func updateSignerAddress(c *cli.Context) error {
 	}
 	if err := chainOps.UpdateSignerAddress(network, cliCfg.SignerAddress); err != nil {
 		logger.Infof("Failed to update signer address: %s", err)
+	}
+
+	return nil
+}
+
+func addBlsPubKey(c *cli.Context) error {
+	network := strings.ToLower(c.String(flagNetwork))
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+	cliCfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+	blsPubRawKeys := make([][2]*big.Int, 0)
+	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
+	if err != nil {
+		return fmt.Errorf("failed to convert BLS public key: %w", err)
+	}
+	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
+
+	// add the BLS public key
+	logger.Infof("Adding BLS public key with BLS public key: %s", pubRawKey)
+	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to create ChainOps instance: %s", err)
+	}
+	if err := chainOps.AddBlsPubKeys(network, blsPubRawKeys); err != nil {
+		logger.Infof("Failed to add BLS public key: %s", err)
 	}
 
 	return nil
@@ -403,6 +432,7 @@ func subscribeChain(c *cli.Context) error {
 	}
 
 	// subscribe chain
+	logger.Infof("Subscribing to the dedicated chain: %s", chain)
 	if err := chainOps.Subscribe(network, chain); err != nil {
 		logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
 	}
@@ -429,6 +459,7 @@ func unsubscribeChain(c *cli.Context) error {
 	}
 
 	// subscribe chain
+	logger.Infof("Unsubscribing from the dedicated chain: %s", chain)
 	if err := chainOps.Unsubscribe(network, chain); err != nil {
 		logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
 	}
@@ -457,17 +488,15 @@ func generateConfig(c *cli.Context) error {
 	clientCfg.ChainName = chain
 	clientCfg.ServerGrpcURL = config.NetworkConfigs[network].GRPCServerURLs[chain]
 	clientCfg.L1RPCEndpoint = cfg.L1RPCEndpoint
-	clientCfg.L2RPCEndpoint = c.String(flagRollupRPC)
+	clientCfg.L2RPCEndpoint = cfg.L2RPCEndpoint
 	clientCfg.BeaconURL = cfg.BeaconURL
 	clientCfg.BatchInbox = config.ChainBatchConfigs[chain].BatchInbox
 	clientCfg.BatchSender = config.ChainBatchConfigs[chain].BatchSender
 	clientCfg.OperatorAddress = cfg.OperatorAddress
 	clientCfg.BLSPubKey = cfg.BLSPublicKey
 	clientCfg.BLSKeystorePath = cfg.BLSKeystorePath
-	clientCfg.BLSKeystorePassword = cfg.BLSKeystorePassword
 	clientCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
 	clientCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
-	clientCfg.SignerECDSAKeystorePassword = cfg.SignerECDSAKeystorePassword
 	clientCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
 
 	configFilePath, err := config.GenerateClientConfig(clientCfg, network)
