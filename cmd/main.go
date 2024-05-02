@@ -71,7 +71,7 @@ var (
 	}
 	dockerImageFlag = &cli.StringFlag{
 		Name:    flagDockerImage,
-		Value:   "lagrangelabs/lagrange-node:v0.3.13",
+		Value:   "lagrangelabs/lagrange-node:v0.3.14",
 		Usage:   "Docker `IMAGE`",
 		Aliases: []string{"i"},
 	}
