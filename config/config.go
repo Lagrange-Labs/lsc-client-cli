@@ -116,7 +116,7 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 		return nil, fmt.Errorf("operator keystore path is required")
 	}
 	if len(cfg.OperatorKeystorePasswordPath) > 0 {
-		cfg.OperatorKeystorePassword, err = readPasswordFromFile(cfg.OperatorKeystorePasswordPath)
+		cfg.OperatorKeystorePassword, err = crypto.ReadKeystorePasswordFromFile(cfg.OperatorKeystorePasswordPath)
 		if err != nil {
 			return nil, err
 		}
@@ -139,7 +139,7 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 		return nil, fmt.Errorf("signer ECDSA keystore path is required")
 	}
 	if len(cfg.SignerECDSAKeystorePasswordPath) > 0 {
-		cfg.SignerECDSAKeystorePassword, err = readPasswordFromFile(cfg.SignerECDSAKeystorePasswordPath)
+		cfg.SignerECDSAKeystorePassword, err = crypto.ReadKeystorePasswordFromFile(cfg.SignerECDSAKeystorePasswordPath)
 		if err != nil {
 			return nil, err
 		}
@@ -161,7 +161,7 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 		return nil, fmt.Errorf("BLS keystore path is required")
 	}
 	if len(cfg.BLSKeystorePasswordPath) > 0 {
-		cfg.BLSKeystorePassword, err = readPasswordFromFile(cfg.BLSKeystorePasswordPath)
+		cfg.BLSKeystorePassword, err = crypto.ReadKeystorePasswordFromFile(cfg.BLSKeystorePasswordPath)
 		if err != nil {
 			return nil, err
 		}
@@ -181,14 +181,6 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 	cfg.BLSPublicKey = nutils.Bytes2Hex(pubKey)
 
 	return &cfg, nil
-}
-
-func readPasswordFromFile(filePath string) (string, error) {
-	password, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read password from file: %w", err)
-	}
-	return strings.TrimSpace(string(password)), nil
 }
 
 // GenerateClientConfig generates the client.toml file.
