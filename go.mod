@@ -3,7 +3,7 @@ go 1.21
 module github.com/Lagrange-Labs/client-cli
 
 require (
-	github.com/Lagrange-Labs/lagrange-node v0.0.0-20240426131021-6b661e56957a
+	github.com/Lagrange-Labs/lagrange-node v0.3.15
 	github.com/ethereum/go-ethereum v1.13.11
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/viper v1.18.2
