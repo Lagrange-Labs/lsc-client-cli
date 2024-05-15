@@ -16,14 +16,14 @@ import (
 )
 
 const (
-	flagKeyType     = "key-type"
-	flagKeyPassword = "password"
-	flagPrivateKey  = "private-key"
-	flagKeyPath     = "key-path"
-	flagNetwork     = "network"
-	flagChain       = "chain"
-	flagDockerImage = "docker-image"
-	flagKeyIndex    = "key-index"
+	flagKeyType         = "key-type"
+	flagKeyPasswordPath = "password-path"
+	flagPrivateKey      = "private-key"
+	flagKeyPath         = "key-path"
+	flagNetwork         = "network"
+	flagChain           = "chain"
+	flagDockerImage     = "docker-image"
+	flagKeyIndex        = "key-index"
 )
 
 var (
@@ -39,8 +39,8 @@ var (
 		Usage:   "Key `TYPE` (bls/ecdsa)",
 		Aliases: []string{"t"},
 	}
-	keyPasswordFlag = &cli.StringFlag{
-		Name:    flagKeyPassword,
+	keyPasswordPathFlag = &cli.StringFlag{
+		Name:    flagKeyPasswordPath,
 		Value:   "",
 		Usage:   "Keystore `PASSWORD`",
 		Aliases: []string{"p"},
@@ -104,7 +104,7 @@ func main() {
 			Usage: "Generate a new keystore file for the given key type (bls/ecdsa)",
 			Flags: []cli.Flag{
 				keyTypeFlag,
-				keyPasswordFlag,
+				keyPasswordPathFlag,
 			},
 			Action: generateKeystore,
 		},
@@ -113,7 +113,7 @@ func main() {
 			Usage: "Import a private key to the keystore for the given key type (bls/ecdsa)",
 			Flags: []cli.Flag{
 				keyTypeFlag,
-				keyPasswordFlag,
+				keyPasswordPathFlag,
 				privateKeyFlag,
 			},
 			Action: importKeystore,
@@ -123,7 +123,7 @@ func main() {
 			Usage: "Export a private key from the keystore",
 			Flags: []cli.Flag{
 				keyTypeFlag,
-				keyPasswordFlag,
+				keyPasswordPathFlag,
 				keyPathFlag,
 			},
 			Action: exportKeystore,
@@ -234,22 +234,22 @@ func main() {
 
 func generateKeystore(c *cli.Context) error {
 	keyType := strings.ToLower(c.String(flagKeyType))
-	password := c.String(flagKeyPassword)
-	return utils.GenerateKeystore(keyType, password)
+	passwordPath := c.String(flagKeyPasswordPath)
+	return utils.GenerateKeystore(keyType, passwordPath)
 }
 
 func importKeystore(c *cli.Context) error {
 	keyType := strings.ToLower(c.String(flagKeyType))
-	password := c.String(flagKeyPassword)
+	passwordPath := c.String(flagKeyPasswordPath)
 	privKey := nutils.Hex2Bytes(c.String(flagPrivateKey))
-	return utils.ImportFromPrivateKey(keyType, password, privKey)
+	return utils.ImportFromPrivateKey(keyType, passwordPath, privKey)
 }
 
 func exportKeystore(c *cli.Context) error {
 	keyType := strings.ToLower(c.String(flagKeyType))
-	password := c.String(flagKeyPassword)
+	passwordPath := c.String(flagKeyPasswordPath)
 	keyPath := c.String(flagKeyPath)
-	privKey, err := utils.ExportKeystore(keyType, password, keyPath)
+	privKey, err := utils.ExportKeystore(keyType, passwordPath, keyPath)
 	if err != nil {
 		return err
 	}
