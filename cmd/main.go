@@ -215,6 +215,15 @@ func main() {
 			Action: generateConfig,
 		},
 		{
+			Name:  "generate-docker-compose",
+			Usage: "Generate a docker-compose file for node deployment",
+			Flags: []cli.Flag{
+				configFileFlag,
+				dockerImageFlag,
+			},
+			Action: generateDockerCompose,
+		},
+		{
 			Name:  "deploy",
 			Usage: "Deploy the Lagrange Node Client with the given config file",
 			Flags: []cli.Flag{
@@ -505,6 +514,16 @@ func generateConfig(c *cli.Context) error {
 	}
 
 	logger.Infof("Client Config file created: %s", configFilePath)
+
+	return nil
+}
+
+func generateDockerCompose(c *cli.Context) error {
+	logger.Infof("Generating Docker Compose file")
+	_, err := utils.GenerateDockerComposeFile(c.String(flagDockerImage), c.String(config.FlagCfg))
+	if err != nil {
+		return fmt.Errorf("failed to generate docker compose file: %w", err)
+	}
 
 	return nil
 }
