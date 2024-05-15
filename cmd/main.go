@@ -42,7 +42,7 @@ var (
 	keyPasswordPathFlag = &cli.StringFlag{
 		Name:    flagKeyPasswordPath,
 		Value:   "",
-		Usage:   "Keystore `PASSWORD`",
+		Usage:   "Keystore Password `PATH`",
 		Aliases: []string{"p"},
 	}
 	keyPathFlag = &cli.StringFlag{

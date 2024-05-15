@@ -117,23 +117,23 @@ The below commands will allow a developer to run a node and attest to the state 
 - Generate Keystore: generates a new key pair for the given key type and password, and saves it in the keystore file. The key type can be either `ecdsa` or `bls`.
 
     ```bash
-    lagrange-cli generate-keystore -t <Key Type> -p <Password>
+    lagrange-cli generate-keystore -t <Key Type> -p <Password File Path>
 
-    # i.e. ./dist/lagrange-cli generate-keystore -t ecdsa -p password
+    # i.e. ./dist/lagrange-cli generate-keystore -t ecdsa -p ~/.lagrange/keystore/ecdsa_.pass
     ```
 - Import Keystore: imports a key pair from the given private key and saves it in the keystore file. The key type can be either `ecdsa` or `bls`.
 
     ```bash
-    lagrange-cli import-keystore -t <Key Type> -p <Password> -k <Private Key>
+    lagrange-cli import-keystore -t <Key Type> -p <Password File Path> -k <Private Key>
 
-    # i.e. ./dist/lagrange-cli import-keystore -t bls -p password -k 0x1234567890abcdef...
+    # i.e. ./dist/lagrange-cli import-keystore -t bls -p ~/.lagrange/keystore/bls_.pass -k 0x1234567890abcdef...
     ```
 - Export Keystore: exports a private key from the keystore file for the given key type and password.
 
     ```bash
-    lagrange-cli export-keystore -t <Key Type> -p <Password> -f <Keystore File Path>
+    lagrange-cli export-keystore -t <Key Type> -p <Password File Path> -f <Keystore File Path>
 
-    # i.e. ./dist/lagrange-cli export-keystore -t ecdsa -p password -f ~/.lagrange/keystore/bls_.key
+    # i.e. ./dist/lagrange-cli export-keystore -t ecdsa -p ~/.lagrange/keystore/ecdsa_.pass -f ~/.lagrange/keystore/bls_.key
     ```
 
 - Register Operator: registers an operator to the Lagrange State Committee. The network name can be either `mainnet` or `holesky`. The BLS key and Signer address are referenced from the config file.
