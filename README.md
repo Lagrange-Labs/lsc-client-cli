@@ -33,6 +33,7 @@ The below commands will allow a developer to run a node and attest to the state 
 
 - Optimism: `10`
 - Base: `8453`
+- Arbitrum: `42161`
 
 ### Minimum Recommended Hardware
 
@@ -107,7 +108,7 @@ The below commands will allow a developer to run a node and attest to the state 
   - `EthereumRPCURL`: Ethereum mainnet RPC endpoint for mainnet, and Holesky RPC endpoint for testnet.
   - `L1RPCEndpoint`: Ethereum mainnet RPC endpoint for both mainnet and Holesky testnet.
   - `BeaconURL`: Beacon mainnet RPC endpoint for both mainnet and Holesky testnet.
-  - `L2RPCEndpoint`: Rollup (`Optimism` or `Base`) chain's mainnet RPC endpoint for both mainnet and Holesky testnet. 
+  - `L2RPCEndpoint`: Rollup (`Optimism` or `Arbitrum` or `Base` etc.) chain's mainnet RPC endpoint for both mainnet and Holesky testnet. 
 
     > NOTE: Currently, we only support the `BN254` curve for the `BLSScheme`.
 
@@ -142,7 +143,7 @@ The below commands will allow a developer to run a node and attest to the state 
 
     # i.e. ./dist/lagrange-cli register-operator -c ./config.toml -n mainnet
     ```
-- Deregsiter Operator: deregisters an operator from the Lagrange State Committee. The network name can be either `mainnet` or `holesky`.
+- Deregister Operator: deregisters an operator from the Lagrange State Committee. The network name can be either `mainnet` or `holesky`.
 
     ```bash
     lagrange-cli deregister-operator -c <Config File Path> -n <Network Name>
@@ -182,7 +183,7 @@ The below commands will allow a developer to run a node and attest to the state 
     # i.e. ./dist/lagrange-cli remove-bls-pub-key -c ./config.toml -n mainnet -i 0
     ```
 
-- Subscribe Chain: subscribes the operator to the given chain. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `base`.
+- Subscribe Chain: subscribes the operator to the given chain. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `arbitrum` etc.
 
     ```bash
     lagrange-cli subscribe-chain -c <Config File Path> -n <Network Name> -r <Chain Name>
@@ -190,7 +191,7 @@ The below commands will allow a developer to run a node and attest to the state 
     # i.e. ./dist/lagrange-cli subscribe-chain -c ./config.toml -n mainnet -r optimism
     ```
 
-- Unsubscribe Chain: unsubscribes the operator from the given chain. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `base`.
+- Unsubscribe Chain: unsubscribes the operator from the given chain. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `base` etc.
 
     ```bash
     lagrange-cli unsubscribe-chain -c <Config File Path> -n <Network Name> -r <Chain Name>
@@ -198,7 +199,7 @@ The below commands will allow a developer to run a node and attest to the state 
     # i.e. ./dist/lagrange-cli unsubscribe-chain -c ./config.toml -n mainnet -r optimism
     ```
 
-- Generate Config: generates a client config file. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `base`. The L1 RPC endpoint is the Ethereum mainnet RPC endpoint for both mainnet and Holesky testnet. The L2 (`Optimism` or `Base`) RPC endpoint is the rollup chain's mainnet RPC endpoint for both mainnet and Holesky testnet. The Beacon RPC endpoint is the Beacon mainnet RPC endpoint for both mainnet and Holesky testnet.
+- Generate Config: generates a client config file. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `base` etc. The L1 RPC endpoint is the Ethereum mainnet RPC endpoint for both mainnet and Holesky testnet. The L2 (`Optimism` or `Base` etc.) RPC endpoint is the rollup chain's mainnet RPC endpoint for both mainnet and Holesky testnet. The Beacon RPC endpoint is the Beacon mainnet RPC endpoint for both mainnet and Holesky testnet.
 
     ```bash
     lagrange-cli generate-config -c <Config File Path> -n <Network Name> -r <Chain Name>

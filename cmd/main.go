@@ -66,7 +66,7 @@ var (
 	chainFlag = &cli.StringFlag{
 		Name:    flagChain,
 		Value:   "optimism",
-		Usage:   "Chain `NAME` (optimism/base)",
+		Usage:   "Chain `NAME` (optimism/base/arbitrum ...)",
 		Aliases: []string{"r"},
 	}
 	dockerImageFlag = &cli.StringFlag{
@@ -429,7 +429,7 @@ func subscribeChain(c *cli.Context) error {
 	}
 	chain := c.String(flagChain)
 	if _, ok := config.ChainBatchConfigs[chain]; !ok {
-		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base, arbitrum ...)", chain)
 	}
 	cliCfg, err := config.LoadCLIConfig(c)
 	if err != nil {
@@ -456,7 +456,7 @@ func unsubscribeChain(c *cli.Context) error {
 	}
 	chain := c.String(flagChain)
 	if _, ok := config.ChainBatchConfigs[chain]; !ok {
-		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base, arbitrum ...)", chain)
 	}
 	cliCfg, err := config.LoadCLIConfig(c)
 	if err != nil {
@@ -483,7 +483,7 @@ func generateConfig(c *cli.Context) error {
 	}
 	chain := c.String(flagChain)
 	if _, ok := config.ChainBatchConfigs[chain]; !ok {
-		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base, arbitrum ...)", chain)
 	}
 	cfg, err := config.LoadCLIConfig(c)
 	if err != nil {
@@ -520,8 +520,7 @@ func generateConfig(c *cli.Context) error {
 
 func generateDockerCompose(c *cli.Context) error {
 	logger.Infof("Generating Docker Compose file")
-	_, err := utils.GenerateDockerComposeFile(c.String(flagDockerImage), c.String(config.FlagCfg))
-	if err != nil {
+	if _, err := utils.GenerateDockerComposeFile(c.String(flagDockerImage), c.String(config.FlagCfg)); err != nil {
 		return fmt.Errorf("failed to generate docker compose file: %w", err)
 	}
 
