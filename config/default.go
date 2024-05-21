@@ -60,7 +60,7 @@ var (
 			GRPCServerURLs: map[string]string{
 				"optimism": "34.202.191.166:9090",
 				"base":     "34.193.82.90:9090",
-				"arbitrum": "__arbitrum_mainnet_grpc_url__",
+				"arbitrum": "44.208.119.151:9090",
 			},
 		},
 		"local": {
