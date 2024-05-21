@@ -67,15 +67,15 @@ func pullDockerImage(imageName string) error {
 	return nil
 }
 
-// RunDockerImage runs a Docker image.
-func RunDockerImage(imageName, configFilePath string) error {
+// GenerateDockerComposeFile generates a Docker Compose file.
+func GenerateDockerComposeFile(imageName, configFilePath string) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %s", err)
+		return "", fmt.Errorf("failed to get home directory: %s", err)
 	}
 	workDir := filepath.Join(homeDir, ".lagrange")
 	if err := os.MkdirAll(workDir, 0755); err != nil {
-		return fmt.Errorf("failed to create work directory: %s", err)
+		return "", fmt.Errorf("failed to create work directory: %s", err)
 	}
 
 	var dockerConfig config.DockerComposeConfig
@@ -91,7 +91,7 @@ func RunDockerImage(imageName, configFilePath string) error {
 	// Load the client config
 	clientCfg, err := config.LoadClientConfig(configFilePath)
 	if err != nil {
-		return fmt.Errorf("failed to load client config: %s", err)
+		return "", fmt.Errorf("failed to load client config: %s", err)
 	}
 	dockerConfig.BLSKeystorePath = clientCfg.BLSKeystorePath
 	dockerConfig.BLSKeystorePasswordPath = clientCfg.BLSKeystorePasswordPath
@@ -100,15 +100,26 @@ func RunDockerImage(imageName, configFilePath string) error {
 
 	tmpDocker, err := template.New("docker-compose").Parse(dockerComposeTemplate)
 	if err != nil {
-		return err
+		return "", err
 	}
 	dockerComposeFilePath := filepath.Join(workDir, fmt.Sprintf("docker-compose_%s_%s_%s.yml", dockerConfig.Network, dockerConfig.ChainName, dockerConfig.BLSPubKeyPrefix))
 	dockerConfigFile, err := os.Create(dockerComposeFilePath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer dockerConfigFile.Close()
 	if err := tmpDocker.Execute(dockerConfigFile, dockerConfig); err != nil {
+		return "", err
+	}
+
+	logger.Infof("Generated Docker Compose file: %s", dockerComposeFilePath)
+	return dockerComposeFilePath, nil
+}
+
+// RunDockerImage runs a Docker image.
+func RunDockerImage(imageName, configFilePath string) error {
+	dockerComposeFilePath, err := GenerateDockerComposeFile(imageName, configFilePath)
+	if err != nil {
 		return err
 	}
 

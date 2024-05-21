@@ -14,7 +14,12 @@ import (
 const keystoreDir = ".lagrange/keystore"
 
 // GenerateKeystore generates a new keystore file for the given key.
-func GenerateKeystore(keyType, password string) error {
+func GenerateKeystore(keyType, passwordPath string) error {
+	password, err := crypto.ReadKeystorePasswordFromFile(passwordPath)
+	if err != nil {
+		return fmt.Errorf("failed to read password from file: %w", err)
+	}
+
 	switch keyType {
 	case "ecdsa":
 		privateKey, err := ecrypto.GenerateKey()
@@ -41,7 +46,12 @@ func GenerateKeystore(keyType, password string) error {
 }
 
 // ImportFromPrivateKey imports a private key to the keystore.
-func ImportFromPrivateKey(keyType, password string, privKey []byte) error {
+func ImportFromPrivateKey(keyType, passwordPath string, privKey []byte) error {
+	password, err := crypto.ReadKeystorePasswordFromFile(passwordPath)
+	if err != nil {
+		return fmt.Errorf("failed to read password from file: %w", err)
+	}
+
 	switch keyType {
 	case "ecdsa":
 		privateKey, err := ecrypto.ToECDSA(privKey)
@@ -63,12 +73,31 @@ func ImportFromPrivateKey(keyType, password string, privKey []byte) error {
 }
 
 // ExportKeystore exports the private key from the keystore file.
-func ExportKeystore(keyType, password, filePath string) ([]byte, error) {
+func ExportKeystore(keyType, passwordPath, filePath string) ([]byte, error) {
+	password, err := crypto.ReadKeystorePasswordFromFile(passwordPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read password from file: %w", err)
+	}
+
 	switch keyType {
 	case "ecdsa":
-		return crypto.LoadPrivateKey(crypto.CryptoCurve("ECDSA"), password, filePath)
+		privateKey, err := crypto.LoadPrivateKey(crypto.CryptoCurve("ECDSA"), password, filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load ECDSA private key: %w", err)
+		}
+		if err := DisplayWarningMessage(keyType, nutils.Bytes2Hex(privateKey), filePath); err != nil {
+			return nil, fmt.Errorf("failed to display warning message: %w", err)
+		}
+		return privateKey, nil
 	case "bls":
-		return crypto.LoadPrivateKey(crypto.CryptoCurve("BN254"), password, filePath)
+		privateKey, err := crypto.LoadPrivateKey(crypto.CryptoCurve("BN254"), password, filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load BLS private key: %w", err)
+		}
+		if err := DisplayWarningMessage(keyType, nutils.Bytes2Hex(privateKey), filePath); err != nil {
+			return nil, fmt.Errorf("failed to display warning message: %w", err)
+		}
+		return privateKey, nil
 	default:
 		return nil, fmt.Errorf("invalid key type: %s", keyType)
 	}
@@ -86,7 +115,9 @@ func saveKeystore(keyType string, password string, pubKey, privKey []byte) error
 	} else if keyType == "bls" {
 		cryptoCurve = crypto.CryptoCurve("BN254")
 	}
-	DisplayWarningMessage(keyType, nutils.Bytes2Hex(privKey), ksPath)
+	if err := DisplayWarningMessage(keyType, nutils.Bytes2Hex(privKey), ksPath); err != nil {
+		return fmt.Errorf("failed to display warning message: %w", err)
+	}
 	return crypto.SaveKey(cryptoCurve, privKey, password, ksPath)
 }
 

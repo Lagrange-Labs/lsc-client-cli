@@ -16,14 +16,14 @@ import (
 )
 
 const (
-	flagKeyType     = "key-type"
-	flagKeyPassword = "password"
-	flagPrivateKey  = "private-key"
-	flagKeyPath     = "key-path"
-	flagNetwork     = "network"
-	flagChain       = "chain"
-	flagDockerImage = "docker-image"
-	flagKeyIndex    = "key-index"
+	flagKeyType         = "key-type"
+	flagKeyPasswordPath = "password-path"
+	flagPrivateKey      = "private-key"
+	flagKeyPath         = "key-path"
+	flagNetwork         = "network"
+	flagChain           = "chain"
+	flagDockerImage     = "docker-image"
+	flagKeyIndex        = "key-index"
 )
 
 var (
@@ -39,10 +39,10 @@ var (
 		Usage:   "Key `TYPE` (bls/ecdsa)",
 		Aliases: []string{"t"},
 	}
-	keyPasswordFlag = &cli.StringFlag{
-		Name:    flagKeyPassword,
+	keyPasswordPathFlag = &cli.StringFlag{
+		Name:    flagKeyPasswordPath,
 		Value:   "",
-		Usage:   "Keystore `PASSWORD`",
+		Usage:   "Keystore Password `PATH`",
 		Aliases: []string{"p"},
 	}
 	keyPathFlag = &cli.StringFlag{
@@ -66,7 +66,7 @@ var (
 	chainFlag = &cli.StringFlag{
 		Name:    flagChain,
 		Value:   "optimism",
-		Usage:   "Chain `NAME` (optimism/base)",
+		Usage:   "Chain `NAME` (optimism/base/arbitrum ...)",
 		Aliases: []string{"r"},
 	}
 	dockerImageFlag = &cli.StringFlag{
@@ -104,7 +104,7 @@ func main() {
 			Usage: "Generate a new keystore file for the given key type (bls/ecdsa)",
 			Flags: []cli.Flag{
 				keyTypeFlag,
-				keyPasswordFlag,
+				keyPasswordPathFlag,
 			},
 			Action: generateKeystore,
 		},
@@ -113,7 +113,7 @@ func main() {
 			Usage: "Import a private key to the keystore for the given key type (bls/ecdsa)",
 			Flags: []cli.Flag{
 				keyTypeFlag,
-				keyPasswordFlag,
+				keyPasswordPathFlag,
 				privateKeyFlag,
 			},
 			Action: importKeystore,
@@ -123,7 +123,7 @@ func main() {
 			Usage: "Export a private key from the keystore",
 			Flags: []cli.Flag{
 				keyTypeFlag,
-				keyPasswordFlag,
+				keyPasswordPathFlag,
 				keyPathFlag,
 			},
 			Action: exportKeystore,
@@ -215,6 +215,15 @@ func main() {
 			Action: generateConfig,
 		},
 		{
+			Name:  "generate-docker-compose",
+			Usage: "Generate a docker-compose file for node deployment",
+			Flags: []cli.Flag{
+				configFileFlag,
+				dockerImageFlag,
+			},
+			Action: generateDockerCompose,
+		},
+		{
 			Name:  "deploy",
 			Usage: "Deploy the Lagrange Node Client with the given config file",
 			Flags: []cli.Flag{
@@ -234,22 +243,22 @@ func main() {
 
 func generateKeystore(c *cli.Context) error {
 	keyType := strings.ToLower(c.String(flagKeyType))
-	password := c.String(flagKeyPassword)
-	return utils.GenerateKeystore(keyType, password)
+	passwordPath := c.String(flagKeyPasswordPath)
+	return utils.GenerateKeystore(keyType, passwordPath)
 }
 
 func importKeystore(c *cli.Context) error {
 	keyType := strings.ToLower(c.String(flagKeyType))
-	password := c.String(flagKeyPassword)
+	passwordPath := c.String(flagKeyPasswordPath)
 	privKey := nutils.Hex2Bytes(c.String(flagPrivateKey))
-	return utils.ImportFromPrivateKey(keyType, password, privKey)
+	return utils.ImportFromPrivateKey(keyType, passwordPath, privKey)
 }
 
 func exportKeystore(c *cli.Context) error {
 	keyType := strings.ToLower(c.String(flagKeyType))
-	password := c.String(flagKeyPassword)
+	passwordPath := c.String(flagKeyPasswordPath)
 	keyPath := c.String(flagKeyPath)
-	privKey, err := utils.ExportKeystore(keyType, password, keyPath)
+	privKey, err := utils.ExportKeystore(keyType, passwordPath, keyPath)
 	if err != nil {
 		return err
 	}
@@ -420,7 +429,7 @@ func subscribeChain(c *cli.Context) error {
 	}
 	chain := c.String(flagChain)
 	if _, ok := config.ChainBatchConfigs[chain]; !ok {
-		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base, arbitrum ...)", chain)
 	}
 	cliCfg, err := config.LoadCLIConfig(c)
 	if err != nil {
@@ -447,7 +456,7 @@ func unsubscribeChain(c *cli.Context) error {
 	}
 	chain := c.String(flagChain)
 	if _, ok := config.ChainBatchConfigs[chain]; !ok {
-		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base, arbitrum ...)", chain)
 	}
 	cliCfg, err := config.LoadCLIConfig(c)
 	if err != nil {
@@ -474,7 +483,7 @@ func generateConfig(c *cli.Context) error {
 	}
 	chain := c.String(flagChain)
 	if _, ok := config.ChainBatchConfigs[chain]; !ok {
-		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base)", chain)
+		return fmt.Errorf("invalid chain: %s, should be one of (optimism, base, arbitrum ...)", chain)
 	}
 	cfg, err := config.LoadCLIConfig(c)
 	if err != nil {
@@ -505,6 +514,15 @@ func generateConfig(c *cli.Context) error {
 	}
 
 	logger.Infof("Client Config file created: %s", configFilePath)
+
+	return nil
+}
+
+func generateDockerCompose(c *cli.Context) error {
+	logger.Infof("Generating Docker Compose file")
+	if _, err := utils.GenerateDockerComposeFile(c.String(flagDockerImage), c.String(config.FlagCfg)); err != nil {
+		return fmt.Errorf("failed to generate docker compose file: %w", err)
+	}
 
 	return nil
 }

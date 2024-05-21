@@ -5,7 +5,7 @@ const (
 	FlagCfg = "config"
 
 	clientConfigTemplate = `[Client]
-GrpcURL = "{{.ServerGrpcURL}}"
+GrpcURLs = "{{.ServerGrpcURL}}"
 Chain = "{{.ChainName}}"
 EthereumURL = "{{.EthereumRPCURL}}"
 OperatorAddress = "{{.OperatorAddress}}"
@@ -18,7 +18,7 @@ PullInterval = "1000ms"
 BLSCurve = "{{.BLSCurve}}"
 
 [RpcClient]
-
+	{{ if eq .ChainName "optimism" "base" }}
 	[RpcClient.Optimism]
 	RPCURL = "{{.L2RPCEndpoint}}"
 	L1RPCURL = "{{.L1RPCEndpoint}}"
@@ -26,9 +26,17 @@ BLSCurve = "{{.BLSCurve}}"
 	BatchInbox = "{{.BatchInbox}}"
 	BatchSender = "{{.BatchSender}}"
 	ConcurrentFetchers = "{{.ConcurrentFetchers}}"
-
+	{{ else if eq .ChainName "arbitrum" }}
+	[RpcClient.Arbitrum]
+	RPCURL = "{{.L2RPCEndpoint}}"
+	L1RPCURL = "{{.L1RPCEndpoint}}"
+	BeaconURL = "{{.BeaconURL}}"
+	BatchInbox = "{{.BatchInbox}}"
+	ConcurrentFetchers = "{{.ConcurrentFetchers}}"
+	{{ else if eq .ChainName "mock" }}
 	[RpcClient.Mock]
-	RPCURL = "{{.L2RPCEndpoint}}"`
+	RPCURL = "{{.L2RPCEndpoint}}"
+	{{ end }}`
 
 	configDir = ".lagrange/config"
 )
@@ -42,6 +50,7 @@ var (
 			GRPCServerURLs: map[string]string{
 				"optimism": "44.210.11.64:9090",
 				"base":     "3.209.124.237:9090",
+				"arbitrum": "18.211.62.223:9090",
 			},
 		},
 		"mainnet": {
@@ -51,6 +60,7 @@ var (
 			GRPCServerURLs: map[string]string{
 				"optimism": "34.202.191.166:9090",
 				"base":     "34.193.82.90:9090",
+				"arbitrum": "44.208.119.151:9090",
 			},
 		},
 		"local": {
@@ -73,6 +83,10 @@ var (
 			ChainID:     8453,
 			BatchInbox:  "0xFf00000000000000000000000000000000008453",
 			BatchSender: "0x5050F69a9786F081509234F1a7F4684b5E5b76C9",
+		},
+		"arbitrum": {
+			ChainID:    42161,
+			BatchInbox: "0x1c479675ad559DC151F6Ec7ed3FbF8ceE79582B6",
 		},
 		"mock": {
 			ChainID: 1337,

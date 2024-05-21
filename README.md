@@ -25,7 +25,8 @@ For a full breakdown of the architecture, please refer to the below two document
 
 ## Running a Lagrange Client Node
 
-The below commands will allow a developer to run a node and attest to the state of `Optimism` and `Base` chains. We are operating on two networks:
+The below commands will allow a developer to run a node and attest to the state of `Optimism`, `Arbitrum`, and `Base` chains. We are operating on two networks:
+
   - Holesky Testnet
   - Mainnet
 
@@ -33,6 +34,7 @@ The below commands will allow a developer to run a node and attest to the state 
 
 - Optimism: `10`
 - Base: `8453`
+- Arbitrum: `42161`
 
 ### Minimum Recommended Hardware
 
@@ -107,7 +109,7 @@ The below commands will allow a developer to run a node and attest to the state 
   - `EthereumRPCURL`: Ethereum mainnet RPC endpoint for mainnet, and Holesky RPC endpoint for testnet.
   - `L1RPCEndpoint`: Ethereum mainnet RPC endpoint for both mainnet and Holesky testnet.
   - `BeaconURL`: Beacon mainnet RPC endpoint for both mainnet and Holesky testnet.
-  - `L2RPCEndpoint`: Rollup (`Optimism` or `Base`) chain's mainnet RPC endpoint for both mainnet and Holesky testnet. 
+  - `L2RPCEndpoint`: Rollup (`Optimism` or `Arbitrum` or `Base` etc.) chain's mainnet RPC endpoint for both mainnet and Holesky testnet. 
 
     > NOTE: Currently, we only support the `BN254` curve for the `BLSScheme`.
 
@@ -116,23 +118,23 @@ The below commands will allow a developer to run a node and attest to the state 
 - Generate Keystore: generates a new key pair for the given key type and password, and saves it in the keystore file. The key type can be either `ecdsa` or `bls`.
 
     ```bash
-    lagrange-cli generate-keystore -t <Key Type> -p <Password>
+    lagrange-cli generate-keystore -t <Key Type> -p <Password File Path>
 
-    # i.e. ./dist/lagrange-cli generate-keystore -t ecdsa -p password
+    # i.e. ./dist/lagrange-cli generate-keystore -t ecdsa -p ~/.lagrange/keystore/ecdsa_.pass
     ```
 - Import Keystore: imports a key pair from the given private key and saves it in the keystore file. The key type can be either `ecdsa` or `bls`.
 
     ```bash
-    lagrange-cli import-keystore -t <Key Type> -p <Password> -k <Private Key>
+    lagrange-cli import-keystore -t <Key Type> -p <Password File Path> -k <Private Key>
 
-    # i.e. ./dist/lagrange-cli import-keystore -t bls -p password -k 0x1234567890abcdef...
+    # i.e. ./dist/lagrange-cli import-keystore -t bls -p ~/.lagrange/keystore/bls_.pass -k 0x1234567890abcdef...
     ```
 - Export Keystore: exports a private key from the keystore file for the given key type and password.
 
     ```bash
-    lagrange-cli export-keystore -t <Key Type> -p <Password> -f <Keystore File Path>
+    lagrange-cli export-keystore -t <Key Type> -p <Password File Path> -f <Keystore File Path>
 
-    # i.e. ./dist/lagrange-cli export-keystore -t ecdsa -p password -f ~/.lagrange/keystore/bls_.key
+    # i.e. ./dist/lagrange-cli export-keystore -t ecdsa -p ~/.lagrange/keystore/ecdsa_.pass -f ~/.lagrange/keystore/bls_.key
     ```
 
 - Register Operator: registers an operator to the Lagrange State Committee. The network name can be either `mainnet` or `holesky`. The BLS key and Signer address are referenced from the config file.
@@ -142,7 +144,7 @@ The below commands will allow a developer to run a node and attest to the state 
 
     # i.e. ./dist/lagrange-cli register-operator -c ./config.toml -n mainnet
     ```
-- Deregsiter Operator: deregisters an operator from the Lagrange State Committee. The network name can be either `mainnet` or `holesky`.
+- Deregister Operator: deregisters an operator from the Lagrange State Committee. The network name can be either `mainnet` or `holesky`.
 
     ```bash
     lagrange-cli deregister-operator -c <Config File Path> -n <Network Name>
@@ -182,7 +184,7 @@ The below commands will allow a developer to run a node and attest to the state 
     # i.e. ./dist/lagrange-cli remove-bls-pub-key -c ./config.toml -n mainnet -i 0
     ```
 
-- Subscribe Chain: subscribes the operator to the given chain. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `base`.
+- Subscribe Chain: subscribes the operator to the given chain. The network name can be either `mainnet` or `holesky`. The chain name can be `optimism`, `arbitrum`, `base` etc.
 
     ```bash
     lagrange-cli subscribe-chain -c <Config File Path> -n <Network Name> -r <Chain Name>
@@ -190,7 +192,7 @@ The below commands will allow a developer to run a node and attest to the state 
     # i.e. ./dist/lagrange-cli subscribe-chain -c ./config.toml -n mainnet -r optimism
     ```
 
-- Unsubscribe Chain: unsubscribes the operator from the given chain. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `base`.
+- Unsubscribe Chain: unsubscribes the operator from the given chain. The network name can be either `mainnet` or `holesky`. The chain name can be `optimism`, `arbitrum`, `base` etc.
 
     ```bash
     lagrange-cli unsubscribe-chain -c <Config File Path> -n <Network Name> -r <Chain Name>
@@ -198,7 +200,7 @@ The below commands will allow a developer to run a node and attest to the state 
     # i.e. ./dist/lagrange-cli unsubscribe-chain -c ./config.toml -n mainnet -r optimism
     ```
 
-- Generate Config: generates a client config file. The network name can be either `mainnet` or `holesky`. The chain name can be either `optimism` or `base`. The L1 RPC endpoint is the Ethereum mainnet RPC endpoint for both mainnet and Holesky testnet. The L2 (`Optimism` or `Base`) RPC endpoint is the rollup chain's mainnet RPC endpoint for both mainnet and Holesky testnet. The Beacon RPC endpoint is the Beacon mainnet RPC endpoint for both mainnet and Holesky testnet.
+- Generate Config: generates a client config file. The network name can be either `mainnet` or `holesky`. The chain name can be `optimism`, `arbitrum`, `base` etc. The L1 RPC endpoint is the Ethereum mainnet RPC endpoint for both mainnet and Holesky testnet. The L2 RPC endpoint is the given rollup chain's mainnet RPC endpoint for both mainnet and Holesky testnet. The Beacon RPC endpoint is the Beacon mainnet RPC endpoint for both mainnet and Holesky testnet.
 
     ```bash
     lagrange-cli generate-config -c <Config File Path> -n <Network Name> -r <Chain Name>
