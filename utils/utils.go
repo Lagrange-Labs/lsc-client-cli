@@ -56,7 +56,8 @@ func DisplayWarningMessage(keyType, privateKey, ksPath string) error {
 	msg += fmt.Sprintln("\033[1m\x1b[31m" + border + "\033[0m")
 	msg += fmt.Sprintln("")
 	msg += fmt.Sprintln("\033[1m\x1b[33m🔑  WARNING: Make sure to copy this private key securely and never share it with anyone!\033[0m")
-	msg += fmt.Sprintln("🔑  Keystore file saved at: " + ksPath)
+	msg += fmt.Sprintln("🔑  Keystore file will be saved at: " + ksPath)
+	msg += fmt.Sprintln("Please press 'q' to exit this screen completely after confirmation.")
 
 	// Write the message to the command
 	if _, err = stdin.Write([]byte(msg)); err != nil {

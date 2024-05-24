@@ -3,12 +3,9 @@
 # 2. `cast` - a binary from the foundry toolkit https://github.com/foundry-rs/foundry?tab=readme-ov-file
 #           Version: tag nightly-f625d0fa7c51e65b4bf1e8f7931cd1c6e2e285e9
 #                   cargo install --git https://github.com/foundry-rs/foundry --tag nightly-f625d0fa7c51e65b4bf1e8f7931cd1c6e2e285e9 --profile local --locked cast --force
-# 3. `openssl` - to generate your new ECDSA secp256k1 LAGR_KEY to be used only for the ZK Coprocessor AVS
-# 4. `jq` - only needed for the demo; 
 
 # ==== MODIFY ME! ====
-ETH_KEY=
-OPERATOR_ADDR=
+OPERATOR_PRIVATE_KEY=
 export ETH_RPC_URL= # Put rpc url here
 
 # --- ChainIDS ---
@@ -42,7 +39,7 @@ set_contract_addresses() {
         LAGRANGE_SERVICE_ADDR=0x34d8f7384Ddd4e8Ab447a150F9955f284882A43F
         EIGEN_AVS_DIRECTORY_ADDR=0xE5F13E61654363719407247BB7E06f539d3a9d32
     elif [ "$chain_id" -eq "$LOCAL_CHAINID" ]; then
-        echo "Registering Operator on Sepolia Testnet"
+        echo "Registering Operator on Local Testnet"
         LAGRANGE_SERVICE_ADDR=0xBda41273d671bb33374F7b9C4Ae8746c712727f7
         EIGEN_AVS_DIRECTORY_ADDR=0x6Bf0fF4eBa00E3668c0241bb1C622CDBFE55bbE0
     else
@@ -52,7 +49,7 @@ set_contract_addresses() {
 }
 
 deregister_operator() {
-    cast send $LAGRANGE_SERVICE_ADDR "deregister()" --private-key $ETH_KEY
+    cast send $LAGRANGE_SERVICE_ADDR "deregister()" --private-key $OPERATOR_PRIVATE_KEY
 
     printf "\nSuccessfully Deregistered!\n"
 }
