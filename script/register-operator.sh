@@ -7,6 +7,7 @@
 # ==== MODIFY ME! ====
 OPERATOR_PRIVATE_KEY=
 OPERATOR_ADDR=
+SIGNER_ADDR=
 export ETH_RPC_URL= # Put rpc url here
 PUBKEY_X= # Put pubkey X here
 PUBKEY_Y= # Put pubkey Y here
@@ -41,7 +42,7 @@ set_contract_addresses() {
         LAGRANGE_SERVICE_ADDR=0x34d8f7384Ddd4e8Ab447a150F9955f284882A43F
         EIGEN_AVS_DIRECTORY_ADDR=0xE5F13E61654363719407247BB7E06f539d3a9d32
     elif [ "$chain_id" -eq "$LOCAL_CHAINID" ]; then
-        echo "Registering Operator on Sepolia Testnet"
+        echo "Registering Operator on Local Testnet"
         LAGRANGE_SERVICE_ADDR=0xBda41273d671bb33374F7b9C4Ae8746c712727f7
         EIGEN_AVS_DIRECTORY_ADDR=0x6Bf0fF4eBa00E3668c0241bb1C622CDBFE55bbE0
     else
@@ -87,13 +88,13 @@ sign_registration_hash() {
 register_operator() {
     printf "cast send $LAGRANGE_SERVICE_ADDR \n"
     printf "register(address,uint256[2][],(bytes,bytes32,uint256)) \n"
-    printf "$OPERATOR_ADDR \n"
+    printf "$SIGNER_ADDR \n"
     printf "[[${PUBKEY_X},${PUBKEY_Y}]] \n"
     printf "(${SIGNATURE},${SALT},${EXPIRY_TIMESTAMP}) \n"
 
     cast send $LAGRANGE_SERVICE_ADDR \
         "register(address,uint256[2][],(bytes,bytes32,uint256))" \
-        "$OPERATOR_ADDR" \
+        "$SIGNER_ADDR" \
         "[[${PUBKEY_X},${PUBKEY_Y}]]" \
         "(${SIGNATURE},${SALT},${EXPIRY_TIMESTAMP})" \
         --private-key $OPERATOR_PRIVATE_KEY
@@ -102,30 +103,27 @@ register_operator() {
 }
 
 ## --- Main Script ---
-printf "Step 1: generate_bls_pubkey\n"
-generate_bls_pubkey
-sleep 3s
-printf "Step 2: set_contract_addresses\n"
+printf "Step 1: set_contract_addresses\n"
 set_contract_addresses
 sleep 3s
-printf "Step 3: calculate_expiry_timestamp\n"
+printf "Step 2: calculate_expiry_timestamp\n"
 calculate_expiry_timestamp
 sleep 3s
-printf "Step 4: generate_salt\n"
+printf "Step 3: generate_salt\n"
 generate_salt
 
 printf "PUBKEY_X: $PUBKEY_X\n"
 printf "PUBKEY_Y: $PUBKEY_Y\n"
-printf "\nOperator Address: $OPERATOR_ADDR\n"
+printf "\nSigner Address: $SIGNER_ADDR\n"
 printf "Salt for signature: $SALT\n"
 printf "Signature expires at: $EXPIRY_TIMESTAMP\n"
 
 sleep 3s
-printf "Step 5: calculate_registration_hash\n"
+printf "Step 4: calculate_registration_hash\n"
 calculate_registration_hash
 sleep 3s
-printf "Step 6: sign_registration_hash\n"
+printf "Step 5: sign_registration_hash\n"
 sign_registration_hash
 sleep 3s
-printf "Step 7: register_operator\n"
+printf "Step 6: register_operator\n"
 register_operator

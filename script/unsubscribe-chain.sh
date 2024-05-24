@@ -6,7 +6,6 @@
 
 # ==== MODIFY ME! ====
 OPERATOR_PRIVATE_KEY=
-OPERATOR_ADDR=
 CHAIN_TO_UNSUBSCRIBE= # 10
 export ETH_RPC_URL= # Put rpc url here
 
@@ -39,7 +38,7 @@ set_contract_addresses() {
         LAGRANGE_SERVICE_ADDR=0x34d8f7384Ddd4e8Ab447a150F9955f284882A43F
         EIGEN_AVS_DIRECTORY_ADDR=0xE5F13E61654363719407247BB7E06f539d3a9d32
     elif [ "$chain_id" -eq "$LOCAL_CHAINID" ]; then
-        echo "Registering Operator on Sepolia Testnet"
+        echo "Registering Operator on Local Testnet"
         LAGRANGE_SERVICE_ADDR=0xBda41273d671bb33374F7b9C4Ae8746c712727f7
         EIGEN_AVS_DIRECTORY_ADDR=0x6Bf0fF4eBa00E3668c0241bb1C622CDBFE55bbE0
     else
