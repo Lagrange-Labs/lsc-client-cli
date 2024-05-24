@@ -129,6 +129,15 @@ func main() {
 			Action: exportKeystore,
 		},
 		{
+			Name:  "export-public-key",
+			Usage: "Export the public key from the keystore",
+			Flags: []cli.Flag{
+				keyTypeFlag,
+				keyPathFlag,
+			},
+			Action: exportPublicKey,
+		},
+		{
 			Name:  "register-operator",
 			Usage: "Register the operator to the committee",
 			Flags: []cli.Flag{
@@ -263,6 +272,15 @@ func exportKeystore(c *cli.Context) error {
 		return err
 	}
 	logger.Infof("Private Key: %s", nutils.Bytes2Hex(privKey))
+	return nil
+}
+
+func exportPublicKey(c *cli.Context) error {
+	keyType := strings.ToLower(c.String(flagKeyType))
+	keyPath := c.String(flagKeyPath)
+	if err := utils.ExportPublicKey(keyType, keyPath); err != nil {
+		return err
+	}
 	return nil
 }
 
