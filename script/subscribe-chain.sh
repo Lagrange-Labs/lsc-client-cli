@@ -1,11 +1,10 @@
-#!/bin/zsh
-
 # --- Dependencies ---
-# 1. zsh
+# 1. sh
 # 2. `cast` - a binary from the foundry toolkit https://github.com/foundry-rs/foundry?tab=readme-ov-file
+#           Version: tag nightly-f625d0fa7c51e65b4bf1e8f7931cd1c6e2e285e9
+#                   cargo install --git https://github.com/foundry-rs/foundry --tag nightly-f625d0fa7c51e65b4bf1e8f7931cd1c6e2e285e9 --profile local --locked cast --force
 # 3. `openssl` - to generate your new ECDSA secp256k1 LAGR_KEY to be used only for the ZK Coprocessor AVS
 # 4. `jq` - only needed for the demo; 
-# see === MODIFY ME! === section below
 
 # ==== MODIFY ME! ====
 ETH_KEY=
