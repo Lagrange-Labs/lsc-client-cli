@@ -3,15 +3,13 @@
 # 2. `cast` - a binary from the foundry toolkit https://github.com/foundry-rs/foundry?tab=readme-ov-file
 #           Version: tag nightly-f625d0fa7c51e65b4bf1e8f7931cd1c6e2e285e9
 #                   cargo install --git https://github.com/foundry-rs/foundry --tag nightly-f625d0fa7c51e65b4bf1e8f7931cd1c6e2e285e9 --profile local --locked cast --force
-# 3. `openssl` - to generate your new ECDSA secp256k1 LAGR_KEY to be used only for the ZK Coprocessor AVS
-# 4. `jq` - only needed for the demo; 
 
 # ==== MODIFY ME! ====
-ETH_KEY=
+OPERATOR_PRIVATE_KEY=
 OPERATOR_ADDR=
 export ETH_RPC_URL= # Put rpc url here
-PUBKEY_X=1
-PUBKEY_Y=2
+PUBKEY_X= # Put pubkey X here
+PUBKEY_Y= # Put pubkey Y here
 SIG_EXPIRY_SECONDS=300
 
 # --- Constants ---
@@ -77,10 +75,10 @@ calculate_registration_hash() {
     printf "\nRegistration hash:\n${HASH}\n"
 }
 
-# Sign the registration hash with your ETH_KEY
+# Sign the registration hash with your OPERATOR_PRIVATE_KEY
 sign_registration_hash() {
     printf "${HASH} \n"
-    SIGNATURE=$(cast wallet sign --private-key $ETH_KEY $HASH --no-hash)
+    SIGNATURE=$(cast wallet sign --private-key $OPERATOR_PRIVATE_KEY $HASH --no-hash)
     printf "\nRegistration signature:${SIGNATURE}\n"
 }
 
@@ -98,7 +96,7 @@ register_operator() {
         "$OPERATOR_ADDR" \
         "[[${PUBKEY_X},${PUBKEY_Y}]]" \
         "(${SIGNATURE},${SALT},${EXPIRY_TIMESTAMP})" \
-        --private-key $ETH_KEY
+        --private-key $OPERATOR_PRIVATE_KEY
 
     printf "\nSuccessfully Registered!\n"
 }

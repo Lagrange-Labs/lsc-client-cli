@@ -3,13 +3,11 @@
 # 2. `cast` - a binary from the foundry toolkit https://github.com/foundry-rs/foundry?tab=readme-ov-file
 #           Version: tag nightly-f625d0fa7c51e65b4bf1e8f7931cd1c6e2e285e9
 #                   cargo install --git https://github.com/foundry-rs/foundry --tag nightly-f625d0fa7c51e65b4bf1e8f7931cd1c6e2e285e9 --profile local --locked cast --force
-# 3. `openssl` - to generate your new ECDSA secp256k1 LAGR_KEY to be used only for the ZK Coprocessor AVS
-# 4. `jq` - only needed for the demo; 
 
 # ==== MODIFY ME! ====
-ETH_KEY=
+OPERATOR_PRIVATE_KEY=
 OPERATOR_ADDR=
-CHAIN_TO_UNSUBSCRIBE=420
+CHAIN_TO_UNSUBSCRIBE= # 10
 export ETH_RPC_URL= # Put rpc url here
 
 # --- Constants ---
@@ -51,7 +49,7 @@ set_contract_addresses() {
 }
 
 unsubscribe_chain() {
-    cast send $LAGRANGE_SERVICE_ADDR "unsubscribe(uint32)" $CHAIN_TO_UNSUBSCRIBE --private-key $ETH_KEY
+    cast send $LAGRANGE_SERVICE_ADDR "unsubscribe(uint32)" $CHAIN_TO_UNSUBSCRIBE --private-key $OPERATOR_PRIVATE_KEY
 
     printf "\nSuccessfully Unsubscribed!\n"
 }
