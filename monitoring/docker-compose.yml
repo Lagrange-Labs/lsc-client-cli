@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  lagrange-prometheus:
+    image: prom/prometheus:latest
+    container_name: lagrange-prometheus
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - lagrange-prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - 9090:9090
+    networks:
+      - lagrange-monitoring
+
+  lagrange-grafana:
+    image: grafana/grafana:latest
+    container_name: lagrange-grafana
+    restart: always
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - "lagrange-grafana-data:/var/lib/grafana"
+      - "./datasources:/etc/grafana/provisioning/datasources"
+      - "./dashboards:/etc/grafana/provisioning/dashboards"
+      - "./alerting:/etc/grafana/provisioning/alerting"
+    networks:
+      - lagrange-monitoring
+
+networks:
+  lagrange-monitoring:
+    driver: bridge
+
+volumes:
+  lagrange-prometheus-data: {}
+  lagrange-grafana-data: {}

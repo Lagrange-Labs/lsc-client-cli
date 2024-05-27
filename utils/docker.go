@@ -19,6 +19,8 @@ services:
     container_name: lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}
     image: {{.DockerImage}}
     restart: always
+	ports:
+	  - "{{.PrometheusPort}}:8080"
     environment:
       - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPATH=/app/config/keystore/bls.key
       - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPASSWORDPATH=/app/config/keystore/bls.pass
@@ -68,7 +70,7 @@ func pullDockerImage(imageName string) error {
 }
 
 // GenerateDockerComposeFile generates a Docker Compose file.
-func GenerateDockerComposeFile(imageName, configFilePath string) (string, error) {
+func GenerateDockerComposeFile(imageName, prometheusPort, configFilePath string) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %s", err)
@@ -117,8 +119,8 @@ func GenerateDockerComposeFile(imageName, configFilePath string) (string, error)
 }
 
 // RunDockerImage runs a Docker image.
-func RunDockerImage(imageName, configFilePath string) error {
-	dockerComposeFilePath, err := GenerateDockerComposeFile(imageName, configFilePath)
+func RunDockerImage(imageName, prometheusPort, configFilePath string) error {
+	dockerComposeFilePath, err := GenerateDockerComposeFile(imageName, prometheusPort, configFilePath)
 	if err != nil {
 		return err
 	}
