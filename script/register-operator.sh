@@ -84,7 +84,7 @@ sign_registration_hash() {
 }
 
 # === MODIFY ME ! ===
-# Register with ZKMR contract using your signature and public key component of your new $LAGR_KEY
+# Register with State Committee contract using your signature and public key component of your new $LAGR_KEY
 register_operator() {
     printf "cast send $LAGRANGE_SERVICE_ADDR \n"
     printf "register(address,uint256[2][],(bytes,bytes32,uint256)) \n"
