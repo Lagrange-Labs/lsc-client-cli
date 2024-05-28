@@ -9,7 +9,7 @@
             "rules": [
                 {
                     "uid": "e25272b4-f4e6-4828-9dcc-b192c7a061d9",
-                    "title": "Current Batch Number - Committed Batch Number",
+                    "title": "Current Batch Number - Committed Batch Number for Optimism",
                     "condition": "B",
                     "data": [
                         {
@@ -22,7 +22,7 @@
                             "model": {
                                 "disableTextWrap": false,
                                 "editorMode": "builder",
-                                "expr": "client_current_batch_number{service=\"lagrange-node\"} - client_commit_batch_number{service=\"lagrange-node\"}",
+                                "expr": "client_current_batch_number{service=\"lagrange-node\", module=\"client_optimism\"} - client_commit_batch_number{service=\"lagrange-node\", module=\"client_optimism\"}",
                                 "fullMetaSearch": false,
                                 "includeNullMetadata": true,
                                 "instant": true,
