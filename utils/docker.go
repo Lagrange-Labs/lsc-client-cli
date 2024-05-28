@@ -12,15 +12,15 @@ import (
 	"github.com/Lagrange-Labs/lagrange-node/logger"
 )
 
-const dockerComposeTemplate = `version: "3.5"
+const dockerComposeTemplate = `version: "3.7"
 
 services:
   lagrange_client_{{.Network}}_{{.ChainName}}:
     container_name: lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}
     image: {{.DockerImage}}
     restart: always
-	ports:
-	  - "{{.PrometheusPort}}:8080"
+    ports:
+      - "{{.PrometheusPort}}:8080"
     environment:
       - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPATH=/app/config/keystore/bls.key
       - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPASSWORDPATH=/app/config/keystore/bls.pass
@@ -36,11 +36,15 @@ services:
       - {{.BLSKeystorePasswordPath}}:/app/config/keystore/bls.pass
       - {{.SignerECDSAKeystorePath}}:/app/config/keystore/signer.key
       - {{.SignerECDSAKeystorePasswordPath}}:/app/config/keystore/signer.pass
+      - lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}:$HOME/.lagrange
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "10"
+
+volumes:
+  lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}:
 `
 
 // CheckDockerImageExists checks if a Docker image exists locally.
@@ -89,6 +93,7 @@ func GenerateDockerComposeFile(imageName, prometheusPort, configFilePath string)
 	dockerConfig.BLSPubKeyPrefix = strings.Split(seps[3], ".")[0]
 	dockerConfig.DockerImage = imageName
 	dockerConfig.ConfigFilePath = configFilePath
+	dockerConfig.PrometheusPort = prometheusPort
 
 	// Load the client config
 	clientCfg, err := config.LoadClientConfig(configFilePath)

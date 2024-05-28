@@ -1,0 +1,99 @@
+{
+    "apiVersion": 1,
+    "groups": [
+        {
+            "orgId": 1,
+            "name": "Lagrange Group",
+            "folder": "alerts",
+            "interval": "5m",
+            "rules": [
+                {
+                    "uid": "e25272b4-f4e6-4828-9dcc-b192c7a061d9",
+                    "title": "Current Batch Number - Committed Batch Number",
+                    "condition": "B",
+                    "data": [
+                        {
+                            "refId": "A",
+                            "relativeTimeRange": {
+                                "from": 600,
+                                "to": 0
+                            },
+                            "datasourceUid": "prometheus",
+                            "model": {
+                                "disableTextWrap": false,
+                                "editorMode": "builder",
+                                "expr": "client_current_batch_number{service=\"lagrange-node\"} - client_commit_batch_number{service=\"lagrange-node\"}",
+                                "fullMetaSearch": false,
+                                "includeNullMetadata": true,
+                                "instant": true,
+                                "intervalMs": 1000,
+                                "legendFormat": "__auto",
+                                "maxDataPoints": 43200,
+                                "range": false,
+                                "refId": "A",
+                                "useBackend": false
+                            }
+                        },
+                        {
+                            "refId": "B",
+                            "relativeTimeRange": {
+                                "from": 0,
+                                "to": 0
+                            },
+                            "datasourceUid": "__expr__",
+                            "model": {
+                                "conditions": [
+                                    {
+                                        "evaluator": {
+                                            "params": [
+                                                5,
+                                                0
+                                            ],
+                                            "type": "gt"
+                                        },
+                                        "operator": {
+                                            "type": "and"
+                                        },
+                                        "query": {
+                                            "params": []
+                                        },
+                                        "reducer": {
+                                            "params": [],
+                                            "type": "avg"
+                                        },
+                                        "type": "query"
+                                    }
+                                ],
+                                "datasource": {
+                                    "name": "Expression",
+                                    "type": "__expr__",
+                                    "uid": "__expr__"
+                                },
+                                "expression": "A",
+                                "hide": false,
+                                "intervalMs": 1000,
+                                "maxDataPoints": 43200,
+                                "refId": "B",
+                                "type": "threshold"
+                            }
+                        }
+                    ],
+                    "dasboardUid": "f8e429fe-b4e4-455f-96ab-ed2a67edacc6",
+                    "panelId": 9,
+                    "noDataState": "Alerting",
+                    "execErrState": "Alerting",
+                    "for": "5m",
+                    "annotations": {
+                        "__dashboardUid__": "f8e429fe-b4e4-455f-96ab-ed2a67edacc6",
+                        "__panelId__": 9,
+                        "description": "The committed batch number is too behind the current batch number. Please check your RPC connection and the status of the Lagrange sequencer.",
+                        "runbook_url": "https://lagrange-labs.gitbook.io/lagrange-labs/lagrange-state-committees/commitees-overview",
+                        "summary": "The committed batch number is too behind the current batch number"
+                    },
+                    "labels": {},
+                    "isPaused": false
+                }
+            ]
+        }
+    ]
+}
