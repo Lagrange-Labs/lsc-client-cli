@@ -534,6 +534,8 @@ func generateConfig(c *cli.Context) error {
 	clientCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
 	clientCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
 	clientCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
+	clientCfg.MetricsServiceName = cfg.MetricsServiceName
+	clientCfg.PrometheusRetentionTime = cfg.PrometheusRetentionTime
 
 	configFilePath, err := config.GenerateClientConfig(clientCfg, network)
 	if err != nil {
