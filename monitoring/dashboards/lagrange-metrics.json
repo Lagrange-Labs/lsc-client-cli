@@ -62,9 +62,7 @@
         "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -82,7 +80,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "client_current_batch_number{service=\"lagrange-node\", module=\"client_optimism\"}",
+          "expr": "sum(client_current_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -98,7 +96,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "client_commit_batch_number{service=\"lagrange-node\", module=\"client_optimism\"}",
+          "expr": "sum(client_commit_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -116,9 +114,10 @@
           "options": {
             "alias": "gap",
             "binary": {
-              "left": "{__name__=\"client_current_batch_number\", job=\"prometheus\", module=\"client_optimism\", service=\"lagrange-node\"}",
+              "left": "sum(client_current_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
               "operator": "-",
-              "right": "{__name__=\"client_commit_batch_number\", job=\"prometheus\", module=\"client_optimism\", service=\"lagrange-node\"}"
+              "right": "sum(client_commit_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
+              "ignoring": ["host", "instance"]
             },
             "mode": "binary",
             "reduce": {
@@ -317,7 +316,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "rpc_arbitrum_fetch_l2_block_hashes{service=\"lagrange-node\", module=\"client_optimism\"}",
+          "expr": "rpc_fetch_l2_block_hashes{service=\"lagrange-node\", module=\"client_optimism\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -417,7 +416,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "rpc_optimism_fetch_l1_blocks{service=\"lagrange-node\", module=\"client_optimism\"}",
+          "expr": "rpc_fetch_l1_blocks{service=\"lagrange-node\", module=\"client_optimism\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -518,7 +517,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "rpc_optimism_fetch_beacon_blobs{service=\"lagrange-node\", module=\"client_optimism\"}",
+          "expr": "rpc_fetch_beacon_blobs{service=\"lagrange-node\", module=\"client_optimism\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
