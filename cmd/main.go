@@ -242,13 +242,25 @@ func main() {
 		},
 		{
 			Name:  "deploy",
-			Usage: "Deploy the Lagrange Node Client with the given config file",
+			Usage: "Deploy the Lagrange Node Client with the given client config file",
 			Flags: []cli.Flag{
 				configFileFlag,
 				dockerImageFlag,
 				prometheusPortFlag,
 			},
 			Action: clientDeploy,
+		},
+		{
+			Name:  "deploy-with-config",
+			Usage: "Deploy the Lagrange Node Client after generating the client config file and docker-compose file",
+			Flags: []cli.Flag{
+				configFileFlag,
+				networkFlag,
+				chainFlag,
+				dockerImageFlag,
+				prometheusPortFlag,
+			},
+			Action: deployWithConfig,
 		},
 	}
 
@@ -543,6 +555,7 @@ func generateConfig(c *cli.Context) error {
 	}
 
 	logger.Infof("Client Config file created: %s", configFilePath)
+	c.Set(config.FlagCfg, configFilePath)
 
 	return nil
 }
@@ -566,4 +579,11 @@ func clientDeploy(c *cli.Context) error {
 	}
 
 	return utils.RunDockerImage(dockerImageName, prometheusPort, c.String(config.FlagCfg))
+}
+
+func deployWithConfig(c *cli.Context) error {
+	if err := generateConfig(c); err != nil {
+		return fmt.Errorf("failed to generate client config: %w", err)
+	}
+	return clientDeploy(c)
 }
