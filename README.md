@@ -211,7 +211,7 @@ The below commands will allow a developer to run a node and attest to the state 
   # i.e. ./dist/lagrange-cli unsubscribe-chain -c ./config.toml -n mainnet -r optimism
   ```
 
-- Generate Config: generates a client config file. The network name can be either `mainnet` or `holesky`. The chain name can be `optimism`, `arbitrum`, `base` etc. The L1 RPC endpoint is the Ethereum mainnet RPC endpoint for both mainnet and Holesky testnet. The L2 RPC endpoint is the given rollup chain's mainnet RPC endpoint for both mainnet and Holesky testnet. The Beacon RPC endpoint is the Beacon mainnet RPC endpoint for both mainnet and Holesky testnet.
+- Generate Config: generates a client config file. The network name can be either `mainnet` or `holesky`. The chain name can be `optimism`, `arbitrum`, `base` etc.
 
   ```bash
   lagrange-cli generate-config -c <Config File Path> -n <Network Name> -r <Chain Name>
@@ -219,12 +219,20 @@ The below commands will allow a developer to run a node and attest to the state 
   # i.e. ./dist/lagrange-cli generate-config -c ./config.toml -n mainnet -r optimism
   ```
 
-- Deploy Node: creates a docker-compose file and deploys the docker container for the attestation node. The network name can be either `mainnet` or `holesky`.
+- Deploy Node: creates a docker-compose file and deploys the docker container for the attestation node. The prometheus port is the port which binds the prometheus server to the host machine.
 
   ```bash
-  lagrange-cli deploy -c <Client Config File Path> -i <Docker Image Name>
+  lagrange-cli deploy -c <Client Config File Path> -i <Docker Image Name> -p <Prometheus Port>
 
-  # i.e. ./dist/lagrange-cli deploy -c ~/.lagrange/config/client_mainnet_optimism_.toml -i lagrangelabs/lagrange-node:v0.3.13
+  # i.e. ./dist/lagrange-cli deploy -c ~/.lagrange/config/client_mainnet_optimism_.toml -i lagrangelabs/lagrange-node:v0.4.0 -p 8080
+  ```
+
+- Generate Config & Deploy Node: generates a client config file and deploys the docker container for the attestation node. It combines the `generate-config` and `deploy` commands.
+
+  ```bash
+  lagrange-cli generate-config-deploy -c <Config File Path> -n <Network Name> -r <Chain Name> -i <Docker Image Name> -p <Prometheus Port>
+
+  # i.e. ./dist/lagrange-cli generate-config-deploy -c ./config.toml -n mainnet -r optimism -i lagrangelabs/lagrange-node:v0.4.0 -p 8080
   ```
 
 > NOTE: Please take a backup of your BLS and ECDSA key pairs. They are located at `~/.lagrange/keystore/<key_type>_<public_key_prefix>.key`.
