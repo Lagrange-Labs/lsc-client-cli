@@ -24,6 +24,7 @@ const (
 	flagChain           = "chain"
 	flagDockerImage     = "docker-image"
 	flagKeyIndex        = "key-index"
+	flagPrometheusPort  = "prometheus-port"
 )
 
 var (
@@ -80,6 +81,12 @@ var (
 		Value:   0,
 		Usage:   "BLS Key `INDEX`",
 		Aliases: []string{"i"},
+	}
+	prometheusPortFlag = &cli.StringFlag{
+		Name:    flagPrometheusPort,
+		Value:   "8080",
+		Usage:   "Prometheus `PORT`",
+		Aliases: []string{"p"},
 	}
 )
 
@@ -229,6 +236,7 @@ func main() {
 			Flags: []cli.Flag{
 				configFileFlag,
 				dockerImageFlag,
+				prometheusPortFlag,
 			},
 			Action: generateDockerCompose,
 		},
@@ -238,6 +246,7 @@ func main() {
 			Flags: []cli.Flag{
 				configFileFlag,
 				dockerImageFlag,
+				prometheusPortFlag,
 			},
 			Action: clientDeploy,
 		},
@@ -525,6 +534,8 @@ func generateConfig(c *cli.Context) error {
 	clientCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
 	clientCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
 	clientCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
+	clientCfg.MetricsServiceName = cfg.MetricsServiceName
+	clientCfg.PrometheusRetentionTime = cfg.PrometheusRetentionTime
 
 	configFilePath, err := config.GenerateClientConfig(clientCfg, network)
 	if err != nil {
@@ -538,7 +549,7 @@ func generateConfig(c *cli.Context) error {
 
 func generateDockerCompose(c *cli.Context) error {
 	logger.Infof("Generating Docker Compose file")
-	if _, err := utils.GenerateDockerComposeFile(c.String(flagDockerImage), c.String(config.FlagCfg)); err != nil {
+	if _, err := utils.GenerateDockerComposeFile(c.String(flagDockerImage), c.String(flagPrometheusPort), c.String(config.FlagCfg)); err != nil {
 		return fmt.Errorf("failed to generate docker compose file: %w", err)
 	}
 
@@ -547,11 +558,12 @@ func generateDockerCompose(c *cli.Context) error {
 
 func clientDeploy(c *cli.Context) error {
 	dockerImageName := c.String(flagDockerImage)
+	prometheusPort := c.String(flagPrometheusPort)
 	logger.Infof("Deploying Lagrange Node Client with Image: %s", dockerImageName)
 	// check if the docker image exists locally
 	if err := utils.CheckDockerImageExists(dockerImageName); err != nil {
 		return fmt.Errorf("failed to check docker image: %s", err)
 	}
 
-	return utils.RunDockerImage(dockerImageName, c.String(config.FlagCfg))
+	return utils.RunDockerImage(dockerImageName, prometheusPort, c.String(config.FlagCfg))
 }

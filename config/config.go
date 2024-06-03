@@ -37,6 +37,8 @@ type CLIConfig struct {
 	L2RPCEndpoint                   string `mapstructure:"L2RPCEndpoint"`
 	BLSCurve                        string `mapstructure:"BLSCurve"`
 	ConcurrentFetchers              int    `mapstructure:"ConcurrentFetchers"`
+	MetricsServiceName              string `mapstructure:"MetricsServiceName"`
+	PrometheusRetentionTime         string `mapstructure:"PrometheusRetentionTime"`
 }
 
 // ClientConfig is the configuration for the lagrange client.
@@ -59,6 +61,8 @@ type ClientConfig struct {
 	BatchSender                     string
 	BLSCurve                        string
 	ConcurrentFetchers              int
+	MetricsServiceName              string
+	PrometheusRetentionTime         string
 }
 
 // DockerComposeConfig is the configuration for the docker-compose.yml file.
@@ -72,6 +76,7 @@ type DockerComposeConfig struct {
 	BLSKeystorePasswordPath         string `json:"bls_keystore_password_path"`
 	SignerECDSAKeystorePath         string `json:"signer_ecdsa_keystore_path"`
 	SignerECDSAKeystorePasswordPath string `json:"signer_ecdsa_keystore_password_path"`
+	PrometheusPort                  string `json:"prometheus_port"`
 }
 
 // LoadCLIConfig loads the lagrange CLI configuration.
