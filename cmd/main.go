@@ -251,7 +251,7 @@ func main() {
 			Action: clientDeploy,
 		},
 		{
-			Name:  "deploy-with-config",
+			Name:  "generate-config-deploy",
 			Usage: "Deploy the Lagrange Node Client after generating the client config file and docker-compose file",
 			Flags: []cli.Flag{
 				configFileFlag,
@@ -555,9 +555,8 @@ func generateConfig(c *cli.Context) error {
 	}
 
 	logger.Infof("Client Config file created: %s", configFilePath)
-	c.Set(config.FlagCfg, configFilePath)
 
-	return nil
+	return c.Set(config.FlagCfg, configFilePath)
 }
 
 func generateDockerCompose(c *cli.Context) error {
