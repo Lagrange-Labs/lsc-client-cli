@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 	ecrypto "github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/Lagrange-Labs/lagrange-node/crypto"
+	"github.com/Lagrange-Labs/lagrange-node/logger"
 	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
@@ -101,6 +103,38 @@ func ExportKeystore(keyType, passwordPath, filePath string) ([]byte, error) {
 	default:
 		return nil, fmt.Errorf("invalid key type: %s", keyType)
 	}
+}
+
+func ExportPublicKey(keyType, filePath string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
+	}
+
+	switch keyType {
+	case "ecdsa":
+		keyStore := struct {
+			Address string `json:"address"`
+		}{}
+		if err := json.Unmarshal(data, &keyStore); err != nil {
+			return fmt.Errorf("failed to unmarshal ECDSA keystore: %w", err)
+		}
+		logger.Infof("ECDSA address: %s", keyStore.Address)
+	case "bls":
+		keyStore := struct {
+			PublicKey string `json:"pubKey"`
+		}{}
+		if err := json.Unmarshal(data, &keyStore); err != nil {
+			return fmt.Errorf("failed to unmarshal BLS keystore: %w", err)
+		}
+		pubRawKey, err := ConvertBLSKey(nutils.Hex2Bytes(keyStore.PublicKey))
+		if err != nil {
+			return fmt.Errorf("failed to convert BLS public key: %w", err)
+		}
+		logger.Infof("BLS public key X: %s Y: %s", pubRawKey[0].String(), pubRawKey[1].String())
+	}
+
+	return nil
 }
 
 func saveKeystore(keyType string, password string, pubKey, privKey []byte) error {

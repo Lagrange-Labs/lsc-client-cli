@@ -36,7 +36,10 @@ BLSCurve = "{{.BLSCurve}}"
 	{{ else if eq .ChainName "mock" }}
 	[RpcClient.Mock]
 	RPCURL = "{{.L2RPCEndpoint}}"
-	{{ end }}`
+	{{ end }}
+[Telemetry]
+	ServiceName = "{{.MetricsServiceName}}"
+	PrometheusRetentionTime = "{{.PrometheusRetentionTime}}"`
 
 	configDir = ".lagrange/config"
 )
