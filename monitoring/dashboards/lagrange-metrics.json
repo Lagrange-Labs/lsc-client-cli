@@ -80,7 +80,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "sum(client_current_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
+          "expr": "avg(client_current_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -96,7 +96,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "sum(client_commit_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
+          "expr": "avg(client_commit_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -114,9 +114,9 @@
           "options": {
             "alias": "gap",
             "binary": {
-              "left": "sum(client_current_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
+              "left": "avg(client_current_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
               "operator": "-",
-              "right": "sum(client_commit_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
+              "right": "avg(client_commit_batch_number{service=\"lagrange-node\", module=\"client_optimism\"})",
               "ignoring": ["host", "instance"]
             },
             "mode": "binary",
