@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  lagrange_client_{{.Network}}_{{.ChainName}}:
+    container_name: lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}
+    image: lagrangelabs/lagrange-node:{{.Version}}
+    restart: always
+    ports:
+      - "{{.PrometheusPort}}:8080"
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "/app/lagrange-node run-client -c /app/config/client.toml"
+    volumes:
+      - {{.ConfigFilePath}}:/app/config/client.toml
+      - {{.BLSKeystorePath}}:/app/config/keystore/bls.key
+      - {{.BLSKeystorePasswordPath}}:/app/config/keystore/bls.pass
+      - {{.SignerECDSAKeystorePath}}:/app/config/keystore/signer.key
+      - {{.SignerECDSAKeystorePasswordPath}}:/app/config/keystore/signer.pass
+      - lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}:$HOME/.lagrange
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+volumes:
+  lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}:

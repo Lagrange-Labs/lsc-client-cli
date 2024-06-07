@@ -9,4 +9,4 @@ __debug_bin
 /dist/
 
 # config
-client_*.toml
+client_config_*.toml
