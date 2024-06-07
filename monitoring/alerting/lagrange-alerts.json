@@ -86,7 +86,7 @@
                     "annotations": {
                         "__dashboardUid__": "f8e429fe-b4e4-455f-96ab-ed2a67edacc6",
                         "__panelId__": 9,
-                        "description": "The committed batch number is too behind the current batch number. Please check your RPC connection and the status of the Lagrange sequencer.",
+                        "description": "The committed batch number is too far behind the current batch number. Please check your RPC connection and the status of the Lagrange sequencer.",
                         "runbook_url": "https://lagrange-labs.gitbook.io/lagrange-labs/lagrange-state-committees/commitees-overview",
                         "summary": "The committed batch number is too behind the current batch number"
                     },
