@@ -1,33 +1,21 @@
 # Lagrange CLI
 
-This CLI app provides the functionalities needed to run the a Lagrange Attestation Node.
+This CLI app provides functionalities such as key management, operator registration, chain subscription, monitoring configuration and automated docker deployment which are necessary to run the Lagrange Attestation Node.
 
 ## Lagrange Labs State Committees Attestation Node
 
-Lagrange Labs State Committees provide a mechanism for generating succinct zero-knowledge state proofs for optimistic rollups based on the use of either staked or restaked collateral. Each state committee is a group of attestors/validators that have either staked an optimistic rollup’s native token or dualstaked with EigenLayer. Each state committee node attests to the execution and finality of transaction batches submitted by optimistic sequencers to Ethereum.
+For a full breakdown of the Lagrange State Committee architecture, please refer to the below two documents:
 
-Whenever a batch consisting of rollup blocks is considered either safe (OP stack) or has had its corresponding transaction batch settled on Ethereum (Mainnet), each node is required to attest to the batch of blocks using its BLS key.
-
-Broadly, each signature is executed on a tuple containing 3 essential elements:
-
-```
-struct batch {
-    var batch_header,
-    var current_committee,
-    var next_committee
-}
-```
-
-For a full breakdown of the architecture, please refer to the below two documents:
-
-1. [Lagrange Technical Overview Docs](https://lagrange-labs.gitbook.io/lagrange-labs/lagrange-state-committees/commitees-overview)
+1. [Lagrange Technical Overview Docs](https://docs.lagrange.dev/state-committees/overview)
 2. [Lagrange State Committee Deep Dive](https://hackmd.io/@lagrange/lagrange-committee)
 
-## Running a Lagrange Client Node
+## Running a Lagrange Attestation Node
 
-The below commands will allow a developer to run a node and attest to the state of `Optimism`, `Arbitrum`, and `Base` chains. We are operating on two networks:
+The below commands will allow a developer to run a node and attest to the state of `Optimism`, `Arbitrum`, and `Base` chains.
 
-- Holesky Testnet
+### Networks
+
+- Holesky
 - Mainnet
 
 ### Chains
@@ -112,6 +100,29 @@ The below commands will allow a developer to run a node and attest to the state 
 - `L2RPCEndpoint`: Rollup (`Optimism` or `Arbitrum` or `Base` etc.) chain's mainnet RPC endpoint for both mainnet and Holesky testnet.
 
   > NOTE: Currently, we only support the `BN254` curve for the `BLSScheme`.
+
+6. If you choose to perform manual deployments without using CLI, you can find the `client_config` and `docker-compose` template files.
+
+- Replace `{{.xxx}}` in the template files with appropriate values and run the following command:
+
+```bash
+docker compose up -f <docker_compose_file_name> -d
+```
+
+| GrpcUrl | Optimism       | Base          | Arbitrum       |
+| ------- | -------------- | ------------- | -------------- |
+| Mainnet | 34.202.191.166 | 34.193.82.90  | 44.208.119.151 |
+| Holesky | 44.210.11.64   | 3.209.124.237 | 18.211.62.223  |
+
+| Mainnet     | Optimism                                   | Base                                       | Arbitrum                                   |
+| ----------- | ------------------------------------------ | ------------------------------------------ | ------------------------------------------ |
+| BatchInbox  | 0xFF00000000000000000000000000000000000010 | 0xFf00000000000000000000000000000000008453 | 0x1c479675ad559DC151F6Ec7ed3FbF8ceE79582B6 |
+| BatchSender | 0x6887246668a3b87F54DeB3b94Ba47a6f63F32985 | 0x5050F69a9786F081509234F1a7F4684b5E5b76C9 |                                            |
+
+| Holesky     | Optimism                                   | Base                                       | Arbitrum                                   |
+| ----------- | ------------------------------------------ | ------------------------------------------ | ------------------------------------------ |
+| BatchInbox  | 0xFF00000000000000000000000000000000000010 | 0xFf00000000000000000000000000000000008453 | 0x1c479675ad559DC151F6Ec7ed3FbF8ceE79582B6 |
+| BatchSender | 0x6887246668a3b87F54DeB3b94Ba47a6f63F32985 | 0x5050F69a9786F081509234F1a7F4684b5E5b76C9 |                                            |
 
 ### Commands
 
@@ -275,9 +286,8 @@ If you want to register an operator without running the commands manually, you c
   cd $HOME/.lagrange && docker compose -f <docker-compose-file> down --remove-orphans
   ```
 
-```
+- If you wish to setup Grafana dashboard for monitoring your attestation node, please review the steps mentioned in this [documentation](/monitoring/MONITORING.MD)
 
 - If you experience the rpc provider issue, it can be due to the rate limit of the provider. You can control the `ConcurrentFetchers` in the `config.toml` file to manage the rate limit.
 
 - If you face any issues while running the Lagrange Attestation Node, please reach out to the Lagrange Labs team on Telegram.
-```

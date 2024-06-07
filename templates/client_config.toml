@@ -1,0 +1,34 @@
+[Client]
+# 
+GrpcURLs = "{{.ServerGrpcURL}}:9090"
+Chain = "{{.ChainName}}"
+EthereumURL = "{{.EthereumRPCURL}}"
+OperatorAddress = "{{.OperatorAddress}}"
+CommitteeSCAddress = "{{.CommitteeSCAddress}}"
+BLSKeystorePath = "/app/config/keystore/bls.key"
+BLSKeystorePasswordPath = "/app/config/keystore/bls.pass"
+SignerECDSAKeystorePath = "/app/config/keystore/signer.key"
+SignerECDSAKeystorePasswordPath = "/app/config/keystore/signer.pass"
+PullInterval = "1000ms"
+BLSCurve = "BN254"
+
+[RpcClient]
+	#{{ if eq .ChainName "optimism" "base" }}
+	[RpcClient.Optimism]
+	RPCURL = "{{.L2RPCEndpoint}}"
+	L1RPCURL = "{{.L1RPCEndpoint}}"
+	BeaconURL = "{{.BeaconURL}}"
+	BatchInbox = "{{.BatchInbox}}"
+	BatchSender = "{{.BatchSender}}"
+	ConcurrentFetchers = 8
+
+	#{{ else if eq .ChainName "arbitrum" }}
+	[RpcClient.Arbitrum]
+	RPCURL = "{{.L2RPCEndpoint}}"
+	L1RPCURL = "{{.L1RPCEndpoint}}"
+	BeaconURL = "{{.BeaconURL}}"
+	BatchInbox = "{{.BatchInbox}}"
+	ConcurrentFetchers = 8
+[Telemetry]
+        ServiceName = "lagrange-node"
+        PrometheusRetentionTime = "60s"
