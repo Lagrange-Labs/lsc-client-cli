@@ -22,7 +22,7 @@ BLSCurve = "BN254"
 	BatchSender = "{{.BatchSender}}"
 	ConcurrentFetchers = 8
 
-    #{{ else if eq .ChainName "arbitrum" }}
+	#{{ else if eq .ChainName "arbitrum" }}
 	[RpcClient.Arbitrum]
 	RPCURL = "{{.L2RPCEndpoint}}"
 	L1RPCURL = "{{.L1RPCEndpoint}}"
