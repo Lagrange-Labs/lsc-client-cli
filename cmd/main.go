@@ -30,7 +30,7 @@ const (
 var (
 	configFileFlag = &cli.StringFlag{
 		Name:    config.FlagCfg,
-		Value:   "config.toml",
+		Value:   "./config.toml",
 		Usage:   "Configuration `FILE`",
 		Aliases: []string{"c"},
 	}
