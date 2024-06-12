@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/Lagrange-Labs/lagrange-node/crypto"
+	"github.com/Lagrange-Labs/lagrange-node/logger"
 	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
 )
 
@@ -104,6 +105,7 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 		if !ok {
 			return nil, err
 		} else if len(configFilePath) > 0 {
+			logger.Warnf("config file `%s` not found, the path should be absolute or relative to the current working directory like `./config.toml`", configFilePath)
 			return nil, fmt.Errorf("config file not found: %s", err)
 		}
 	}
