@@ -246,6 +246,8 @@ docker compose up -f <docker_compose_file_name> -d
   # i.e. ./dist/lagrange-cli generate-config-deploy -c ./config.toml -n mainnet -r optimism -i lagrangelabs/lagrange-node:v0.4.0 -p 8080
   ```
 
+> NOTE: All file paths should be absolute or relative to the current working directory including config file paths and keystore file paths.
+
 > NOTE: Please take a backup of your BLS and ECDSA key pairs. They are located at `~/.lagrange/keystore/<key_type>_<public_key_prefix>.key`.
 
 > NOTE: We recommend using trusted providers like Alchemy, Quicknode, Infura if you don't run your own node. For the Beacon RPC endpoint, you should check if the given RPC provider supports the Beacon RPC API like `/eth/v1/beacon/genesis`. Quicknode supports this API.
