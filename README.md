@@ -2,129 +2,70 @@
 
 This CLI app provides functionalities such as key management, operator registration, chain subscription, monitoring configuration and automated docker deployment which are necessary to run the Lagrange Attestation Node.
 
-## Lagrange Labs State Committees Attestation Node
+## Lagrange Labs State Committees
 
 For a full breakdown of the Lagrange State Committee architecture, please refer to the below two documents:
 
 1. [Lagrange Technical Overview Docs](https://docs.lagrange.dev/state-committees/overview)
 2. [Lagrange State Committee Deep Dive](https://hackmd.io/@lagrange/lagrange-committee)
 
-## Running a Lagrange Attestation Node
+## Installing CLI from source
 
-The below commands will allow a developer to run a node and attest to the state of `Optimism`, `Arbitrum`, and `Base` chains.
+To begin with, install Go programming language following the steps mentioned in the [docs](https://docs.lagrange.dev/state-committees/run-node/prerequisite-installation).
 
-### Networks
-
-- Holesky
-- Mainnet
-
-### Chains
-
-- Optimism: `10`
-- Base: `8453`
-- Arbitrum: `42161`
-
-### Minimum Recommended Hardware
-
-- VCPUs: `2`
-- RAM: `4 GB`
-- Storage: `8 GB`
-- AWS instance type: `t3.medium`
-- Architecture: 64-bit ARM instance
-
-> NOTE: The commands in this README file are for 64-bit ARM AWS ubuntu instance.
-
-### Pre-requisite Installations
-
-1. Golang
-
-   ```bash
-   sudo apt-get update
-   sudo apt-get -y upgrade
-   wget https://go.dev/dl/go1.21.9.linux-amd64.tar.gz
-   sudo tar -xvf go1.21.9.linux-amd64.tar.gz -C /usr/local
-   echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile
-   export GOROOT=/usr/local/go
-   source ~/.profile
-   go version
-   ```
-
-2. Docker and Docker Compose
-
-   ```bash
-   sudo apt-get update
-   sudo install -m 0755 -d /etc/apt/keyrings
-   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-   sudo chmod a+r /etc/apt/keyrings/docker.gpg
-   echo "deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-   sudo apt-get update
-   sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make gcc
-   echo '{ "log-opts": { "max-size": "10m", "max-file": "100" } }' | sudo tee /etc/docker/daemon.json
-   sudo usermod -aG docker $USER
-   newgrp docker
-   sudo systemctl restart docker
-   ```
-
-## Steps
-
-1. Send your EigenLayer operator Ethereum address to Lagrange Labs team for allowlisting. ([Form](https://docs.google.com/forms/d/1oJq1QddKb1Sa_Pe_C1Sa-9p_jN4jBEV2ARI3-M8yb8c/edit))
-
-2. Clone the [Lagrange CLI repository](https://github.com/Lagrange-Labs/client-cli) to your machine.
-
-   ```bash
-   git clone https://github.com/Lagrange-Labs/client-cli.git
-   ```
-
-3. Set environment variables and download dependencies.
-
-   ```bash
-   export CGO_CFLAGS="-O -D__BLST_PORTABLE__"
-   export CGO_CFLAGS_ALLOW="-O -D__BLST_PORTABLE__"
-   cd client-cli
-   go mod download
-   ```
-
-4. Create a go binary.
-
-   ```bash
-   sudo apt install make gcc
-
-   make build
-   ```
-
-5. Create a configuration file for the CLI. Please refer to `config.toml` for the configuration file.
-
-- `EthereumRPCURL`: Ethereum mainnet RPC endpoint for mainnet, and Holesky RPC endpoint for testnet.
-- `L1RPCEndpoint`: Ethereum mainnet RPC endpoint for both mainnet and Holesky testnet.
-- `BeaconURL`: Beacon mainnet RPC endpoint for both mainnet and Holesky testnet.
-- `L2RPCEndpoint`: Rollup (`Optimism` or `Arbitrum` or `Base` etc.) chain's mainnet RPC endpoint for both mainnet and Holesky testnet.
-
-  > NOTE: Currently, we only support the `BN254` curve for the `BLSScheme`.
-
-6. If you choose to perform manual deployments without using CLI, you can find the `client_config` and `docker-compose` template files.
-
-- Replace `{{.xxx}}` in the template files with appropriate values and run the following command:
+- Clone [CLI](https://github.com/Lagrange-Labs/client-cli) repository
 
 ```bash
-docker compose up -f <docker_compose_file_name> -d
+git clone https://github.com/Lagrange-Labs/client-cli.git
 ```
 
-| GrpcUrl | Optimism       | Base          | Arbitrum       |
-| ------- | -------------- | ------------- | -------------- |
-| Mainnet | 34.202.191.166 | 34.193.82.90  | 44.208.119.151 |
-| Holesky | 44.210.11.64   | 3.209.124.237 | 18.211.62.223  |
+- Set CGO Flags
 
-| Mainnet     | Optimism                                   | Base                                       | Arbitrum                                   |
-| ----------- | ------------------------------------------ | ------------------------------------------ | ------------------------------------------ |
-| BatchInbox  | 0xFF00000000000000000000000000000000000010 | 0xFf00000000000000000000000000000000008453 | 0x1c479675ad559DC151F6Ec7ed3FbF8ceE79582B6 |
-| BatchSender | 0x6887246668a3b87F54DeB3b94Ba47a6f63F32985 | 0x5050F69a9786F081509234F1a7F4684b5E5b76C9 |                                            |
+```bash
+export CGO_CFLAGS="-O -D__BLST_PORTABLE__"
+export CGO_CFLAGS_ALLOW="-O -D__BLST_PORTABLE__"
+```
 
-| Holesky     | Optimism                                   | Base                                       | Arbitrum                                   |
-| ----------- | ------------------------------------------ | ------------------------------------------ | ------------------------------------------ |
-| BatchInbox  | 0xFF00000000000000000000000000000000000010 | 0xFf00000000000000000000000000000000008453 | 0x1c479675ad559DC151F6Ec7ed3FbF8ceE79582B6 |
-| BatchSender | 0x6887246668a3b87F54DeB3b94Ba47a6f63F32985 | 0x5050F69a9786F081509234F1a7F4684b5E5b76C9 |                                            |
+- Create binary
+
+```bash
+cd client-cli
+mkdir -p dist
+go build -o ./dist cmd/main.go
+```
+
+or
+
+```bash
+cd client-cli
+sudo apt install make gcc
+make build
+```
+
+## Running a Lagrange Attestation Node
+
+Please refer to the detailed [documentation](https://docs.lagrange.dev/state-committees/overview).
+
+- Networks:
+  - Holesky
+  - Mainnet
+- [System Requirements](https://docs.lagrange.dev/state-committees/operator-guide/system-requirements)
+- [Supported Chains](https://docs.lagrange.dev/state-committees/operator-guide/supported-chains)
+- [Prerequisite Installations](https://docs.lagrange.dev/state-committees/run-node/prerequisite-installation)
+- [Setup configuration file](https://docs.lagrange.dev/state-committees/run-node/configuration)
+- [Commands](#commands)
+- [Setup Keystore](https://docs.lagrange.dev/state-committees/run-node/setup-keystore)
+- Register Operator
+  - [Using CLI](https://docs.lagrange.dev/state-committees/run-node/register-operator)
+  - [Using Script](#script)
+- Deploy attestation node
+  - [Deploy using CLI](https://docs.lagrange.dev/state-committees/run-node/deploy#deploy-using-cli)
+  - [Deploy using templates](https://docs.lagrange.dev/state-committees/run-node/deploy#deploy-using-template)
+- [Post deployment](#post-deployment)
 
 ### Commands
+
+The below commands will allow a developer to run a node and attest to the state of supported chains.
 
 - Generate Keystore: generates a new key pair for the given key type and password, and saves it in the keystore file. The key type can be either `ecdsa` or `bls`.
 
