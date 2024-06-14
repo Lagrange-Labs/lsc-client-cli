@@ -90,4 +90,4 @@ The below commands will allow a developer to run a node and attest to the state 
 
 - The detailed information for the post-deployment monitoring can be found on our [documentation](https://docs.lagrange.dev/state-committees/run-node/monitoring) page.
 
-**If you face any issues while running the Lagrange Attestation Node, please reach out to the Lagrange Labs team on [Discord](https://discord.lagrange.dev/)**
+**If you face any issues while running the Lagrange Attestation Node, please reach out to the Lagrange Labs team on [Discord](https://discord.lagrange.dev/).**
