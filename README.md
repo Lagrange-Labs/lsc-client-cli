@@ -1,8 +1,8 @@
-# Lagrange CLI
+# LSC Client CLI
 
-This CLI app provides functionalities such as key management, operator registration, chain subscription, monitoring configuration and automated docker deployment which are necessary to run the Lagrange Attestation Node.
+This CLI app provides functionalities such as key management, operator registration, chain subscription, monitoring configuration and automated docker deployment which are necessary to run the LSC Attestation Node.
 
-## Lagrange Labs State Committees
+## Lagrange State Committees
 
 For a full breakdown of the Lagrange State Committee architecture, please refer to the below two documents:
 
@@ -13,10 +13,10 @@ For a full breakdown of the Lagrange State Committee architecture, please refer 
 
 To begin with, install Go programming language following the steps mentioned in the [docs](https://docs.lagrange.dev/state-committees/run-node/prerequisite-installation).
 
-- Clone [CLI](https://github.com/Lagrange-Labs/client-cli) repository
+- Clone [CLI](https://github.com/Lagrange-Labs/lsc-client-cli) repository
 
 ```bash
-git clone https://github.com/Lagrange-Labs/client-cli.git
+git clone https://github.com/Lagrange-Labs/lsc-client-cli.git
 ```
 
 - Set CGO Flags
@@ -42,7 +42,7 @@ sudo apt install make gcc
 make build
 ```
 
-## Running a Lagrange Attestation Node
+## Running a LSC Attestation Node
 
 Please refer to the detailed [documentation](https://docs.lagrange.dev/state-committees/overview).
 
@@ -90,4 +90,4 @@ The below commands will allow a developer to run a node and attest to the state 
 
 - The detailed information for the post-deployment monitoring can be found on our [documentation](https://docs.lagrange.dev/state-committees/run-node/monitoring) page.
 
-**If you face any issues while running the Lagrange Attestation Node, please reach out to the Lagrange Labs team on [Discord](https://discord.lagrange.dev/).**
+**If you face any issues while running the LSC Attestation Node, please reach out to the Lagrange Labs team on [Discord](https://discord.lagrange.dev/).**
