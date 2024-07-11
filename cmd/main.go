@@ -546,6 +546,8 @@ func generateConfig(c *cli.Context) error {
 	clientCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
 	clientCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
 	clientCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
+	clientCfg.MetricsEnabled = cfg.MetricsEnabled
+	clientCfg.MetricsServerPort = cfg.MetricsServerPort
 	clientCfg.MetricsServiceName = cfg.MetricsServiceName
 	clientCfg.PrometheusRetentionTime = cfg.PrometheusRetentionTime
 
