@@ -10,5 +10,7 @@ BeaconURL = "--- Beacon Endpoint (mainnet) ---"
 L2RPCEndpoint = "--- L2 RPC Endpoint (optimism / base) ---"
 BLSCurve = "BN254"
 ConcurrentFetchers = 8
+MetricsEnabled = true
+MetricsServerPort = "8080"
 MetricsServiceName = "lagrange-node"
 PrometheusRetentionTime = "60s"
