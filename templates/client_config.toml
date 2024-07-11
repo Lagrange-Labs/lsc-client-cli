@@ -1,5 +1,4 @@
 [Client]
-# 
 GrpcURLs = "{{.ServerGrpcURL}}:9090"
 Chain = "{{.ChainName}}"
 EthereumURL = "{{.EthereumRPCURL}}"
@@ -29,6 +28,9 @@ BLSCurve = "BN254"
 	BeaconURL = "{{.BeaconURL}}"
 	BatchInbox = "{{.BatchInbox}}"
 	ConcurrentFetchers = 8
+
 [Telemetry]
-        ServiceName = "lagrange-node"
-        PrometheusRetentionTime = "60s"
+MetricsEnabled = true
+MetricsServerPort = "8080"
+ServiceName = "lagrange-node"
+PrometheusRetentionTime = "60s"

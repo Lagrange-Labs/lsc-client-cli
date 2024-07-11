@@ -37,9 +37,13 @@ BLSCurve = "{{.BLSCurve}}"
 	[RpcClient.Mock]
 	RPCURL = "{{.L2RPCEndpoint}}"
 	{{ end }}
+
 [Telemetry]
-	ServiceName = "{{.MetricsServiceName}}"
-	PrometheusRetentionTime = "{{.PrometheusRetentionTime}}"`
+MetricsEnabled = {{.MetricsEnabled}}
+MetricsServerPort = "{{.MetricsServerPort}}"
+ServiceName = "{{.MetricsServiceName}}"
+PrometheusRetentionTime = "{{.PrometheusRetentionTime}}"
+`
 
 	configDir = ".lagrange/config"
 )
