@@ -124,16 +124,25 @@ func (s *BN254Scheme) Sign(privKey, message []byte) ([]byte, error) {
 	sig := new(bn254.G1Affine)
 	sig.ScalarMultiplication(h, scalar)
 	sigRaw := sig.RawBytes()
-	PrintG1(sig)
 	return sigRaw[:], nil
 }
 
-func PrintG2(p *bn254.G2Affine) {
+func PrintG2(prefix string, point []byte) {
+	fmt.Println(prefix)
+	p := new(bn254.G2Affine)
+	if _, err := p.SetBytes(point); err != nil {
+		panic(err)
+	}
 	fmt.Printf("X.A0: %s, X.A1: %s\n", p.X.A0.String(), p.X.A1.String())
 	fmt.Printf("Y.A0: %s, Y.A1: %s\n", p.Y.A0.String(), p.Y.A1.String())
 }
 
-func PrintG1(p *bn254.G1Affine) {
+func PrintG1(prefix string, point []byte) {
+	fmt.Println(prefix)
+	p := new(bn254.G1Affine)
+	if _, err := p.SetBytes(point); err != nil {
+		panic(err)
+	}
 	fmt.Printf("X: %s\n", p.X.String())
 	fmt.Printf("Y: %s\n", p.Y.String())
 }
