@@ -37,9 +37,9 @@ func TestBN254(t *testing.T) {
 
 	aggPubKeyG2, err := scheme.AggregateG2(pubKeyG2s)
 	require.NoError(t, err)
-	PrintG2("Aggregated PubKey G2: ", aggPubKeyG2)
+	fmt.Printf("Aggregated PubKey G2: %v", aggPubKeyG2)
 
 	aggSig, err := scheme.AggregateG1(signatures)
 	require.NoError(t, err)
-	PrintG1("Aggregated Signature: ", aggSig)
+	fmt.Printf("Aggregated Signature: %v", aggSig)
 }

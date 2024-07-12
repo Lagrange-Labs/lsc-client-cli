@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/Lagrange-Labs/lagrange-node/utils"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
@@ -147,7 +148,7 @@ func PrintG1(prefix string, point []byte) {
 	fmt.Printf("Y: %s\n", p.Y.String())
 }
 
-func (s *BN254Scheme) AggregateG2(points [][]byte) ([]byte, error) {
+func (s *BN254Scheme) AggregateG2(points [][]byte) (*bn254.G2Affine, error) {
 	aggG2 := new(bn254.G2Affine)
 	for i, point := range points {
 		s := new(bn254.G2Affine)
@@ -161,11 +162,10 @@ func (s *BN254Scheme) AggregateG2(points [][]byte) ([]byte, error) {
 		}
 	}
 
-	pRaw := aggG2.Bytes()
-	return pRaw[:], nil
+	return aggG2, nil
 }
 
-func (s *BN254Scheme) AggregateG1(points [][]byte) ([]byte, error) {
+func (s *BN254Scheme) AggregateG1(points [][]byte) (*bn254.G1Affine, error) {
 	aggG1 := new(bn254.G1Affine)
 	for i, point := range points {
 		p := new(bn254.G1Affine)
@@ -179,6 +179,54 @@ func (s *BN254Scheme) AggregateG1(points [][]byte) ([]byte, error) {
 		}
 	}
 
-	pRaw := aggG1.Bytes()
-	return pRaw[:], nil
+	return aggG1, nil
+}
+
+func GenerateBLSSignature(digest []byte, blsPrivKeys ...string) (
+	blsG1PublicKeys [][2]*big.Int,
+	aggG2PublicKey [2][2]*big.Int,
+	signature [2]*big.Int,
+	err error,
+) {
+	pubKeyG2s := make([][]byte, len(blsPrivKeys))
+	signatures := make([][]byte, len(blsPrivKeys))
+	for i, privKey := range blsPrivKeys {
+		priv := utils.Hex2Bytes(privKey)
+		pubKeyG2s[i], err = new(BN254Scheme).GetPublicKeyG2(priv, false)
+		if err != nil {
+			return
+		}
+		var pubKey []byte
+		pubKey, err = new(BN254Scheme).GetPublicKeyG1(priv, false)
+		if err != nil {
+			return
+		}
+
+		pubKeyX := new(big.Int).SetBytes(pubKey[:32])
+		pubKeyY := new(big.Int).SetBytes(pubKey[32:])
+		blsG1PublicKeys = append(blsG1PublicKeys, [2]*big.Int{pubKeyX, pubKeyY})
+
+		signatures[i], err = new(BN254Scheme).Sign(priv, digest)
+		if err != nil {
+			return
+		}
+	}
+
+	aggG2, err := new(BN254Scheme).AggregateG2(pubKeyG2s)
+	if err != nil {
+		return blsG1PublicKeys, aggG2PublicKey, signature, err
+	}
+	aggG2PublicKey[0][0] = aggG2.X.A1.BigInt(big.NewInt(0))
+	aggG2PublicKey[0][1] = aggG2.X.A0.BigInt(big.NewInt(0))
+	aggG2PublicKey[1][0] = aggG2.Y.A1.BigInt(big.NewInt(0))
+	aggG2PublicKey[1][1] = aggG2.Y.A0.BigInt(big.NewInt(0))
+
+	aggSig, err := new(BN254Scheme).AggregateG1(signatures)
+	if err != nil {
+		return blsG1PublicKeys, aggG2PublicKey, signature, err
+	}
+	signature[0] = aggSig.X.BigInt(big.NewInt(0))
+	signature[1] = aggSig.Y.BigInt(big.NewInt(0))
+
+	return
 }
