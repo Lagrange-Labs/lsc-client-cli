@@ -37,6 +37,8 @@ type CLIConfig struct {
 	L2RPCEndpoint                   string `mapstructure:"L2RPCEndpoint"`
 	BLSCurve                        string `mapstructure:"BLSCurve"`
 	ConcurrentFetchers              int    `mapstructure:"ConcurrentFetchers"`
+	MetricsEnabled                  bool   `mapstructure:"MetricsEnabled"`
+	MetricsServerPort               string `mapstructure:"MetricsServerPort"`
 	MetricsServiceName              string `mapstructure:"MetricsServiceName"`
 	PrometheusRetentionTime         string `mapstructure:"PrometheusRetentionTime"`
 }
@@ -61,6 +63,8 @@ type ClientConfig struct {
 	BatchSender                     string
 	BLSCurve                        string
 	ConcurrentFetchers              int
+	MetricsEnabled                  bool
+	MetricsServerPort               string
 	MetricsServiceName              string
 	PrometheusRetentionTime         string
 }
