@@ -16,6 +16,7 @@ import (
 
 	"github.com/Lagrange-Labs/client-cli/config"
 	"github.com/Lagrange-Labs/client-cli/scinterface/avs"
+	"github.com/Lagrange-Labs/client-cli/scinterface/committee"
 	"github.com/Lagrange-Labs/client-cli/scinterface/lagrange"
 	"github.com/Lagrange-Labs/lagrange-node/logger"
 	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
@@ -62,21 +63,7 @@ func NewChainOps(network, rpcEndpoint string, privateKey string) (*ChainOps, err
 	}, nil
 }
 
-// Register registers a new validator.
-func (c *ChainOps) Register(network, signAddr string, blsPubKeys [][2]*big.Int) error {
-	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
-	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
-	if err != nil {
-		return err
-	}
-	avsAddr, err := lagrangeService.AvsDirectory(nil)
-	if err != nil {
-		return err
-	}
-	avsDirectory, err := avs.NewAvs(avsAddr, c.client)
-	if err != nil {
-		return err
-	}
+func (c *ChainOps) getSaltAndExpiry() ([32]byte, *big.Int) {
 	var salt [32]byte
 	copy(salt[:], lagrangeAVSSalt)
 	// add timestamp to salt
@@ -84,24 +71,94 @@ func (c *ChainOps) Register(network, signAddr string, blsPubKeys [][2]*big.Int) 
 	copy(salt[len(lagrangeAVSSalt):], big.NewInt(t).Bytes())
 	header, err := c.client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		return err
+		return [32]byte{}, nil
 	}
 	expiry := header.Time + 300
-	digestHash, err := avsDirectory.CalculateOperatorAVSRegistrationDigestHash(nil, c.auth.From, common.HexToAddress(serviceAddr), salt, big.NewInt(int64(expiry)))
+	return salt, big.NewInt(int64(expiry))
+}
+
+func (c *ChainOps) getAVSDSignature(network string) (*lagrange.ISignatureUtilsSignatureWithSaltAndExpiry, error) {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	avsAddr, err := lagrangeService.AvsDirectory(nil)
+	if err != nil {
+		return nil, err
+	}
+	avsDirectory, err := avs.NewAvs(avsAddr, c.client)
+	if err != nil {
+		return nil, err
+	}
+	salt, expiry := c.getSaltAndExpiry()
+	digestHash, err := avsDirectory.CalculateOperatorAVSRegistrationDigestHash(nil, c.auth.From, common.HexToAddress(serviceAddr), salt, expiry)
+	if err != nil {
+		return nil, err
 	}
 	signature, err := ecrypto.Sign(digestHash[:], c.privateKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	signature[64] += 27
 
-	tx, err := lagrangeService.Register(c.auth, common.HexToAddress(signAddr), blsPubKeys, lagrange.ISignatureUtilsSignatureWithSaltAndExpiry{
+	return &lagrange.ISignatureUtilsSignatureWithSaltAndExpiry{
 		Signature: signature,
 		Salt:      salt,
-		Expiry:    big.NewInt(int64(expiry)),
-	})
+		Expiry:    expiry,
+	}, nil
+}
+
+func (c *ChainOps) getCommitteeDigestHash(network string, blsPrivKeys ...string) (*lagrange.IBLSKeyCheckerBLSKeyWithProof, error) {
+	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
+	if err != nil {
+		return nil, err
+	}
+	committeeAdr, err := lagrangeService.Committee(nil)
+	if err != nil {
+		return nil, err
+	}
+	committee, err := committee.NewCommittee(committeeAdr, c.client)
+	if err != nil {
+		return nil, err
+	}
+	salt, expiry := c.getSaltAndExpiry()
+	digestHash, err := committee.CalculateKeyWithProofHash(nil, c.auth.From, salt, expiry)
+	if err != nil {
+		return nil, err
+	}
+
+	arg0, arg1, arg2, err := GenerateBLSSignature(digestHash[:], blsPrivKeys...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &lagrange.IBLSKeyCheckerBLSKeyWithProof{
+		BlsG1PublicKeys: arg0,
+		AggG2PublicKey:  arg1,
+		Signature:       arg2,
+		Salt:            salt,
+		Expiry:          expiry,
+	}, nil
+}
+
+// Register registers a new validator.
+func (c *ChainOps) Register(network, signAddr string, blsPrivKeys ...string) error {
+	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(config.NetworkConfigs[network].LagrangeServiceSCAddress), c.client)
+	if err != nil {
+		return err
+	}
+
+	avsSig, err := c.getAVSDSignature(network)
+	if err != nil {
+		return err
+	}
+	blsSig, err := c.getCommitteeDigestHash(network, blsPrivKeys...)
+	if err != nil {
+		return err
+	}
+	tx, err := lagrangeService.Register(c.auth, common.HexToAddress(signAddr), *blsSig, *avsSig)
 	if err != nil {
 		return fmt.Errorf("failed to register: %v", err)
 	}
@@ -110,14 +167,18 @@ func (c *ChainOps) Register(network, signAddr string, blsPubKeys [][2]*big.Int) 
 }
 
 // AddBlsPubKeys adds BLS Public keys to the validator.
-func (c *ChainOps) AddBlsPubKeys(network string, blsPubKeys [][2]*big.Int) error {
+func (c *ChainOps) AddBlsPubKeys(network string, blsPrivKeys ...string) error {
 	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
 	}
 
-	tx, err := lagrangeService.AddBlsPubKeys(c.auth, blsPubKeys)
+	blsSig, err := c.getCommitteeDigestHash(network, blsPrivKeys...)
+	if err != nil {
+		return err
+	}
+	tx, err := lagrangeService.AddBlsPubKeys(c.auth, *blsSig)
 	if err != nil {
 		return fmt.Errorf("failed to add BLS keys: %v", err)
 	}
@@ -176,14 +237,18 @@ func (c *ChainOps) Deregister(network string) error {
 }
 
 // UpdateBlsPubKey updates the BLS public key at the given index.
-func (c *ChainOps) UpdateBlsPubKey(network string, index uint32, blsPubKey [2]*big.Int) error {
+func (c *ChainOps) UpdateBlsPubKey(network string, index uint32, blsPrivKey string) error {
 	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
 	}
 
-	tx, err := lagrangeService.UpdateBlsPubKey(c.auth, index, blsPubKey)
+	blsSig, err := c.getCommitteeDigestHash(network, blsPrivKey)
+	if err != nil {
+		return err
+	}
+	tx, err := lagrangeService.UpdateBlsPubKey(c.auth, index, *blsSig)
 	if err != nil {
 		return fmt.Errorf("failed to update BLS key: %v", err)
 	}

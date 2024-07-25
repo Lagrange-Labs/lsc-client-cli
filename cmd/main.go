@@ -100,7 +100,7 @@ func main() {
 			Usage: "Prints the version of the Lagrange Client CLI",
 			Action: func(c *cli.Context) error {
 				w := os.Stdout
-				fmt.Fprintf(w, "Version:      %s\n", "v0.2.0")
+				fmt.Fprintf(w, "Version:      %s\n", "v1.0.0")
 				fmt.Fprintf(w, "Go version:   %s\n", runtime.Version())
 				fmt.Fprintf(w, "OS/Arch:      %s/%s\n", runtime.GOOS, runtime.GOARCH)
 				return nil
@@ -327,7 +327,7 @@ func registerOperator(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.Register(network, cliCfg.SignerAddress, blsPubRawKeys); err != nil {
+	if err := chainOps.Register(network, cliCfg.SignerAddress, cliCfg.BLSPrivateKey); err != nil {
 		logger.Infof("Failed to register to the committee: %s", err)
 	}
 
@@ -378,7 +378,7 @@ func updateBlsPubKey(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.UpdateBlsPubKey(network, index, pubRawKey); err != nil {
+	if err := chainOps.UpdateBlsPubKey(network, index, cliCfg.BLSPrivateKey); err != nil {
 		logger.Infof("Failed to update BLS public key: %s", err)
 	}
 
@@ -417,20 +417,18 @@ func addBlsPubKey(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	blsPubRawKeys := make([][2]*big.Int, 0)
+
 	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
 	if err != nil {
 		return fmt.Errorf("failed to convert BLS public key: %w", err)
 	}
-	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
-
 	// add the BLS public key
 	logger.Infof("Adding BLS public key with BLS public key: %s", pubRawKey)
 	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.AddBlsPubKeys(network, blsPubRawKeys); err != nil {
+	if err := chainOps.AddBlsPubKeys(network, cliCfg.BLSPrivateKey); err != nil {
 		logger.Infof("Failed to add BLS public key: %s", err)
 	}
 

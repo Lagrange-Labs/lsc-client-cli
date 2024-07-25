@@ -30,9 +30,36 @@
         "name": "addBlsPubKeys",
         "inputs": [
             {
-                "name": "additionalBlsPubKeys",
-                "type": "uint256[2][]",
-                "internalType": "uint256[2][]"
+                "name": "blsKeyWithProof",
+                "type": "tuple",
+                "internalType": "struct IBLSKeyChecker.BLSKeyWithProof",
+                "components": [
+                    {
+                        "name": "blsG1PublicKeys",
+                        "type": "uint256[2][]",
+                        "internalType": "uint256[2][]"
+                    },
+                    {
+                        "name": "aggG2PublicKey",
+                        "type": "uint256[2][2]",
+                        "internalType": "uint256[2][2]"
+                    },
+                    {
+                        "name": "signature",
+                        "type": "uint256[2]",
+                        "internalType": "uint256[2]"
+                    },
+                    {
+                        "name": "salt",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "expiry",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    }
+                ]
             }
         ],
         "outputs": [],
@@ -171,9 +198,36 @@
                 "internalType": "address"
             },
             {
-                "name": "blsPubKeys",
-                "type": "uint256[2][]",
-                "internalType": "uint256[2][]"
+                "name": "blsKeyWithProof",
+                "type": "tuple",
+                "internalType": "struct IBLSKeyChecker.BLSKeyWithProof",
+                "components": [
+                    {
+                        "name": "blsG1PublicKeys",
+                        "type": "uint256[2][]",
+                        "internalType": "uint256[2][]"
+                    },
+                    {
+                        "name": "aggG2PublicKey",
+                        "type": "uint256[2][2]",
+                        "internalType": "uint256[2][2]"
+                    },
+                    {
+                        "name": "signature",
+                        "type": "uint256[2]",
+                        "internalType": "uint256[2]"
+                    },
+                    {
+                        "name": "salt",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "expiry",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    }
+                ]
             },
             {
                 "name": "operatorSignature",
@@ -288,6 +342,24 @@
     },
     {
         "type": "function",
+        "name": "unsubscribeByAdmin",
+        "inputs": [
+            {
+                "name": "operators",
+                "type": "address[]",
+                "internalType": "address[]"
+            },
+            {
+                "name": "chainID",
+                "type": "uint32",
+                "internalType": "uint32"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
         "name": "updateAVSMetadataURI",
         "inputs": [
             {
@@ -309,9 +381,36 @@
                 "internalType": "uint32"
             },
             {
-                "name": "blsPubKey",
-                "type": "uint256[2]",
-                "internalType": "uint256[2]"
+                "name": "blsKeyWithProof",
+                "type": "tuple",
+                "internalType": "struct IBLSKeyChecker.BLSKeyWithProof",
+                "components": [
+                    {
+                        "name": "blsG1PublicKeys",
+                        "type": "uint256[2][]",
+                        "internalType": "uint256[2][]"
+                    },
+                    {
+                        "name": "aggG2PublicKey",
+                        "type": "uint256[2][2]",
+                        "internalType": "uint256[2][2]"
+                    },
+                    {
+                        "name": "signature",
+                        "type": "uint256[2]",
+                        "internalType": "uint256[2]"
+                    },
+                    {
+                        "name": "salt",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "expiry",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    }
+                ]
             }
         ],
         "outputs": [],
@@ -441,6 +540,25 @@
                 "type": "address",
                 "indexed": true,
                 "internalType": "address"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "UnsubscribedByAdmin",
+        "inputs": [
+            {
+                "name": "operator",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "chainID",
+                "type": "uint32",
+                "indexed": true,
+                "internalType": "uint32"
             }
         ],
         "anonymous": false

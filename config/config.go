@@ -28,6 +28,7 @@ type CLIConfig struct {
 	SignerECDSAKeystorePath         string `mapstructure:"SignerECDSAKeystorePath"`
 	SignerECDSAKeystorePassword     string
 	SignerECDSAKeystorePasswordPath string `mapstructure:"SignerECDSAKeystorePasswordPath"`
+	BLSPrivateKey                   string
 	BLSPublicKey                    string
 	BLSKeystorePath                 string `mapstructure:"BLSKeyStorePath"`
 	BLSKeystorePassword             string
@@ -191,6 +192,7 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get BLS public key: %w", err)
 	}
+	cfg.BLSPrivateKey = nutils.Bytes2Hex(privKey)
 	cfg.BLSPublicKey = nutils.Bytes2Hex(pubKey)
 
 	return &cfg, nil
