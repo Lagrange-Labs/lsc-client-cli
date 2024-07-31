@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/big"
 	"os"
@@ -585,8 +586,16 @@ func clientDeploy(c *cli.Context) error {
 }
 
 func deployWithConfig(c *cli.Context) error {
+	cliConfigFilePath := c.String(config.FlagCfg)
 	if err := generateConfig(c); err != nil {
 		return fmt.Errorf("failed to generate client config: %w", err)
 	}
+	nodeConfigFilePath := c.String(config.FlagCfg)
+	fs := flag.NewFlagSet("deploy", flag.ContinueOnError)
+	fs.String(config.FlagCfg, cliConfigFilePath, "Configuration FILE")
+	fs.String(config.FlagNodeCfg, nodeConfigFilePath, "Node Configuration FILE")
+	fs.String(flagDockerImage, c.String(flagDockerImage), "Docker IMAGE")
+	c = cli.NewContext(c.App, fs, nil)
+
 	return clientDeploy(c)
 }
