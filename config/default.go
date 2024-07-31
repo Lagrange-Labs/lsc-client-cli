@@ -1,10 +1,12 @@
 package config
 
 const (
-	// FlagCfg is the flag for cfg.
+	// FlagCfg is the flag for config.
 	FlagCfg = "config"
+	// FlagNodeCfg is the flag for node config.
+	FlagNodeCfg = "node-config"
 
-	clientConfigTemplate = `[Client]
+	nodeConfigTemplate = `[Client]
 GrpcURLs = "{{.ServerGrpcURL}}"
 Chain = "{{.ChainName}}"
 EthereumURL = "{{.EthereumRPCURL}}"
