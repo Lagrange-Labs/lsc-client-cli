@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/big"
 	"os"
@@ -24,7 +25,6 @@ const (
 	flagChain           = "chain"
 	flagDockerImage     = "docker-image"
 	flagKeyIndex        = "key-index"
-	flagPrometheusPort  = "prometheus-port"
 )
 
 var (
@@ -33,6 +33,12 @@ var (
 		Value:   "./config.toml",
 		Usage:   "Configuration `FILE`",
 		Aliases: []string{"c"},
+	}
+	nodeConfigFileFlag = &cli.StringFlag{
+		Name:     config.FlagNodeCfg,
+		Usage:    "Node Configuration `FILE`",
+		Aliases:  []string{"n"},
+		Required: true,
 	}
 	keyTypeFlag = &cli.StringFlag{
 		Name:    flagKeyType,
@@ -81,12 +87,6 @@ var (
 		Value:   0,
 		Usage:   "BLS Key `INDEX`",
 		Aliases: []string{"i"},
-	}
-	prometheusPortFlag = &cli.StringFlag{
-		Name:    flagPrometheusPort,
-		Value:   "8080",
-		Usage:   "Prometheus `PORT`",
-		Aliases: []string{"p"},
 	}
 )
 
@@ -235,30 +235,29 @@ func main() {
 			Usage: "Generate a docker-compose file for node deployment",
 			Flags: []cli.Flag{
 				configFileFlag,
+				nodeConfigFileFlag,
 				dockerImageFlag,
-				prometheusPortFlag,
 			},
 			Action: generateDockerCompose,
 		},
 		{
 			Name:  "deploy",
-			Usage: "Deploy the Lagrange Node Client with the given client config file",
+			Usage: "Deploy the LSC node with the given node config file",
 			Flags: []cli.Flag{
 				configFileFlag,
+				nodeConfigFileFlag,
 				dockerImageFlag,
-				prometheusPortFlag,
 			},
 			Action: clientDeploy,
 		},
 		{
 			Name:  "generate-config-deploy",
-			Usage: "Deploy the Lagrange Node Client after generating the client config file and docker-compose file",
+			Usage: "Deploy the LSC node after generating the client config file and docker-compose file",
 			Flags: []cli.Flag{
 				configFileFlag,
 				networkFlag,
 				chainFlag,
 				dockerImageFlag,
-				prometheusPortFlag,
 			},
 			Action: deployWithConfig,
 		},
@@ -526,42 +525,46 @@ func generateConfig(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	clientCfg := new(config.ClientConfig)
-	clientCfg.EthereumRPCURL = cfg.EthereumRPCURL
-	clientCfg.CommitteeSCAddress = config.NetworkConfigs[network].CommitteeSCAddress
-	clientCfg.BLSCurve = cfg.BLSCurve
-	clientCfg.ConcurrentFetchers = cfg.ConcurrentFetchers
-	clientCfg.ChainName = chain
-	clientCfg.ServerGrpcURL = config.NetworkConfigs[network].GRPCServerURLs[chain]
-	clientCfg.L1RPCEndpoint = cfg.L1RPCEndpoint
-	clientCfg.L2RPCEndpoint = cfg.L2RPCEndpoint
-	clientCfg.BeaconURL = cfg.BeaconURL
-	clientCfg.BatchInbox = config.ChainBatchConfigs[chain].BatchInbox
-	clientCfg.BatchSender = config.ChainBatchConfigs[chain].BatchSender
-	clientCfg.OperatorAddress = cfg.OperatorAddress
-	clientCfg.BLSPubKey = cfg.BLSPublicKey
-	clientCfg.BLSKeystorePath = cfg.BLSKeystorePath
-	clientCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
-	clientCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
-	clientCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
-	clientCfg.MetricsEnabled = cfg.MetricsEnabled
-	clientCfg.MetricsServerPort = cfg.MetricsServerPort
-	clientCfg.MetricsServiceName = cfg.MetricsServiceName
-	clientCfg.PrometheusRetentionTime = cfg.PrometheusRetentionTime
+	nodeCfg := new(config.NodeConfig)
+	nodeCfg.EthereumRPCURL = cfg.EthereumRPCURL
+	nodeCfg.CommitteeSCAddress = config.NetworkConfigs[network].CommitteeSCAddress
+	nodeCfg.BLSCurve = cfg.BLSCurve
+	nodeCfg.ConcurrentFetchers = cfg.ConcurrentFetchers
+	nodeCfg.ChainName = chain
+	nodeCfg.ServerGrpcURL = config.NetworkConfigs[network].GRPCServerURLs[chain]
+	nodeCfg.L1RPCEndpoint = cfg.L1RPCEndpoint
+	nodeCfg.L2RPCEndpoint = cfg.L2RPCEndpoint
+	nodeCfg.BeaconURL = cfg.BeaconURL
+	nodeCfg.BatchInbox = config.ChainBatchConfigs[chain].BatchInbox
+	nodeCfg.BatchSender = config.ChainBatchConfigs[chain].BatchSender
+	nodeCfg.OperatorAddress = cfg.OperatorAddress
+	nodeCfg.BLSPubKey = cfg.BLSPublicKey
+	nodeCfg.BLSKeystorePath = cfg.BLSKeystorePath
+	nodeCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
+	nodeCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
+	nodeCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
+	nodeCfg.MetricsEnabled = cfg.MetricsEnabled
+	nodeCfg.MetricsServerPort = cfg.MetricsServerPort
+	nodeCfg.MetricsServiceName = cfg.MetricsServiceName
+	nodeCfg.PrometheusRetentionTime = cfg.PrometheusRetentionTime
 
-	configFilePath, err := config.GenerateClientConfig(clientCfg, network)
+	nodeConfigFilePath, err := config.GenerateNodeConfig(nodeCfg, network)
 	if err != nil {
 		return fmt.Errorf("failed to generate client config: %w", err)
 	}
 
-	logger.Infof("Client Config file created: %s", configFilePath)
+	logger.Infof("Node Config file created: %s", nodeConfigFilePath)
 
-	return c.Set(config.FlagCfg, configFilePath)
+	return c.Set(config.FlagCfg, nodeConfigFilePath)
 }
 
 func generateDockerCompose(c *cli.Context) error {
 	logger.Infof("Generating Docker Compose file")
-	if _, err := utils.GenerateDockerComposeFile(c.String(flagDockerImage), c.String(flagPrometheusPort), c.String(config.FlagCfg)); err != nil {
+	cfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+	if _, err := utils.GenerateDockerComposeFile(cfg, c.String(flagDockerImage), c.String(config.FlagNodeCfg)); err != nil {
 		return fmt.Errorf("failed to generate docker compose file: %w", err)
 	}
 
@@ -570,19 +573,29 @@ func generateDockerCompose(c *cli.Context) error {
 
 func clientDeploy(c *cli.Context) error {
 	dockerImageName := c.String(flagDockerImage)
-	prometheusPort := c.String(flagPrometheusPort)
 	logger.Infof("Deploying Lagrange Node Client with Image: %s", dockerImageName)
 	// check if the docker image exists locally
 	if err := utils.CheckDockerImageExists(dockerImageName); err != nil {
 		return fmt.Errorf("failed to check docker image: %s", err)
 	}
-
-	return utils.RunDockerImage(dockerImageName, prometheusPort, c.String(config.FlagCfg))
+	cfg, err := config.LoadCLIConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+	return utils.RunDockerImage(cfg, dockerImageName, c.String(config.FlagNodeCfg))
 }
 
 func deployWithConfig(c *cli.Context) error {
+	cliConfigFilePath := c.String(config.FlagCfg)
 	if err := generateConfig(c); err != nil {
 		return fmt.Errorf("failed to generate client config: %w", err)
 	}
+	nodeConfigFilePath := c.String(config.FlagCfg)
+	fs := flag.NewFlagSet("deploy", flag.ContinueOnError)
+	fs.String(config.FlagCfg, cliConfigFilePath, "Configuration FILE")
+	fs.String(config.FlagNodeCfg, nodeConfigFilePath, "Node Configuration FILE")
+	fs.String(flagDockerImage, c.String(flagDockerImage), "Docker IMAGE")
+	c = cli.NewContext(c.App, fs, nil)
+
 	return clientDeploy(c)
 }
