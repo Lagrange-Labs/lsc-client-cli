@@ -6,7 +6,7 @@ services:
     image: lagrangelabs/lagrange-node:{{.Version}}
     restart: always
     ports:
-      - "{{.PrometheusPort}}:8080"
+      - "{{.HostBindingPort}}:{{.PrometheusPort}}"
     command:
       - "/bin/sh"
       - "-c"

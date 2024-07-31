@@ -20,7 +20,7 @@ services:
     image: {{.DockerImage}}
     restart: always
     ports:
-      - "{{.PrometheusPort}}:8080"
+      - "{{.HostBindingPort}}:{{.PrometheusPort}}"
     environment:
       - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPATH=/app/config/keystore/bls.key
       - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPASSWORDPATH=/app/config/keystore/bls.pass
@@ -74,7 +74,7 @@ func pullDockerImage(imageName string) error {
 }
 
 // GenerateDockerComposeFile generates a Docker Compose file.
-func GenerateDockerComposeFile(imageName, prometheusPort, configFilePath string) (string, error) {
+func GenerateDockerComposeFile(cfg *config.CLIConfig, imageName, nodeConfigFilePath string) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %s", err)
@@ -86,24 +86,25 @@ func GenerateDockerComposeFile(imageName, prometheusPort, configFilePath string)
 
 	var dockerConfig config.DockerComposeConfig
 	// Get chain name and bls pub key from config file path
-	configFileName := filepath.Base(configFilePath)
+	configFileName := filepath.Base(nodeConfigFilePath)
 	seps := strings.Split(configFileName, "_")
 	dockerConfig.Network = seps[1]
 	dockerConfig.ChainName = seps[2]
 	dockerConfig.BLSPubKeyPrefix = strings.Split(seps[3], ".")[0]
 	dockerConfig.DockerImage = imageName
-	dockerConfig.ConfigFilePath = configFilePath
-	dockerConfig.PrometheusPort = prometheusPort
+	dockerConfig.ConfigFilePath = nodeConfigFilePath
+	dockerConfig.PrometheusPort = cfg.MetricsServerPort
+	dockerConfig.HostBindingPort = cfg.HostBindingPort
 
-	// Load the client config
-	clientCfg, err := config.LoadClientConfig(configFilePath)
+	// Load the node config
+	nodeCfg, err := config.LoadNodeConfig(nodeConfigFilePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to load client config: %s", err)
 	}
-	dockerConfig.BLSKeystorePath = clientCfg.BLSKeystorePath
-	dockerConfig.BLSKeystorePasswordPath = clientCfg.BLSKeystorePasswordPath
-	dockerConfig.SignerECDSAKeystorePath = clientCfg.SignerECDSAKeystorePath
-	dockerConfig.SignerECDSAKeystorePasswordPath = clientCfg.SignerECDSAKeystorePasswordPath
+	dockerConfig.BLSKeystorePath = nodeCfg.BLSKeystorePath
+	dockerConfig.BLSKeystorePasswordPath = nodeCfg.BLSKeystorePasswordPath
+	dockerConfig.SignerECDSAKeystorePath = nodeCfg.SignerECDSAKeystorePath
+	dockerConfig.SignerECDSAKeystorePasswordPath = nodeCfg.SignerECDSAKeystorePasswordPath
 
 	tmpDocker, err := template.New("docker-compose").Parse(dockerComposeTemplate)
 	if err != nil {
@@ -124,8 +125,8 @@ func GenerateDockerComposeFile(imageName, prometheusPort, configFilePath string)
 }
 
 // RunDockerImage runs a Docker image.
-func RunDockerImage(imageName, prometheusPort, configFilePath string) error {
-	dockerComposeFilePath, err := GenerateDockerComposeFile(imageName, prometheusPort, configFilePath)
+func RunDockerImage(cfg *config.CLIConfig, imageName, clientConfigFilePath string) error {
+	dockerComposeFilePath, err := GenerateDockerComposeFile(cfg, imageName, clientConfigFilePath)
 	if err != nil {
 		return err
 	}
