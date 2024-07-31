@@ -41,13 +41,14 @@ type CLIConfig struct {
 	ConcurrentFetchers              int    `mapstructure:"ConcurrentFetchers"`
 	MetricsEnabled                  bool   `mapstructure:"MetricsEnabled"`
 	MetricsServerPort               string `mapstructure:"MetricsServerPort"`
+	HostBindingPort                 string `mapstructure:"HostBindingPort"`
 	MetricsServiceName              string `mapstructure:"MetricsServiceName"`
 	PrometheusRetentionTime         string `mapstructure:"PrometheusRetentionTime"`
 }
 
-// ClientConfig is the configuration for the lagrange client.
+// NodeConfig is the configuration for the LSC node.
 // This is used to generate the client.toml file.
-type ClientConfig struct {
+type NodeConfig struct {
 	ChainName                       string
 	ServerGrpcURL                   string
 	OperatorAddress                 string
@@ -83,6 +84,7 @@ type DockerComposeConfig struct {
 	SignerECDSAKeystorePath         string `json:"signer_ecdsa_keystore_path"`
 	SignerECDSAKeystorePasswordPath string `json:"signer_ecdsa_keystore_password_path"`
 	PrometheusPort                  string `json:"prometheus_port"`
+	HostBindingPort                 string `json:"host_binding_port"`
 }
 
 // LoadCLIConfig loads the lagrange CLI configuration.
@@ -198,8 +200,8 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 	return &cfg, nil
 }
 
-// GenerateClientConfig generates the client.toml file.
-func GenerateClientConfig(clientCfg *ClientConfig, network string) (string, error) {
+// GenerateNodeConfig generates the client.toml file.
+func GenerateNodeConfig(clientCfg *NodeConfig, network string) (string, error) {
 	// Validate the client config
 	if len(clientCfg.BLSKeystorePath) == 0 {
 		return "", fmt.Errorf("BLS keystore path is required")
@@ -208,7 +210,7 @@ func GenerateClientConfig(clientCfg *ClientConfig, network string) (string, erro
 		return "", fmt.Errorf("signer ECDSA keystore path is required")
 	}
 	// Create the Client Config file
-	tmplClient, err := template.New("client").Parse(clientConfigTemplate)
+	tmplClient, err := template.New("client").Parse(nodeConfigTemplate)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse client config template: %s", err)
 	}
@@ -234,13 +236,13 @@ func GenerateClientConfig(clientCfg *ClientConfig, network string) (string, erro
 	return configFilePath, nil
 }
 
-// LoadClientConfig loads the client config from the client.toml file.
-func LoadClientConfig(configFilePath string) (*ClientConfig, error) {
+// LoadNodeConfig loads the node config from the client.toml file.
+func LoadNodeConfig(nodeConfigFilePath string) (*NodeConfig, error) {
 	var cfg struct {
-		Client ClientConfig
+		Client NodeConfig
 	}
 
-	viper.SetConfigFile(configFilePath)
+	viper.SetConfigFile(nodeConfigFilePath)
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
