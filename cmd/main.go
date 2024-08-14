@@ -12,8 +12,8 @@ import (
 
 	"github.com/Lagrange-Labs/client-cli/config"
 	"github.com/Lagrange-Labs/client-cli/utils"
-	"github.com/Lagrange-Labs/lagrange-node/logger"
-	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
+	"github.com/Lagrange-Labs/lagrange-node/core"
+	"github.com/Lagrange-Labs/lagrange-node/core/logger"
 )
 
 const (
@@ -279,7 +279,7 @@ func generateKeystore(c *cli.Context) error {
 func importKeystore(c *cli.Context) error {
 	keyType := strings.ToLower(c.String(flagKeyType))
 	passwordPath := c.String(flagKeyPasswordPath)
-	privKey := nutils.Hex2Bytes(c.String(flagPrivateKey))
+	privKey := core.Hex2Bytes(c.String(flagPrivateKey))
 	return utils.ImportFromPrivateKey(keyType, passwordPath, privKey)
 }
 
@@ -291,7 +291,7 @@ func exportKeystore(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("Private Key: %s", nutils.Bytes2Hex(privKey))
+	logger.Infof("Private Key: %s", core.Bytes2Hex(privKey))
 	return nil
 }
 
@@ -314,7 +314,7 @@ func registerOperator(c *cli.Context) error {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
 	blsPubRawKeys := make([][2]*big.Int, 0)
-	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
+	pubRawKey, err := utils.ConvertBLSKey(core.Hex2Bytes(cliCfg.BLSPublicKey))
 	if err != nil {
 		return fmt.Errorf("failed to convert BLS public key: %w", err)
 	}
@@ -366,7 +366,7 @@ func updateBlsPubKey(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
+	pubRawKey, err := utils.ConvertBLSKey(core.Hex2Bytes(cliCfg.BLSPublicKey))
 	if err != nil {
 		return fmt.Errorf("failed to convert BLS public key: %w", err)
 	}
@@ -417,7 +417,7 @@ func addBlsPubKey(c *cli.Context) error {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
 
-	pubRawKey, err := utils.ConvertBLSKey(nutils.Hex2Bytes(cliCfg.BLSPublicKey))
+	pubRawKey, err := utils.ConvertBLSKey(core.Hex2Bytes(cliCfg.BLSPublicKey))
 	if err != nil {
 		return fmt.Errorf("failed to convert BLS public key: %w", err)
 	}

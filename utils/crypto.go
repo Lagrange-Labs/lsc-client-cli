@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/Lagrange-Labs/lagrange-node/utils"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+
+	"github.com/Lagrange-Labs/lagrange-node/core"
 )
 
 const (
@@ -191,7 +192,7 @@ func GenerateBLSSignature(digest []byte, blsPrivKeys ...string) (
 	pubKeyG2s := make([][]byte, len(blsPrivKeys))
 	signatures := make([][]byte, len(blsPrivKeys))
 	for i, privKey := range blsPrivKeys {
-		priv := utils.Hex2Bytes(privKey)
+		priv := core.Hex2Bytes(privKey)
 		pubKeyG2s[i], err = new(BN254Scheme).GetPublicKeyG2(priv, false)
 		if err != nil {
 			return
