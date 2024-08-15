@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 
-	"github.com/Lagrange-Labs/lagrange-node/crypto"
-	"github.com/Lagrange-Labs/lagrange-node/logger"
-	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
+	"github.com/Lagrange-Labs/lagrange-node/core"
+	"github.com/Lagrange-Labs/lagrange-node/core/crypto"
+	"github.com/Lagrange-Labs/lagrange-node/core/logger"
 )
 
 // CLIConfig is the configuration for the lagrange CLI.
@@ -144,7 +144,7 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg.OperatorPrivKey = nutils.Bytes2Hex(privKey)
+	cfg.OperatorPrivKey = core.Bytes2Hex(privKey)
 	privateKey, err := ecrypto.ToECDSA(privKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert private key to ECDSA: %w", err)
@@ -194,8 +194,8 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get BLS public key: %w", err)
 	}
-	cfg.BLSPrivateKey = nutils.Bytes2Hex(privKey)
-	cfg.BLSPublicKey = nutils.Bytes2Hex(pubKey)
+	cfg.BLSPrivateKey = core.Bytes2Hex(privKey)
+	cfg.BLSPublicKey = core.Bytes2Hex(pubKey)
 
 	return &cfg, nil
 }

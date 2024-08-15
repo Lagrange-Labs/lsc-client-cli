@@ -8,9 +8,9 @@ import (
 
 	ecrypto "github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/Lagrange-Labs/lagrange-node/crypto"
-	"github.com/Lagrange-Labs/lagrange-node/logger"
-	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
+	"github.com/Lagrange-Labs/lagrange-node/core"
+	"github.com/Lagrange-Labs/lagrange-node/core/crypto"
+	"github.com/Lagrange-Labs/lagrange-node/core/logger"
 )
 
 const keystoreDir = ".lagrange/keystore"
@@ -87,7 +87,7 @@ func ExportKeystore(keyType, passwordPath, filePath string) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to load ECDSA private key: %w", err)
 		}
-		if err := DisplayWarningMessage(keyType, nutils.Bytes2Hex(privateKey), filePath); err != nil {
+		if err := DisplayWarningMessage(keyType, core.Bytes2Hex(privateKey), filePath); err != nil {
 			return nil, fmt.Errorf("failed to display warning message: %w", err)
 		}
 		return privateKey, nil
@@ -96,7 +96,7 @@ func ExportKeystore(keyType, passwordPath, filePath string) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to load BLS private key: %w", err)
 		}
-		if err := DisplayWarningMessage(keyType, nutils.Bytes2Hex(privateKey), filePath); err != nil {
+		if err := DisplayWarningMessage(keyType, core.Bytes2Hex(privateKey), filePath); err != nil {
 			return nil, fmt.Errorf("failed to display warning message: %w", err)
 		}
 		return privateKey, nil
@@ -127,7 +127,7 @@ func ExportPublicKey(keyType, filePath string) error {
 		if err := json.Unmarshal(data, &keyStore); err != nil {
 			return fmt.Errorf("failed to unmarshal BLS keystore: %w", err)
 		}
-		pubRawKey, err := ConvertBLSKey(nutils.Hex2Bytes(keyStore.PublicKey))
+		pubRawKey, err := ConvertBLSKey(core.Hex2Bytes(keyStore.PublicKey))
 		if err != nil {
 			return fmt.Errorf("failed to convert BLS public key: %w", err)
 		}
@@ -149,7 +149,7 @@ func saveKeystore(keyType string, password string, pubKey, privKey []byte) error
 	} else if keyType == "bls" {
 		cryptoCurve = crypto.CryptoCurve("BN254")
 	}
-	if err := DisplayWarningMessage(keyType, nutils.Bytes2Hex(privKey), ksPath); err != nil {
+	if err := DisplayWarningMessage(keyType, core.Bytes2Hex(privKey), ksPath); err != nil {
 		return fmt.Errorf("failed to display warning message: %w", err)
 	}
 	return crypto.SaveKey(cryptoCurve, privKey, password, ksPath)

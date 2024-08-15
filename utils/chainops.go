@@ -18,8 +18,8 @@ import (
 	"github.com/Lagrange-Labs/client-cli/scinterface/avs"
 	"github.com/Lagrange-Labs/client-cli/scinterface/committee"
 	"github.com/Lagrange-Labs/client-cli/scinterface/lagrange"
-	"github.com/Lagrange-Labs/lagrange-node/logger"
-	nutils "github.com/Lagrange-Labs/lagrange-node/utils"
+	"github.com/Lagrange-Labs/lagrange-node/core/crypto"
+	"github.com/Lagrange-Labs/lagrange-node/core/logger"
 )
 
 var lagrangeAVSSalt = []byte("lagrange-avs")
@@ -45,7 +45,7 @@ func NewChainOps(network, rpcEndpoint string, privateKey string) (*ChainOps, err
 		return nil, fmt.Errorf("chain ID mismatch: expected %d, got %d", config.ChainBatchConfigs[network].ChainID, chainID.Int64())
 	}
 
-	auth, err := nutils.GetSigner(context.Background(), client, privateKey)
+	auth, err := crypto.GetSigner(context.Background(), client, privateKey)
 	if err != nil {
 		return nil, err
 	}
