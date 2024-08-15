@@ -1,0 +1,53 @@
+OperatorKeystorePath = "--- Operator Keystore Path ---"
+OperatorKeystorePasswordPath = "--- Operator Keystore Password Path ---"
+SignerECDSAKeystorePath = "--- Signer ECDSA Keystore Path ---"
+SignerECDSAKeystorePasswordPath = "--- Signer ECDSA Keystore Password Path ---"
+EthereumRPCURL = "--- Ethereum RPC URL (mainnet / holesky) ---"
+L1RPCEndpoint = "--- L1 RPC Endpoint (mainnet) ---"
+BeaconURL = "--- Beacon Endpoint (mainnet) ---"
+BLSCurve = "BN254"
+
+[[Chains]]
+ChainName = "optimism"
+L2RPCEndpoint = "--- L2 RPC Endpoint optimism ---"
+NumberOfAttestationNodes = 1
+
+[[Chains.AttestationNodes]]
+BLSKeystorePath = "--- BLS Keystore Path ---"
+BLSKeystorePasswordPath = "--- BLS Keystore Password Path ---"
+ConcurrentFetchers = 8
+MetricsEnabled = true
+MetricsServerPort = "8080"
+HostBindingPort = "8080"
+MetricsServiceName = "lagrange-node"
+PrometheusRetentionTime = "60s"
+
+[[Chains]]
+ChainName = "base"
+L2RPCEndpoint = "--- L2 RPC Endpoint base ---"
+NumberOfAttestationNodes = 1
+
+[[Chains.AttestationNodes]]
+BLSKeystorePath = "--- BLS Keystore Path ---"
+BLSKeystorePasswordPath = "--- BLS Keystore Password Path ---"
+ConcurrentFetchers = 8
+MetricsEnabled = true
+MetricsServerPort = "8081"
+HostBindingPort = "8081"
+MetricsServiceName = "lagrange-node"
+PrometheusRetentionTime = "60s"
+
+[[Chains]]
+ChainName = "arbitrum"
+L2RPCEndpoint = "--- L2 RPC Endpoint arbitrum ---"
+NumberOfAttestationNodes = 1
+
+[[Chains.AttestationNodes]]
+BLSKeystorePath = "--- BLS Keystore Path ---"
+BLSKeystorePasswordPath = "--- BLS Keystore Password Path ---"
+ConcurrentFetchers = 8
+MetricsEnabled = true
+MetricsServerPort = "8082"
+HostBindingPort = "8082"
+MetricsServiceName = "lagrange-node"
+PrometheusRetentionTime = "60s"

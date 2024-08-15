@@ -33,6 +33,12 @@ var (
 		Usage:   "Configuration `FILE`",
 		Aliases: []string{"c"},
 	}
+	bulkConfigFileFlag = &cli.StringFlag{
+		Name:    config.FlagBulkCfg,
+		Value:   "./config_bulk.toml",
+		Usage:   "Configuration `FILE` for bulk operations on multiple chains and nodes",
+		Aliases: []string{"b"},
+	}
 	nodeConfigFileFlag = &cli.StringFlag{
 		Name:     config.FlagNodeCfg,
 		Usage:    "Node Configuration `FILE`",
@@ -77,7 +83,7 @@ var (
 	}
 	dockerImageFlag = &cli.StringFlag{
 		Name:    flagDockerImage,
-		Value:   "lagrangelabs/lagrange-node:v0.3.15",
+		Value:   "lagrangelabs/lagrange-node:v1.0.0",
 		Usage:   "Docker `IMAGE`",
 		Aliases: []string{"i"},
 	}
@@ -259,6 +265,16 @@ func main() {
 				dockerImageFlag,
 			},
 			Action: deployWithConfig,
+		},
+		{
+			Name:  "bulk-generate-config-deploy",
+			Usage: "Deploy the LSC nodes after generating the client config file and docker-compose file for multiple chains",
+			Flags: []cli.Flag{
+				bulkConfigFileFlag,
+				networkFlag,
+				dockerImageFlag,
+			},
+			Action: bulkDeployWithConfig,
 		},
 	}
 
@@ -580,4 +596,69 @@ func deployWithConfig(c *cli.Context) error {
 	c = cli.NewContext(c.App, fs, nil)
 
 	return clientDeploy(c)
+}
+
+func bulkDeployWithConfig(c *cli.Context) error {
+	network := strings.ToLower(c.String(flagNetwork))
+	if _, ok := config.NetworkConfigs[network]; !ok {
+		return fmt.Errorf("invalid network: %s, should be one of (mainnet, holesky)", network)
+	}
+
+	cfg, err := config.LoadCLIBulkConfig(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+
+	dockerImageName := c.String(flagDockerImage)
+
+	for _, chain := range cfg.Chains {
+		if _, ok := config.ChainBatchConfigs[chain.ChainName]; !ok {
+			return fmt.Errorf("invalid chain: %s, should be one of (optimism, base, arbitrum ...)", chain.ChainName)
+		}
+		for _, node := range chain.AttestationNodes {
+			nodeCfg := new(config.NodeConfig)
+			nodeCfg.EthereumRPCURL = cfg.EthereumRPCURL
+			nodeCfg.CommitteeSCAddress = config.NetworkConfigs[network].CommitteeSCAddress
+			nodeCfg.BLSCurve = cfg.BLSCurve
+			nodeCfg.ConcurrentFetchers = node.ConcurrentFetchers
+			nodeCfg.ChainName = chain.ChainName
+			nodeCfg.ServerGrpcURL = config.NetworkConfigs[network].GRPCServerURLs[chain.ChainName]
+			nodeCfg.L1RPCEndpoint = cfg.L1RPCEndpoint
+			nodeCfg.L2RPCEndpoint = chain.L2RPCEndpoint
+			nodeCfg.BeaconURL = cfg.BeaconURL
+			nodeCfg.BatchInbox = config.ChainBatchConfigs[chain.ChainName].BatchInbox
+			nodeCfg.BatchSender = config.ChainBatchConfigs[chain.ChainName].BatchSender
+			nodeCfg.OperatorAddress = cfg.OperatorAddress
+			nodeCfg.BLSPubKey = node.BLSPublicKey
+			nodeCfg.BLSKeystorePath = node.BLSKeystorePath
+			nodeCfg.BLSKeystorePasswordPath = node.BLSKeystorePasswordPath
+			nodeCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
+			nodeCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
+			nodeCfg.MetricsEnabled = node.MetricsEnabled
+			nodeCfg.MetricsServerPort = node.MetricsServerPort
+			nodeCfg.MetricsServiceName = node.MetricsServiceName
+			nodeCfg.PrometheusRetentionTime = node.PrometheusRetentionTime
+
+			nodeConfigFilePath, err := config.GenerateNodeConfig(nodeCfg, network)
+			if err != nil {
+				return fmt.Errorf("failed to generate client config: %w", err)
+			}
+			logger.Infof("Node Config file created: %s", nodeConfigFilePath)
+
+			logger.Infof("Deploying Lagrange Node Client with Image: %s", dockerImageName)
+			// check if the docker image exists locally
+			if err := utils.CheckDockerImageExists(dockerImageName); err != nil {
+				return fmt.Errorf("failed to check docker image: %s", err)
+			}
+			cliCfg, err := utils.CreateCLIConfigStruct(c, cfg, chain, node)
+			if err != nil {
+				return fmt.Errorf("failed to create CLI config for deployment: %w", err)
+			}
+			err = utils.RunDockerImage(cliCfg, dockerImageName, nodeConfigFilePath)
+			if err != nil {
+				return fmt.Errorf("failed to deploy node for chain %s with BLS public key %s: %w", chain.ChainName, node.BLSPublicKey, err)
+			}
+		}
+	}
+	return nil
 }
