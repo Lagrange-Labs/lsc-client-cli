@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/big"
 	"os"
 	"runtime"
 	"strings"
@@ -313,20 +312,13 @@ func registerOperator(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	blsPubRawKeys := make([][2]*big.Int, 0)
-	pubRawKey, err := utils.ConvertBLSKey(core.Hex2Bytes(cliCfg.BLSPublicKey))
-	if err != nil {
-		return fmt.Errorf("failed to convert BLS public key: %w", err)
-	}
-	blsPubRawKeys = append(blsPubRawKeys, pubRawKey)
-
 	// register the operator to the committee
-	logger.Infof("Registering with BLS public key: %s and sign address: %s", blsPubRawKeys, cliCfg.SignerAddress)
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	logger.Infof("Registering with BLS public key id: %s and sign key id: %s", cliCfg.BLSKeyAccountID, cliCfg.SignerKeyAccountID)
+	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.Register(network, cliCfg.SignerAddress, cliCfg.BLSPrivateKey); err != nil {
+	if err := chainOps.Register(network, cliCfg.SignerKeyAccountID, cliCfg.BLSKeyAccountID); err != nil {
 		logger.Infof("Failed to register to the committee: %s", err)
 	}
 
@@ -344,8 +336,8 @@ func deregisterOperator(c *cli.Context) error {
 	}
 
 	// deregister the operator from the committee
-	logger.Infof("Deregistering with sign address: %s", cliCfg.SignerAddress)
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	logger.Infof("Deregistering with sign key id: %s", cliCfg.SignerKeyAccountID)
+	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
@@ -366,18 +358,13 @@ func updateBlsPubKey(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	pubRawKey, err := utils.ConvertBLSKey(core.Hex2Bytes(cliCfg.BLSPublicKey))
-	if err != nil {
-		return fmt.Errorf("failed to convert BLS public key: %w", err)
-	}
-
 	// update the BLS public key
-	logger.Infof("Updating BLS public key  at index: %d with BLS public key: %s", index, pubRawKey)
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	logger.Infof("Updating BLS public key  at index: %d with BLS public key id: %s", index, cliCfg.BLSKeyAccountID)
+	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.UpdateBlsPubKey(network, index, cliCfg.BLSPrivateKey); err != nil {
+	if err := chainOps.UpdateBlsPubKey(network, index, cliCfg.BLSKeyAccountID); err != nil {
 		logger.Infof("Failed to update BLS public key: %s", err)
 	}
 
@@ -395,12 +382,12 @@ func updateSignerAddress(c *cli.Context) error {
 	}
 
 	// update the signer address
-	logger.Infof("Updating signer address with signer address: %s", cliCfg.SignerAddress)
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	logger.Infof("Updating signer address with signer key id: %s", cliCfg.SignerKeyAccountID)
+	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.UpdateSignerAddress(network, cliCfg.SignerAddress); err != nil {
+	if err := chainOps.UpdateSignerAddress(network, cliCfg.SignerKeyAccountID); err != nil {
 		logger.Infof("Failed to update signer address: %s", err)
 	}
 
@@ -417,17 +404,13 @@ func addBlsPubKey(c *cli.Context) error {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
 
-	pubRawKey, err := utils.ConvertBLSKey(core.Hex2Bytes(cliCfg.BLSPublicKey))
-	if err != nil {
-		return fmt.Errorf("failed to convert BLS public key: %w", err)
-	}
 	// add the BLS public key
-	logger.Infof("Adding BLS public key with BLS public key: %s", pubRawKey)
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	logger.Infof("Adding BLS public key with BLS public key id: %s", cliCfg.BLSKeyAccountID)
+	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
-	if err := chainOps.AddBlsPubKeys(network, cliCfg.BLSPrivateKey); err != nil {
+	if err := chainOps.AddBlsPubKeys(network, cliCfg.BLSKeyAccountID); err != nil {
 		logger.Infof("Failed to add BLS public key: %s", err)
 	}
 
@@ -447,7 +430,7 @@ func removeBlsPubKey(c *cli.Context) error {
 
 	// remove the BLS public key
 	logger.Infof("Removing BLS public key at index: %d", index)
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
@@ -471,7 +454,7 @@ func subscribeChain(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
@@ -498,7 +481,7 @@ func unsubscribeChain(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	chainOps, err := utils.NewChainOps(network, cliCfg.EthereumRPCURL, cliCfg.OperatorPrivKey)
+	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
 	}
@@ -526,6 +509,7 @@ func generateConfig(c *cli.Context) error {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
 	nodeCfg := new(config.NodeConfig)
+	nodeCfg.CertConfig = cfg.CertConfig
 	nodeCfg.EthereumRPCURL = cfg.EthereumRPCURL
 	nodeCfg.CommitteeSCAddress = config.NetworkConfigs[network].CommitteeSCAddress
 	nodeCfg.BLSCurve = cfg.BLSCurve
@@ -537,12 +521,10 @@ func generateConfig(c *cli.Context) error {
 	nodeCfg.BeaconURL = cfg.BeaconURL
 	nodeCfg.BatchInbox = config.ChainBatchConfigs[chain].BatchInbox
 	nodeCfg.BatchSender = config.ChainBatchConfigs[chain].BatchSender
+	nodeCfg.SignerServerURL = cfg.SignerServerURL
 	nodeCfg.OperatorAddress = cfg.OperatorAddress
-	nodeCfg.BLSPubKey = cfg.BLSPublicKey
-	nodeCfg.BLSKeystorePath = cfg.BLSKeystorePath
-	nodeCfg.BLSKeystorePasswordPath = cfg.BLSKeystorePasswordPath
-	nodeCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
-	nodeCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
+	nodeCfg.BLSKeyAccountID = cfg.BLSKeyAccountID
+	nodeCfg.SignerKeyAccountID = cfg.SignerKeyAccountID
 	nodeCfg.MetricsEnabled = cfg.MetricsEnabled
 	nodeCfg.MetricsServerPort = cfg.MetricsServerPort
 	nodeCfg.MetricsServiceName = cfg.MetricsServiceName

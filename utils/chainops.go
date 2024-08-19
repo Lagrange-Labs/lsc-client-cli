@@ -2,16 +2,14 @@ package utils
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
-	"strings"
 	"time"
 
+	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	ecrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/Lagrange-Labs/client-cli/config"
@@ -26,14 +24,14 @@ var lagrangeAVSSalt = []byte("lagrange-avs")
 
 // ChainOps is a wrapper for Ethereum chain operations.
 type ChainOps struct {
-	client     *ethclient.Client
-	auth       *bind.TransactOpts
-	privateKey *ecdsa.PrivateKey
+	client       *ethclient.Client
+	signerClient *SignerClient
+	cliCfg       *config.CLIConfig
 }
 
 // NewChainOps creates a new ChainOps instance.
-func NewChainOps(network, rpcEndpoint string, privateKey string) (*ChainOps, error) {
-	client, err := ethclient.Dial(rpcEndpoint)
+func NewChainOps(network string, cliCfg *config.CLIConfig) (*ChainOps, error) {
+	client, err := ethclient.Dial(cliCfg.EthereumRPCURL)
 	if err != nil {
 		return nil, err
 	}
@@ -45,22 +43,26 @@ func NewChainOps(network, rpcEndpoint string, privateKey string) (*ChainOps, err
 		return nil, fmt.Errorf("chain ID mismatch: expected %d, got %d", config.ChainBatchConfigs[network].ChainID, chainID.Int64())
 	}
 
-	auth, err := crypto.GetSigner(context.Background(), client, privateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	privateKey = strings.TrimPrefix(privateKey, "0x")
-	privateKeyECDSA, err := ecrypto.HexToECDSA(privateKey)
+	signerClient, err := NewSignerClient(cliCfg.SignerServerURL, cliCfg.CertConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ChainOps{
-		client:     client,
-		auth:       auth,
-		privateKey: privateKeyECDSA,
+		client:       client,
+		signerClient: signerClient,
+		cliCfg:       cliCfg,
 	}, nil
+}
+
+func (c *ChainOps) getRawTxOpts() *bind.TransactOpts {
+	return &bind.TransactOpts{
+		From: common.HexToAddress(c.cliCfg.OperatorAddress),
+		Signer: func(address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			return tx, nil
+		},
+		NoSend: true,
+	}
 }
 
 func (c *ChainOps) getSaltAndExpiry() ([32]byte, *big.Int) {
@@ -92,11 +94,11 @@ func (c *ChainOps) getAVSDSignature(network string) (*lagrange.ISignatureUtilsSi
 		return nil, err
 	}
 	salt, expiry := c.getSaltAndExpiry()
-	digestHash, err := avsDirectory.CalculateOperatorAVSRegistrationDigestHash(nil, c.auth.From, common.HexToAddress(serviceAddr), salt, expiry)
+	digestHash, err := avsDirectory.CalculateOperatorAVSRegistrationDigestHash(nil, common.HexToAddress(c.cliCfg.OperatorAddress), common.HexToAddress(serviceAddr), salt, expiry)
 	if err != nil {
 		return nil, err
 	}
-	signature, err := ecrypto.Sign(digestHash[:], c.privateKey)
+	signature, err := c.signerClient.Sign(digestHash[:], c.cliCfg.OperatorKeyAccountID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +111,7 @@ func (c *ChainOps) getAVSDSignature(network string) (*lagrange.ISignatureUtilsSi
 	}, nil
 }
 
-func (c *ChainOps) getCommitteeDigestHash(network string, blsPrivKeys ...string) (*lagrange.IBLSKeyCheckerBLSKeyWithProof, error) {
+func (c *ChainOps) getCommitteeDigestHash(network string, blsKeyIDs ...string) (*lagrange.IBLSKeyCheckerBLSKeyWithProof, error) {
 	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
@@ -124,12 +126,12 @@ func (c *ChainOps) getCommitteeDigestHash(network string, blsPrivKeys ...string)
 		return nil, err
 	}
 	salt, expiry := c.getSaltAndExpiry()
-	digestHash, err := committee.CalculateKeyWithProofHash(nil, c.auth.From, salt, expiry)
+	digestHash, err := committee.CalculateKeyWithProofHash(nil, common.HexToAddress(c.cliCfg.OperatorAddress), salt, expiry)
 	if err != nil {
 		return nil, err
 	}
 
-	arg0, arg1, arg2, err := GenerateBLSSignature(digestHash[:], blsPrivKeys...)
+	arg0, arg1, arg2, err := c.generateBLSSignature(digestHash[:], blsKeyIDs...)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +146,11 @@ func (c *ChainOps) getCommitteeDigestHash(network string, blsPrivKeys ...string)
 }
 
 // Register registers a new validator.
-func (c *ChainOps) Register(network, signAddr string, blsPrivKeys ...string) error {
+func (c *ChainOps) Register(network, signerKeyID string, blsAccountIDs ...string) error {
+	signAddr, err := c.signerClient.GetPublicKey(signerKeyID, false)
+	if err != nil {
+		return err
+	}
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(config.NetworkConfigs[network].LagrangeServiceSCAddress), c.client)
 	if err != nil {
 		return err
@@ -154,11 +160,12 @@ func (c *ChainOps) Register(network, signAddr string, blsPrivKeys ...string) err
 	if err != nil {
 		return err
 	}
-	blsSig, err := c.getCommitteeDigestHash(network, blsPrivKeys...)
+	blsSig, err := c.getCommitteeDigestHash(network, blsAccountIDs...)
 	if err != nil {
 		return err
 	}
-	tx, err := lagrangeService.Register(c.auth, common.HexToAddress(signAddr), *blsSig, *avsSig)
+
+	tx, err := lagrangeService.Register(c.getRawTxOpts(), common.BytesToAddress(signAddr), *blsSig, *avsSig)
 	if err != nil {
 		return fmt.Errorf("failed to register: %v", err)
 	}
@@ -167,18 +174,18 @@ func (c *ChainOps) Register(network, signAddr string, blsPrivKeys ...string) err
 }
 
 // AddBlsPubKeys adds BLS Public keys to the validator.
-func (c *ChainOps) AddBlsPubKeys(network string, blsPrivKeys ...string) error {
+func (c *ChainOps) AddBlsPubKeys(network string, blsKeyIDs ...string) error {
 	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
 	}
 
-	blsSig, err := c.getCommitteeDigestHash(network, blsPrivKeys...)
+	blsSig, err := c.getCommitteeDigestHash(network, blsKeyIDs...)
 	if err != nil {
 		return err
 	}
-	tx, err := lagrangeService.AddBlsPubKeys(c.auth, *blsSig)
+	tx, err := lagrangeService.AddBlsPubKeys(c.getRawTxOpts(), *blsSig)
 	if err != nil {
 		return fmt.Errorf("failed to add BLS keys: %v", err)
 	}
@@ -195,7 +202,7 @@ func (c *ChainOps) Subscribe(network, chain string) error {
 		return err
 	}
 
-	tx, err := lagrangeService.Subscribe(c.auth, chainID)
+	tx, err := lagrangeService.Subscribe(c.getRawTxOpts(), chainID)
 	if err != nil {
 		return fmt.Errorf("failed to subscribe: %v", err)
 	}
@@ -212,7 +219,7 @@ func (c *ChainOps) Unsubscribe(network, chain string) error {
 		return err
 	}
 
-	tx, err := lagrangeService.Unsubscribe(c.auth, chainID)
+	tx, err := lagrangeService.Unsubscribe(c.getRawTxOpts(), chainID)
 	if err != nil {
 		return fmt.Errorf("failed to unsubscribe: %v", err)
 	}
@@ -228,7 +235,7 @@ func (c *ChainOps) Deregister(network string) error {
 		return err
 	}
 
-	tx, err := lagrangeService.Deregister(c.auth)
+	tx, err := lagrangeService.Deregister(c.getRawTxOpts())
 	if err != nil {
 		return fmt.Errorf("failed to deregister: %v", err)
 	}
@@ -237,18 +244,18 @@ func (c *ChainOps) Deregister(network string) error {
 }
 
 // UpdateBlsPubKey updates the BLS public key at the given index.
-func (c *ChainOps) UpdateBlsPubKey(network string, index uint32, blsPrivKey string) error {
+func (c *ChainOps) UpdateBlsPubKey(network string, index uint32, blsKeyID string) error {
 	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
 	}
 
-	blsSig, err := c.getCommitteeDigestHash(network, blsPrivKey)
+	blsSig, err := c.getCommitteeDigestHash(network, blsKeyID)
 	if err != nil {
 		return err
 	}
-	tx, err := lagrangeService.UpdateBlsPubKey(c.auth, index, *blsSig)
+	tx, err := lagrangeService.UpdateBlsPubKey(c.getRawTxOpts(), index, *blsSig)
 	if err != nil {
 		return fmt.Errorf("failed to update BLS key: %v", err)
 	}
@@ -264,7 +271,7 @@ func (c *ChainOps) RemoveBlsPubKeys(network string, indices []uint32) error {
 		return err
 	}
 
-	tx, err := lagrangeService.RemoveBlsPubKeys(c.auth, indices)
+	tx, err := lagrangeService.RemoveBlsPubKeys(c.getRawTxOpts(), indices)
 	if err != nil {
 		return fmt.Errorf("failed to remove BLS keys: %v", err)
 	}
@@ -273,14 +280,18 @@ func (c *ChainOps) RemoveBlsPubKeys(network string, indices []uint32) error {
 }
 
 // UpdateSignerAddress updates the signer address.
-func (c *ChainOps) UpdateSignerAddress(network, newSignerAddr string) error {
+func (c *ChainOps) UpdateSignerAddress(network, newSignerKeyID string) error {
+	newSignerAddr, err := c.signerClient.GetPublicKey(newSignerKeyID, false)
+	if err != nil {
+		return err
+	}
 	serviceAddr := config.NetworkConfigs[network].LagrangeServiceSCAddress
 	lagrangeService, err := lagrange.NewLagrange(common.HexToAddress(serviceAddr), c.client)
 	if err != nil {
 		return err
 	}
 
-	tx, err := lagrangeService.UpdateSignAddress(c.auth, common.HexToAddress(newSignerAddr))
+	tx, err := lagrangeService.UpdateSignAddress(c.getRawTxOpts(), common.BytesToAddress(newSignerAddr))
 	if err != nil {
 		return fmt.Errorf("failed to update signer address: %v", err)
 	}
@@ -288,8 +299,20 @@ func (c *ChainOps) UpdateSignerAddress(network, newSignerAddr string) error {
 	return c.WaitForMined(tx)
 }
 
-// WaitForMined waits for a transaction to be mined.
+// WaitForMined send the transaction and wait for it to be mined.
 func (c *ChainOps) WaitForMined(tx *types.Transaction) error {
+	signature, err := c.signerClient.Sign(tx.Data(), c.cliCfg.OperatorKeyAccountID, true)
+	if err != nil {
+		return err
+	}
+	tx, err = tx.WithSignature(types.LatestSignerForChainID(tx.ChainId()), signature)
+	if err != nil {
+		return err
+	}
+	if err = c.client.SendTransaction(context.Background(), tx); err != nil {
+		return fmt.Errorf("failed to send transaction: %v", err)
+	}
+
 	logger.Infof("Waiting for transaction %s to be mined", tx.Hash().String())
 	receipt, err := bind.WaitMined(context.Background(), c.client, tx)
 	if err != nil {
@@ -300,4 +323,60 @@ func (c *ChainOps) WaitForMined(tx *types.Transaction) error {
 	}
 	logger.Infof("Transaction %s mined", tx.Hash().String())
 	return nil
+}
+
+func (c *ChainOps) generateBLSSignature(digest []byte, blsKeyIDs ...string) (
+	blsG1PublicKeys [][2]*big.Int,
+	aggG2PublicKey [2][2]*big.Int,
+	signature [2]*big.Int,
+	err error,
+) {
+	pubKeyG2s := make([][]byte, len(blsKeyIDs))
+	signatures := make([][]byte, len(blsKeyIDs))
+	for i, blsKeyID := range blsKeyIDs {
+		pubKeyG2s[i], err = c.signerClient.GetPublicKey(blsKeyID, false)
+		if err != nil {
+			return
+		}
+		var pubKey []byte
+		pubKey, err = c.signerClient.GetPublicKey(blsKeyID, true)
+		if err != nil {
+			return
+		}
+
+		pubKeyX := new(big.Int).SetBytes(pubKey[:32])
+		pubKeyY := new(big.Int).SetBytes(pubKey[32:])
+		blsG1PublicKeys = append(blsG1PublicKeys, [2]*big.Int{pubKeyX, pubKeyY})
+
+		signatures[i], err = c.signerClient.Sign(digest, blsKeyID, false)
+		if err != nil {
+			return
+		}
+	}
+
+	aggG2Bytes, err := new(crypto.BN254Scheme).AggregatePublicKeys(pubKeyG2s, false)
+	if err != nil {
+		return blsG1PublicKeys, aggG2PublicKey, signature, err
+	}
+	aggG2 := new(bn254.G2Affine)
+	if _, err = aggG2.SetBytes(aggG2Bytes); err != nil {
+		return blsG1PublicKeys, aggG2PublicKey, signature, err
+	}
+	aggG2PublicKey[0][0] = aggG2.X.A1.BigInt(big.NewInt(0))
+	aggG2PublicKey[0][1] = aggG2.X.A0.BigInt(big.NewInt(0))
+	aggG2PublicKey[1][0] = aggG2.Y.A1.BigInt(big.NewInt(0))
+	aggG2PublicKey[1][1] = aggG2.Y.A0.BigInt(big.NewInt(0))
+
+	aggSigBytes, err := new(crypto.BN254Scheme).AggregateSignatures(signatures, true)
+	if err != nil {
+		return blsG1PublicKeys, aggG2PublicKey, signature, err
+	}
+	aggSig := new(bn254.G1Affine)
+	if _, err = aggSig.SetBytes(aggSigBytes); err != nil {
+		return blsG1PublicKeys, aggG2PublicKey, signature, err
+	}
+	signature[0] = aggSig.X.BigInt(big.NewInt(0))
+	signature[1] = aggSig.Y.BigInt(big.NewInt(0))
+
+	return
 }

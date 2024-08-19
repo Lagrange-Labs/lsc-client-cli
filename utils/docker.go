@@ -96,16 +96,6 @@ func GenerateDockerComposeFile(cfg *config.CLIConfig, imageName, nodeConfigFileP
 	dockerConfig.PrometheusPort = cfg.MetricsServerPort
 	dockerConfig.HostBindingPort = cfg.HostBindingPort
 
-	// Load the node config
-	nodeCfg, err := config.LoadNodeConfig(nodeConfigFilePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to load client config: %s", err)
-	}
-	dockerConfig.BLSKeystorePath = nodeCfg.BLSKeystorePath
-	dockerConfig.BLSKeystorePasswordPath = nodeCfg.BLSKeystorePasswordPath
-	dockerConfig.SignerECDSAKeystorePath = nodeCfg.SignerECDSAKeystorePath
-	dockerConfig.SignerECDSAKeystorePasswordPath = nodeCfg.SignerECDSAKeystorePasswordPath
-
 	tmpDocker, err := template.New("docker-compose").Parse(dockerComposeTemplate)
 	if err != nil {
 		return "", err
