@@ -24,6 +24,7 @@ var lagrangeAVSSalt = []byte("lagrange-avs")
 
 // ChainOps is a wrapper for Ethereum chain operations.
 type ChainOps struct {
+	chainID      *big.Int
 	client       *ethclient.Client
 	signerClient *SignerClient
 	cliCfg       *config.CLIConfig
@@ -49,6 +50,7 @@ func NewChainOps(network string, cliCfg *config.CLIConfig) (*ChainOps, error) {
 	}
 
 	return &ChainOps{
+		chainID:      chainID,
 		client:       client,
 		signerClient: signerClient,
 		cliCfg:       cliCfg,
@@ -301,11 +303,13 @@ func (c *ChainOps) UpdateSignerAddress(network, newSignerKeyID string) error {
 
 // WaitForMined send the transaction and wait for it to be mined.
 func (c *ChainOps) WaitForMined(tx *types.Transaction) error {
-	signature, err := c.signerClient.Sign(tx.Data(), c.cliCfg.OperatorKeyAccountID, true)
+	esigner := types.LatestSignerForChainID(c.chainID)
+	txHash := esigner.Hash(tx)
+	signature, err := c.signerClient.Sign(txHash[:], c.cliCfg.OperatorKeyAccountID, true)
 	if err != nil {
 		return err
 	}
-	tx, err = tx.WithSignature(types.LatestSignerForChainID(tx.ChainId()), signature)
+	tx, err = tx.WithSignature(esigner, signature)
 	if err != nil {
 		return err
 	}

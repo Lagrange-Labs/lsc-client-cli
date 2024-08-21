@@ -8,16 +8,20 @@ const (
 
 	nodeConfigTemplate = `[Client]
 GrpcURLs = "{{.ServerGrpcURL}}"
+SignerServerURL = "{{.SignerServerURL}}"
 Chain = "{{.ChainName}}"
 EthereumURL = "{{.EthereumRPCURL}}"
 OperatorAddress = "{{.OperatorAddress}}"
 CommitteeSCAddress = "{{.CommitteeSCAddress}}"
-BLSKeystorePath = "{{.BLSKeystorePath}}"
-BLSKeystorePasswordPath = "{{.BLSKeystorePasswordPath}}"
-SignerECDSAKeystorePath = "{{.SignerECDSAKeystorePath}}"
-SignerECDSAKeystorePasswordPath = "{{.SignerECDSAKeystorePasswordPath}}"
+BLSKeyAccountID = "{{.BLSKeyAccountID}}"
+SignerKeyAccountID = "{{.SignerKeyAccountID}}"
 PullInterval = "1000ms"
 BLSCurve = "{{.BLSCurve}}"
+
+	[Client.TLSConfig]
+	CACertPath = "/app/config/ca.crt"
+	NodeKeyPath = "/app/config/node.key"
+	NodeCertPath = "/app/config/node.crt"
 
 [RpcClient]
 	{{ if eq .ChainName "optimism" "base" }}

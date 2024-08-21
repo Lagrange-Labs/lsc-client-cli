@@ -63,13 +63,14 @@ type NodeConfig struct {
 
 // DockerComposeConfig is the configuration for the docker-compose.yml file.
 type DockerComposeConfig struct {
-	Network         string `json:"network"`
-	ChainName       string `json:"chain_name"`
-	BLSPubKeyPrefix string `json:"bls_pub_key"`
-	DockerImage     string `json:"docker_image"`
-	ConfigFilePath  string `json:"config_file_path"`
-	PrometheusPort  string `json:"prometheus_port"`
-	HostBindingPort string `json:"host_binding_port"`
+	Network         string           `json:"network"`
+	ChainName       string           `json:"chain_name"`
+	BLSPubKeyPrefix string           `json:"bls_pub_key"`
+	CertConfig      *core.CertConfig `json:"cert_config"`
+	DockerImage     string           `json:"docker_image"`
+	ConfigFilePath  string           `json:"config_file_path"`
+	PrometheusPort  string           `json:"prometheus_port"`
+	HostBindingPort string           `json:"host_binding_port"`
 }
 
 // LoadCLIConfig loads the lagrange CLI configuration.

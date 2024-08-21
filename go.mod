@@ -4,7 +4,8 @@ module github.com/Lagrange-Labs/client-cli
 
 require (
 	github.com/Lagrange-Labs/lagrange-node/core v0.1.0
-	github.com/Lagrange-Labs/lagrange-node/signer v0.0.0-20240819202630-a1fac38a4698
+	github.com/Lagrange-Labs/lagrange-node/signer v0.0.0-20240821130114-bf15bfc9b2d3
+	github.com/consensys/gnark-crypto v0.12.1
 	github.com/ethereum/go-ethereum v1.13.15
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/viper v1.19.0
@@ -20,7 +21,6 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/cockroachdb/pebble v0.0.0-20231018212520-f6cde3fc2fa4 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
-	github.com/consensys/gnark-crypto v0.12.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -87,4 +87,4 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace github.com/Lagrange-Labs/lagrange-node/core v0.1.0 => github.com/Lagrange-Labs/lagrange-node/core v0.0.0-20240819202630-a1fac38a4698
+replace github.com/Lagrange-Labs/lagrange-node/core v0.1.0 => github.com/Lagrange-Labs/lagrange-node/core v0.0.0-20240821130114-bf15bfc9b2d3

@@ -382,7 +382,7 @@ func updateSignerAddress(c *cli.Context) error {
 	}
 
 	// update the signer address
-	logger.Infof("Updating signer address with signer key id: %s", cliCfg.SignerKeyAccountID)
+	logger.Infof("Updating signer address with sign key id: %s", cliCfg.SignerKeyAccountID)
 	chainOps, err := utils.NewChainOps(network, cliCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create ChainOps instance: %s", err)
@@ -489,7 +489,7 @@ func unsubscribeChain(c *cli.Context) error {
 	// subscribe chain
 	logger.Infof("Unsubscribing from the dedicated chain: %s", chain)
 	if err := chainOps.Unsubscribe(network, chain); err != nil {
-		logger.Infof("Failed to subscribe to the dedicated chain: %s", err)
+		logger.Infof("Failed to unsubscribe from the dedicated chain: %s", err)
 	}
 
 	return nil
