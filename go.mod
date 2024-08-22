@@ -9,7 +9,7 @@ require (
 	github.com/ethereum/go-ethereum v1.13.15
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/viper v1.19.0
-	github.com/urfave/cli/v2 v2.27.3
+	github.com/urfave/cli/v2 v2.27.4
 	golang.org/x/term v0.23.0
 	google.golang.org/grpc v1.65.0
 )
