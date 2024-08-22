@@ -37,7 +37,7 @@ func GenerateKeystore(keyType, passwordPath string) error {
 		if err != nil {
 			return fmt.Errorf("failed to generate BLS key: %w", err)
 		}
-		pubKey, err := blsScheme.GetPublicKey(privKey, false)
+		pubKey, err := blsScheme.GetPublicKey(privKey, false, true)
 		if err != nil {
 			return fmt.Errorf("failed to get BLS public key: %w", err)
 		}
@@ -64,7 +64,7 @@ func ImportFromPrivateKey(keyType, passwordPath string, privKey []byte) error {
 		return saveKeystore(keyType, password, addr.Bytes(), privKey)
 	case "bls":
 		blsScheme := crypto.NewBLSScheme(crypto.BN254)
-		pubKey, err := blsScheme.GetPublicKey(privKey, false)
+		pubKey, err := blsScheme.GetPublicKey(privKey, false, true)
 		if err != nil {
 			return fmt.Errorf("failed to get BLS public key: %w", err)
 		}

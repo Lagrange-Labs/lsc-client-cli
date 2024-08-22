@@ -21,21 +21,15 @@ services:
     restart: always
     ports:
       - "{{.HostBindingPort}}:{{.PrometheusPort}}"
-    environment:
-      - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPATH=/app/config/keystore/bls.key
-      - LAGRANGE_NODE_CLIENT_BLSKEYSTOREPASSWORDPATH=/app/config/keystore/bls.pass
-      - LAGRANGE_NODE_CLIENT_SIGNERECDSAKEYSTOREPATH=/app/config/keystore/signer.key
-      - LAGRANGE_NODE_CLIENT_SIGNERECDSAKEYSTOREPASSWORDPATH=/app/config/keystore/signer.pass
     command:
       - "/bin/sh"
       - "-c"
       - "/app/lagrange-node run-client -c /app/config/client.toml"
     volumes:
       - {{.ConfigFilePath}}:/app/config/client.toml
-      - {{.BLSKeystorePath}}:/app/config/keystore/bls.key
-      - {{.BLSKeystorePasswordPath}}:/app/config/keystore/bls.pass
-      - {{.SignerECDSAKeystorePath}}:/app/config/keystore/signer.key
-      - {{.SignerECDSAKeystorePasswordPath}}:/app/config/keystore/signer.pass
+      - {{.CertConfig.CACertPath}}:/app/config/ca.crt
+      - {{.CertConfig.NodeKeyPath}}:/app/config/node.key
+      - {{.CertConfig.NodeCertPath}}:/app/config/node.crt
       - lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}:$HOME/.lagrange
     logging:
       driver: "json-file"
@@ -92,19 +86,10 @@ func GenerateDockerComposeFile(cfg *config.CLIConfig, imageName, nodeConfigFileP
 	dockerConfig.ChainName = seps[2]
 	dockerConfig.BLSPubKeyPrefix = strings.Split(seps[3], ".")[0]
 	dockerConfig.DockerImage = imageName
+	dockerConfig.CertConfig = cfg.CertConfig
 	dockerConfig.ConfigFilePath = nodeConfigFilePath
 	dockerConfig.PrometheusPort = cfg.MetricsServerPort
 	dockerConfig.HostBindingPort = cfg.HostBindingPort
-
-	// Load the node config
-	nodeCfg, err := config.LoadNodeConfig(nodeConfigFilePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to load client config: %s", err)
-	}
-	dockerConfig.BLSKeystorePath = nodeCfg.BLSKeystorePath
-	dockerConfig.BLSKeystorePasswordPath = nodeCfg.BLSKeystorePasswordPath
-	dockerConfig.SignerECDSAKeystorePath = nodeCfg.SignerECDSAKeystorePath
-	dockerConfig.SignerECDSAKeystorePasswordPath = nodeCfg.SignerECDSAKeystorePasswordPath
 
 	tmpDocker, err := template.New("docker-compose").Parse(dockerComposeTemplate)
 	if err != nil {
