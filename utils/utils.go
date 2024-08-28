@@ -83,20 +83,12 @@ func DisplayWarningMessage(keyType, privateKey, ksPath string) error {
 // CreateCLIConfigStruct creates a CLI config struct to reuse the same config for different chains.
 func CreateCLIConfigStruct(c *cli.Context, cfgBulk *config.CLIBulkConfig, chain config.ChainConfig, node config.ChainNode) (*config.CLIConfig, error) {
 	cfg := new(config.CLIConfig)
-	cfg.OperatorPrivKey = cfgBulk.OperatorPrivKey
+	cfg.CertConfig = cfgBulk.CertConfig
+	cfg.SignerServerURL = cfgBulk.SignerServerURL
 	cfg.OperatorAddress = cfgBulk.OperatorAddress
-	cfg.OperatorKeystorePath = cfgBulk.OperatorKeystorePath
-	cfg.OperatorKeystorePasswordPath = cfgBulk.OperatorKeystorePasswordPath
-	cfg.OperatorKeystorePassword = cfgBulk.OperatorKeystorePassword
-	cfg.SignerAddress = cfgBulk.SignerAddress
-	cfg.SignerECDSAKeystorePath = cfgBulk.SignerECDSAKeystorePath
-	cfg.SignerECDSAKeystorePasswordPath = cfgBulk.SignerECDSAKeystorePasswordPath
-	cfg.SignerECDSAKeystorePassword = cfgBulk.SignerECDSAKeystorePassword
-	cfg.BLSPrivateKey = node.BLSPrivateKey
-	cfg.BLSPublicKey = node.BLSPublicKey
-	cfg.BLSKeystorePath = node.BLSKeystorePath
-	cfg.BLSKeystorePasswordPath = node.BLSKeystorePasswordPath
-	cfg.BLSKeystorePassword = node.BLSKeystorePassword
+	cfg.OperatorKeyAccountID = cfgBulk.OperatorKeyAccountID
+	cfg.SignerKeyAccountID = cfgBulk.SignerKeyAccountID
+	cfg.BLSKeyAccountID = node.BLSKeyAccountID
 	cfg.EthereumRPCURL = cfgBulk.EthereumRPCURL
 	cfg.L1RPCEndpoint = cfgBulk.L1RPCEndpoint
 	cfg.BeaconURL = cfgBulk.BeaconURL
@@ -110,4 +102,4 @@ func CreateCLIConfigStruct(c *cli.Context, cfgBulk *config.CLIBulkConfig, chain 
 	cfg.PrometheusRetentionTime = node.PrometheusRetentionTime
 
 	return cfg, nil
-} 
+}

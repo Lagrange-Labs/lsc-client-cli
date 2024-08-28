@@ -617,6 +617,7 @@ func bulkDeployWithConfig(c *cli.Context) error {
 		}
 		for _, node := range chain.AttestationNodes {
 			nodeCfg := new(config.NodeConfig)
+			nodeCfg.CertConfig = cfg.CertConfig
 			nodeCfg.EthereumRPCURL = cfg.EthereumRPCURL
 			nodeCfg.CommitteeSCAddress = config.NetworkConfigs[network].CommitteeSCAddress
 			nodeCfg.BLSCurve = cfg.BLSCurve
@@ -628,12 +629,10 @@ func bulkDeployWithConfig(c *cli.Context) error {
 			nodeCfg.BeaconURL = cfg.BeaconURL
 			nodeCfg.BatchInbox = config.ChainBatchConfigs[chain.ChainName].BatchInbox
 			nodeCfg.BatchSender = config.ChainBatchConfigs[chain.ChainName].BatchSender
+			nodeCfg.SignerServerURL = cfg.SignerServerURL
 			nodeCfg.OperatorAddress = cfg.OperatorAddress
-			nodeCfg.BLSPubKey = node.BLSPublicKey
-			nodeCfg.BLSKeystorePath = node.BLSKeystorePath
-			nodeCfg.BLSKeystorePasswordPath = node.BLSKeystorePasswordPath
-			nodeCfg.SignerECDSAKeystorePath = cfg.SignerECDSAKeystorePath
-			nodeCfg.SignerECDSAKeystorePasswordPath = cfg.SignerECDSAKeystorePasswordPath
+			nodeCfg.BLSKeyAccountID = node.BLSKeyAccountID
+			nodeCfg.SignerKeyAccountID = cfg.SignerKeyAccountID
 			nodeCfg.MetricsEnabled = node.MetricsEnabled
 			nodeCfg.MetricsServerPort = node.MetricsServerPort
 			nodeCfg.MetricsServiceName = node.MetricsServiceName
@@ -656,7 +655,7 @@ func bulkDeployWithConfig(c *cli.Context) error {
 			}
 			err = utils.RunDockerImage(cliCfg, dockerImageName, nodeConfigFilePath)
 			if err != nil {
-				return fmt.Errorf("failed to deploy node for chain %s with BLS public key %s: %w", chain.ChainName, node.BLSPublicKey, err)
+				return fmt.Errorf("failed to deploy node for chain %s with BLS key account id %s: %w", chain.ChainName, node.BLSKeyAccountID, err)
 			}
 		}
 	}

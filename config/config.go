@@ -75,20 +75,16 @@ type DockerComposeConfig struct {
 
 // CLIBulkConfig is the configuration for bulk attestation node deployment.
 type CLIBulkConfig struct {
-	OperatorPrivKey                 string
-	OperatorAddress                 string
-	OperatorKeystorePath            string `mapstructure:"OperatorKeyStorePath"`
-	OperatorKeystorePasswordPath    string `mapstructure:"OperatorKeyStorePasswordPath"`
-	OperatorKeystorePassword        string
-	SignerAddress                   string
-	SignerECDSAKeystorePath         string `mapstructure:"SignerECDSAKeystorePath"`
-	SignerECDSAKeystorePasswordPath string `mapstructure:"SignerECDSAKeystorePasswordPath"`
-	SignerECDSAKeystorePassword     string
-	EthereumRPCURL                  string        `mapstructure:"EthereumRPCURL"`
-	L1RPCEndpoint                   string        `mapstructure:"L1RPCEndpoint"`
-	BeaconURL                       string        `mapstructure:"BeaconURL"`
-	BLSCurve                        string        `mapstructure:"BLSCurve"`
-	Chains                          []ChainConfig `mapstructure:"Chains"`
+	CertConfig           *core.CertConfig `mapstructure:"CertConfig"`
+	SignerServerURL      string           `mapstructure:"SignerServerURL"`
+	OperatorAddress      string           `mapstructure:"OperatorAddress"`
+	OperatorKeyAccountID string           `mapstructure:"OperatorKeyAccountID"`
+	SignerKeyAccountID   string           `mapstructure:"SignerKeyAccountID"`
+	EthereumRPCURL       string           `mapstructure:"EthereumRPCURL"`
+	L1RPCEndpoint        string           `mapstructure:"L1RPCEndpoint"`
+	BeaconURL            string           `mapstructure:"BeaconURL"`
+	BLSCurve             string           `mapstructure:"BLSCurve"`
+	Chains               []ChainConfig    `mapstructure:"Chains"`
 }
 
 // ChainConfig is the configuration for the chain.
@@ -101,11 +97,7 @@ type ChainConfig struct {
 
 // BLSKeyConfig is the configuration for the BLS key for each attestation node
 type ChainNode struct {
-	BLSPrivateKey           string
-	BLSPublicKey            string
-	BLSKeystorePath         string `mapstructure:"BLSKeystorePath"`
-	BLSKeystorePasswordPath string `mapstructure:"BLSKeystorePasswordPath"`
-	BLSKeystorePassword     string
+	BLSKeyAccountID         string `mapstructure:"BLSKeyAccountID"`
 	ConcurrentFetchers      int    `mapstructure:"ConcurrentFetchers"`
 	MetricsEnabled          bool   `mapstructure:"MetricsEnabled"`
 	MetricsServerPort       string `mapstructure:"MetricsServerPort"`
@@ -243,90 +235,6 @@ func LoadCLIBulkConfig(ctx *cli.Context) (*CLIBulkConfig, error) {
 
 	if err := viper.Unmarshal(&cfg, decodeHooks...); err != nil {
 		return nil, err
-	}
-
-	var err error
-	// loads the operator private key from the keystore
-	if len(cfg.OperatorKeystorePath) == 0 {
-		return nil, fmt.Errorf("operator keystore path is required")
-	}
-	if len(cfg.OperatorKeystorePasswordPath) > 0 {
-		cfg.OperatorKeystorePassword, err = crypto.ReadKeystorePasswordFromFile(cfg.OperatorKeystorePasswordPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if len(cfg.OperatorKeystorePassword) == 0 {
-		return nil, fmt.Errorf("operator keystore password is required")
-	}
-	privKey, err := crypto.LoadPrivateKey("ECDSA", cfg.OperatorKeystorePassword, cfg.OperatorKeystorePath)
-	if err != nil {
-		return nil, err
-	}
-	cfg.OperatorPrivKey = core.Bytes2Hex(privKey)
-	privateKey, err := ecrypto.ToECDSA(privKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert private key to ECDSA: %w", err)
-	}
-	cfg.OperatorAddress = ecrypto.PubkeyToAddress(privateKey.PublicKey).Hex()
-	// loads the signer private key from the keystore
-	if len(cfg.SignerECDSAKeystorePath) == 0 {
-		return nil, fmt.Errorf("signer ECDSA keystore path is required")
-	}
-	if len(cfg.SignerECDSAKeystorePasswordPath) > 0 {
-		cfg.SignerECDSAKeystorePassword, err = crypto.ReadKeystorePasswordFromFile(cfg.SignerECDSAKeystorePasswordPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if len(cfg.SignerECDSAKeystorePassword) == 0 {
-		return nil, fmt.Errorf("signer ECDSA keystore password is required")
-	}
-	privKey, err = crypto.LoadPrivateKey("ECDSA", cfg.SignerECDSAKeystorePassword, cfg.SignerECDSAKeystorePath)
-	if err != nil {
-		return nil, err
-	}
-	privateKey, err = ecrypto.ToECDSA(privKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert private key to ECDSA: %w", err)
-	}
-	cfg.SignerAddress = ecrypto.PubkeyToAddress(privateKey.PublicKey).Hex()
-	if cfg.Chains == nil {
-		return nil, fmt.Errorf("chains are required")
-	}
-	for i, chain := range cfg.Chains {
-		if len(chain.AttestationNodes) == 0 {
-			return nil, fmt.Errorf("BLS keys are required")
-		} else if len(chain.AttestationNodes) != chain.NumberOfAttestationNodes {
-			return nil, fmt.Errorf("number of BLS keys should match number of attestation nodes for chain %s", chain.ChainName)
-		}
-		for j := range chain.AttestationNodes {
-			node := &cfg.Chains[i].AttestationNodes[j]
-			// loads the BLS private key from the keystore
-			if len(node.BLSKeystorePath) == 0 {
-				return nil, fmt.Errorf("BLS keystore path is required")
-			}
-			if len(node.BLSKeystorePasswordPath) > 0 {
-				node.BLSKeystorePassword, err = crypto.ReadKeystorePasswordFromFile(node.BLSKeystorePasswordPath)
-				if err != nil {
-					return nil, err
-				}
-			}
-			if len(node.BLSKeystorePassword) == 0 {
-				return nil, fmt.Errorf("BLS keystore password is required")
-			}
-			privKey, err = crypto.LoadPrivateKey(crypto.CryptoCurve(cfg.BLSCurve), node.BLSKeystorePassword, node.BLSKeystorePath)
-			if err != nil {
-				return nil, err
-			}
-			blsScheme := crypto.NewBLSScheme(crypto.BLSCurve(cfg.BLSCurve))
-			pubKey, err := blsScheme.GetPublicKey(privKey, false)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get BLS public key: %w", err)
-			}
-			node.BLSPrivateKey = core.Bytes2Hex(privKey)
-			node.BLSPublicKey = core.Bytes2Hex(pubKey)
-		}
 	}
 
 	return &cfg, nil
