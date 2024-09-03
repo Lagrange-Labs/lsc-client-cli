@@ -73,6 +73,39 @@ type DockerComposeConfig struct {
 	HostBindingPort string           `json:"host_binding_port"`
 }
 
+// CLIBulkConfig is the configuration for bulk attestation node deployment.
+type CLIBulkConfig struct {
+	CertConfig           *core.CertConfig `mapstructure:"CertConfig"`
+	SignerServerURL      string           `mapstructure:"SignerServerURL"`
+	OperatorAddress      string           `mapstructure:"OperatorAddress"`
+	OperatorKeyAccountID string           `mapstructure:"OperatorKeyAccountID"`
+	SignerKeyAccountID   string           `mapstructure:"SignerKeyAccountID"`
+	EthereumRPCURL       string           `mapstructure:"EthereumRPCURL"`
+	L1RPCEndpoint        string           `mapstructure:"L1RPCEndpoint"`
+	BeaconURL            string           `mapstructure:"BeaconURL"`
+	BLSCurve             string           `mapstructure:"BLSCurve"`
+	Chains               []ChainConfig    `mapstructure:"Chains"`
+}
+
+// ChainConfig is the configuration for the chain.
+type ChainConfig struct {
+	ChainName                string
+	L2RPCEndpoint            string `mapstructure:"L2RPCEndpoint"`
+	NumberOfAttestationNodes int
+	AttestationNodes         []ChainNode
+}
+
+// BLSKeyConfig is the configuration for the BLS key for each attestation node
+type ChainNode struct {
+	BLSKeyAccountID         string `mapstructure:"BLSKeyAccountID"`
+	ConcurrentFetchers      int    `mapstructure:"ConcurrentFetchers"`
+	MetricsEnabled          bool   `mapstructure:"MetricsEnabled"`
+	MetricsServerPort       string `mapstructure:"MetricsServerPort"`
+	HostBindingPort         string `mapstructure:"HostBindingPort"`
+	MetricsServiceName      string `mapstructure:"MetricsServiceName"`
+	PrometheusRetentionTime string `mapstructure:"PrometheusRetentionTime"`
+}
+
 // LoadCLIConfig loads the lagrange CLI configuration.
 func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 	var cfg CLIConfig
@@ -163,4 +196,46 @@ func LoadNodeConfig(nodeConfigFilePath string) (*NodeConfig, error) {
 	}
 
 	return &cfg.Client, nil
+}
+
+// LoadCLIBulkConfig loads the lagrange CLI configuratio for bulk attestation node deployment.
+func LoadCLIBulkConfig(ctx *cli.Context) (*CLIBulkConfig, error) {
+	var cfg CLIBulkConfig
+	viper.SetConfigType("toml")
+
+	configFilePath := ctx.String(FlagBulkCfg)
+	if configFilePath != "" {
+		dirName, fileName := filepath.Split(configFilePath)
+
+		fileExtension := strings.TrimPrefix(filepath.Ext(fileName), ".")
+		fileNameWithoutExtension := strings.TrimSuffix(fileName, "."+fileExtension)
+
+		viper.AddConfigPath(dirName)
+		viper.SetConfigName(fileNameWithoutExtension)
+		viper.SetConfigType(fileExtension)
+	}
+	viper.AutomaticEnv()
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.SetEnvPrefix("LAGRANGE_CLI")
+	if err := viper.ReadInConfig(); err != nil {
+		_, ok := err.(viper.ConfigFileNotFoundError)
+		if !ok {
+			return nil, err
+		} else if len(configFilePath) > 0 {
+			logger.Warnf("config file `%s` not found, the path should be absolute or relative to the current working directory like `./config_bulk.toml`", configFilePath)
+			return nil, fmt.Errorf("config file not found: %s", err)
+		}
+	}
+
+	decodeHooks := []viper.DecoderConfigOption{
+		// this allows arrays to be decoded from env var separated by ",", example: MY_VAR="value1,value2,value3"
+		viper.DecodeHook(mapstructure.ComposeDecodeHookFunc(mapstructure.TextUnmarshallerHookFunc(), mapstructure.StringToSliceHookFunc(","))),
+	}
+
+	if err := viper.Unmarshal(&cfg, decodeHooks...); err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }

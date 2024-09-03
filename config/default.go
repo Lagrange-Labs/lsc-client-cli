@@ -5,6 +5,8 @@ const (
 	FlagCfg = "config"
 	// FlagNodeCfg is the flag for node config.
 	FlagNodeCfg = "node-config"
+	// FlagBulkCfg is the flag for bulk config.
+	FlagBulkCfg = "bulk-config"
 
 	nodeConfigTemplate = `[Client]
 GrpcURLs = "{{.ServerGrpcURL}}"
