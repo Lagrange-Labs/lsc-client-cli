@@ -73,6 +73,16 @@ type DockerComposeConfig struct {
 	HostBindingPort string           `json:"host_binding_port"`
 }
 
+// DockerSignerConfig is the configuration for the signer service in the docker-compose.yml file.
+type DockerSignerConfig struct {
+	DockerImage    string            `json:"docker_image"`
+	ServerPort     string            `json:"server_port"`
+	ConfigFilePath string            `json:"config_file_path"`
+	KeyStorePaths  map[string]string `json:"keystore_paths"`
+	PasswordPaths  map[string]string `json:"password_paths"`
+	CertPaths      map[string]string `json:"cert_paths"`
+}
+
 // LoadCLIConfig loads the lagrange CLI configuration.
 func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 	var cfg CLIConfig
