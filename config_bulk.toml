@@ -6,6 +6,10 @@ EthereumRPCURL = "--- Ethereum RPC URL (mainnet / holesky) ---"
 L1RPCEndpoint = "--- L1 RPC Endpoint (mainnet) ---"
 BeaconURL = "--- Beacon Endpoint (mainnet) ---"
 BLSCurve = "BN254"
+[CertConfig]
+    CACertPath = "--- CA Cert Path ---"
+    NodeKeyPath = "--- Node Key Path ---"
+    NodeCertPath = "--- Node Cert Path ---"
 
 [[Chains]]
 ChainName = "optimism"
