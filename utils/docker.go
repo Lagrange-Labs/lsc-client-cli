@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
-
 	"github.com/Lagrange-Labs/client-cli/config"
 	"github.com/Lagrange-Labs/lagrange-node/core/logger"
 	"github.com/Lagrange-Labs/lagrange-node/signer"
@@ -53,7 +51,7 @@ services:
     ports:
       - "{{.ServerPort}}:{{.ServerPort}}"
     volumes:
-      - {{.ConfigFilePath}}:/app/config/signer.toml
+      - {{.ConfigFilePath}}:/app/config/config_signer.toml
       {{ range $key, $value := .KeyStorePaths }}
       - {{$key}}:{{$value}}
       {{ end }}
@@ -63,6 +61,10 @@ services:
       {{ range $key, $value := .CertPaths }}
       - {{$key}}:{{$value}}
       {{ end }}
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "/app/lagrange-node run-signer -c /app/config/config_signer.toml"
     logging:
       driver: "json-file"
       options:
@@ -138,11 +140,8 @@ func GenerateSignerConfigFile(cfg *signer.Config, imageName string) (string, err
 
 	signerConfigFilePath := filepath.Join(workDir, "config/config_signer.toml")
 	signerConfig.ConfigFilePath = signerConfigFilePath
-	if err := viper.MergeConfigMap(map[string]any{"": cfg}); err != nil {
-		return "", fmt.Errorf("failed to merge signer config: %s", err)
-	}
-	if err := viper.SafeWriteConfigAs(signerConfigFilePath); err != nil {
-		return "", fmt.Errorf("failed to write signer config file: %s", err)
+	if err := config.WriteSignerConfig(cfg, signerConfigFilePath); err != nil {
+		return "", err
 	}
 
 	tmpSigner, err := template.New("docker-signer").Parse(dockerSignerTemplate)
