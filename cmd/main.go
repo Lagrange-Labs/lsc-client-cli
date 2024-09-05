@@ -13,6 +13,7 @@ import (
 	"github.com/Lagrange-Labs/client-cli/utils"
 	"github.com/Lagrange-Labs/lagrange-node/core"
 	"github.com/Lagrange-Labs/lagrange-node/core/logger"
+	"github.com/Lagrange-Labs/lagrange-node/signer"
 )
 
 const (
@@ -265,6 +266,15 @@ func main() {
 				dockerImageFlag,
 			},
 			Action: deployWithConfig,
+		},
+		{
+			Name:  "deploy-signer",
+			Usage: "Deploy the LSC signer gRPC server with the given signer config file",
+			Flags: []cli.Flag{
+				configFileFlag,
+				dockerImageFlag,
+			},
+			Action: deploySigner,
 		},
 		{
 			Name:  "bulk-generate-config-deploy",
@@ -580,7 +590,7 @@ func clientDeploy(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
 	}
-	return utils.RunDockerImage(cfg, dockerImageName, c.String(config.FlagNodeCfg))
+	return utils.RunClientNode(cfg, dockerImageName, c.String(config.FlagNodeCfg))
 }
 
 func deployWithConfig(c *cli.Context) error {
@@ -596,6 +606,25 @@ func deployWithConfig(c *cli.Context) error {
 	c = cli.NewContext(c.App, fs, nil)
 
 	return clientDeploy(c)
+}
+
+func deploySigner(c *cli.Context) error {
+	cfg, err := signer.Load(c)
+	if err != nil {
+		return fmt.Errorf("failed to load CLI config: %w", err)
+	}
+	dockerImageName := c.String(flagDockerImage)
+	logger.Infof("Deploying Lagrange Signer with Image: %s", dockerImageName)
+	// check if the docker image exists locally
+	if err := utils.CheckDockerImageExists(dockerImageName); err != nil {
+		return fmt.Errorf("failed to check docker image: %s", err)
+	}
+	dockerComposeFilePath, err := utils.GenerateSignerConfigFile(cfg, dockerImageName)
+	if err != nil {
+		return fmt.Errorf("failed to generate signer config file: %w", err)
+	}
+
+	return utils.RunDockerImage(dockerComposeFilePath)
 }
 
 func bulkDeployWithConfig(c *cli.Context) error {
@@ -653,7 +682,7 @@ func bulkDeployWithConfig(c *cli.Context) error {
 			if err != nil {
 				return fmt.Errorf("failed to create CLI config for deployment: %w", err)
 			}
-			err = utils.RunDockerImage(cliCfg, dockerImageName, nodeConfigFilePath)
+			err = utils.RunClientNode(cliCfg, dockerImageName, nodeConfigFilePath)
 			if err != nil {
 				return fmt.Errorf("failed to deploy node for chain %s with BLS key account id %s: %w", chain.ChainName, node.BLSKeyAccountID, err)
 			}

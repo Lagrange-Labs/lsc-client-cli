@@ -10,6 +10,7 @@ import (
 
 	"github.com/Lagrange-Labs/client-cli/config"
 	"github.com/Lagrange-Labs/lagrange-node/core/logger"
+	"github.com/Lagrange-Labs/lagrange-node/signer"
 )
 
 const dockerComposeTemplate = `version: "3.7"
@@ -41,6 +42,36 @@ volumes:
   lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}:
 `
 
+const dockerSignerTemplate = `version: "3.7"
+services:
+  lagrange_signer:
+    container_name: lagrange_signer
+    image: {{.DockerImage}}
+    restart: always
+    ports:
+      - "{{.ServerPort}}:{{.ServerPort}}"
+    volumes:
+      - {{.ConfigFilePath}}:/app/config/config_signer.toml
+      {{ range $key, $value := .KeyStorePaths }}
+      - {{$key}}:{{$value}}
+      {{ end }}
+      {{ range $key, $value := .PasswordPaths }}
+      - {{$key}}:{{$value}}
+      {{ end }}
+      {{ range $key, $value := .CertPaths }}
+      - {{$key}}:{{$value}}
+      {{ end }}
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "/app/lagrange-node run-signer -c /app/config/config_signer.toml"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+`
+
 // CheckDockerImageExists checks if a Docker image exists locally.
 func CheckDockerImageExists(imageName string) error {
 	cmd := exec.Command("docker", "image", "inspect", imageName)
@@ -65,6 +96,71 @@ func pullDockerImage(imageName string) error {
 		return err
 	}
 	return nil
+}
+
+// GenerateSignerConfigFile generates a signer service configuration file and docker-compose file.
+func GenerateSignerConfigFile(cfg *signer.Config, imageName string) (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get home directory: %s", err)
+	}
+	workDir := filepath.Join(homeDir, ".lagrange")
+	if err := os.MkdirAll(workDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create work directory: %s", err)
+	}
+
+	var signerConfig config.DockerSignerConfig
+	signerConfig.DockerImage = imageName
+	signerConfig.ServerPort = cfg.GRPCPort
+
+	signerConfig.KeyStorePaths = map[string]string{}
+	signerConfig.PasswordPaths = map[string]string{}
+	for _, provider := range cfg.ProviderConfigs {
+		if provider.Type != "local" {
+			return "", fmt.Errorf("unsupported provider type: %s", provider.Type)
+		}
+		keyPath := fmt.Sprintf("/app/config/%s.key", filepath.Base(provider.LocalConfig.AccountID))
+		passPath := fmt.Sprintf("/app/config/%s.pass", filepath.Base(provider.LocalConfig.AccountID))
+		signerConfig.KeyStorePaths[provider.LocalConfig.PrivateKeyPath] = keyPath
+		signerConfig.PasswordPaths[provider.LocalConfig.PasswordKeyPath] = passPath
+		provider.LocalConfig.PrivateKeyPath = keyPath
+		provider.LocalConfig.PasswordKeyPath = passPath
+	}
+
+	signerConfig.CertPaths = map[string]string{}
+	certPath := "/app/config/ca-crt.pem"
+	serverKeyPath := "/app/config/server-key.pem"
+	serverCertPath := "/app/config/server-crt.pem"
+	signerConfig.CertPaths[cfg.TLSConfig.CACertPath] = certPath
+	signerConfig.CertPaths[cfg.TLSConfig.NodeKeyPath] = serverKeyPath
+	signerConfig.CertPaths[cfg.TLSConfig.NodeCertPath] = serverCertPath
+	cfg.TLSConfig.CACertPath = certPath
+	cfg.TLSConfig.NodeKeyPath = serverKeyPath
+	cfg.TLSConfig.NodeCertPath = serverCertPath
+
+	signerConfigFilePath := filepath.Join(workDir, "config/config_signer.toml")
+	signerConfig.ConfigFilePath = signerConfigFilePath
+	if err := config.WriteSignerConfig(cfg, signerConfigFilePath); err != nil {
+		return "", err
+	}
+
+	tmpSigner, err := template.New("docker-signer").Parse(dockerSignerTemplate)
+	if err != nil {
+		return "", err
+	}
+	signerDockerFilePath := filepath.Join(workDir, "docker-compose_signer.yml")
+	signerDockerFile, err := os.Create(signerDockerFilePath)
+	if err != nil {
+		return "", err
+	}
+	defer signerDockerFile.Close()
+	if err := tmpSigner.Execute(signerDockerFile, signerConfig); err != nil {
+		return "", err
+	}
+
+	logger.Infof("Generated Signer service configuration file: %s", signerConfigFilePath)
+	logger.Infof("Generated Docker Compose file for Signer service: %s", signerDockerFilePath)
+	return signerDockerFilePath, nil
 }
 
 // GenerateDockerComposeFile generates a Docker Compose file.
@@ -109,13 +205,18 @@ func GenerateDockerComposeFile(cfg *config.CLIConfig, imageName, nodeConfigFileP
 	return dockerComposeFilePath, nil
 }
 
-// RunDockerImage runs a Docker image.
-func RunDockerImage(cfg *config.CLIConfig, imageName, clientConfigFilePath string) error {
+// RunClientNode runs a client node image.
+func RunClientNode(cfg *config.CLIConfig, imageName, clientConfigFilePath string) error {
 	dockerComposeFilePath, err := GenerateDockerComposeFile(cfg, imageName, clientConfigFilePath)
 	if err != nil {
 		return err
 	}
 
+	return RunDockerImage(dockerComposeFilePath)
+}
+
+// RunDockerImage runs a Docker image.
+func RunDockerImage(dockerComposeFilePath string) error {
 	cmd := exec.Command("docker", "compose", "-f", dockerComposeFilePath, "up", "-d")
 	if err := cmd.Start(); err != nil {
 		return err

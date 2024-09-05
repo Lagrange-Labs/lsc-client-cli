@@ -1,0 +1,22 @@
+GRPCPort = "--- Signer GRPC Server PORT like 9091 ---"
+
+[TLSConfig]
+	CACertPath = "--- Path to CA certificate ---"
+	NodeKeyPath = "--- Path to Node Key ---"
+	NodeCertPath = "--- Path to Node Certificate ---"
+
+[[ProviderConfigs]]
+	Type = "local"
+	[ProviderConfigs.LocalConfig]
+		AccountID = "--- Account ID like operator_bls_key ---"
+		KeyType = "--- Key Type like `BN254` or `ECDSA` ---"
+		PrivateKeyPath = "--- Path to Private Key ---"
+		PasswordKeyPath = "--- Path to Keystore Password ---"
+
+[[ProviderConfigs]]
+	Type = "local"
+	[ProviderConfigs.LocalConfig]
+		AccountID = "--- Account ID like signer_ecdsa_key ---"
+		KeyType = "--- Key Type like `BN254` or `ECDSA` ---"
+		PrivateKeyPath = "--- Path to Private Key ---"
+		PasswordKeyPath = "--- Path to Keystore Password ---"

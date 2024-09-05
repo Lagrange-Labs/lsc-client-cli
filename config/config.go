@@ -13,7 +13,25 @@ import (
 
 	"github.com/Lagrange-Labs/lagrange-node/core"
 	"github.com/Lagrange-Labs/lagrange-node/core/logger"
+	"github.com/Lagrange-Labs/lagrange-node/signer"
 )
+
+const signerConfigTemplate = `GRPCPort = "{{.GRPCPort}}"
+
+[TLSConfig]
+	CACertPath = "{{.TLSConfig.CACertPath}}"
+	NodeKeyPath = "{{.TLSConfig.NodeKeyPath}}"
+	NodeCertPath = "{{.TLSConfig.NodeCertPath}}"
+{{ range $index, $element := .ProviderConfigs }}
+[[ProviderConfigs]]
+	Type = "local"
+	[ProviderConfigs.LocalConfig]
+		AccountID = "{{$element.LocalConfig.AccountID}}"
+		KeyType = "{{$element.LocalConfig.KeyType}}"
+		PrivateKeyPath = "{{$element.LocalConfig.PrivateKeyPath}}"
+		PasswordKeyPath = "{{$element.LocalConfig.PasswordKeyPath}}"
+{{ end }}
+`
 
 // CLIConfig is the configuration for the lagrange CLI.
 type CLIConfig struct {
@@ -71,6 +89,16 @@ type DockerComposeConfig struct {
 	ConfigFilePath  string           `json:"config_file_path"`
 	PrometheusPort  string           `json:"prometheus_port"`
 	HostBindingPort string           `json:"host_binding_port"`
+}
+
+// DockerSignerConfig is the configuration for the signer service in the docker-compose.yml file.
+type DockerSignerConfig struct {
+	DockerImage    string            `json:"docker_image"`
+	ServerPort     string            `json:"server_port"`
+	ConfigFilePath string            `json:"config_file_path"`
+	KeyStorePaths  map[string]string `json:"keystore_paths"`
+	PasswordPaths  map[string]string `json:"password_paths"`
+	CertPaths      map[string]string `json:"cert_paths"`
 }
 
 // CLIBulkConfig is the configuration for bulk attestation node deployment.
@@ -238,4 +266,22 @@ func LoadCLIBulkConfig(ctx *cli.Context) (*CLIBulkConfig, error) {
 	}
 
 	return &cfg, nil
+}
+
+// WriteSignerConfig writes the signer config to a file.
+func WriteSignerConfig(signerCfg *signer.Config, signerConfigFilePath string) error {
+	tmplSigner, err := template.New("signer").Parse(signerConfigTemplate)
+	if err != nil {
+		return err
+	}
+	signerConfigFile, err := os.Create(signerConfigFilePath)
+	if err != nil {
+		return err
+	}
+	defer signerConfigFile.Close()
+	if err := tmplSigner.Execute(signerConfigFile, signerCfg); err != nil {
+		return err
+	}
+
+	return nil
 }
