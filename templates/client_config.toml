@@ -1,5 +1,6 @@
 [Client]
 GrpcURLs = "{{.ServerGrpcURL}}:9090"
+SignerServerURL = "{{.SignerServerURL}}" # optional, can be empty
 Chain = "{{.ChainName}}"
 EthereumURL = "{{.EthereumRPCURL}}"
 OperatorAddress = "{{.OperatorAddress}}"
@@ -8,8 +9,16 @@ BLSKeystorePath = "/app/config/keystore/bls.key"
 BLSKeystorePasswordPath = "/app/config/keystore/bls.pass"
 SignerECDSAKeystorePath = "/app/config/keystore/signer.key"
 SignerECDSAKeystorePasswordPath = "/app/config/keystore/signer.pass"
+BLSKeyAccountID = "bls-sign-key-1" # optional, can be empty
+SignerKeyAccountID = "ecdsa-signer-key-1" # optional, can be empty
 PullInterval = "1000ms"
 BLSCurve = "BN254"
+
+	# optional, can be empty
+	[Client.TLSConfig]
+	CACertPath = "/app/config/ca-cert.pem"
+	NodeKeyPath = "/app/config/client-key.pem"
+	NodeCertPath = "/app/config/client-cert.pem"
 
 [RpcClient]
 	#{{ if eq .ChainName "optimism" "base" }}
@@ -20,6 +29,8 @@ BLSCurve = "BN254"
 	BatchInbox = "{{.BatchInbox}}"
 	BatchSender = "{{.BatchSender}}"
 	ConcurrentFetchers = 8
+	L1ParallelBlocks = 32
+	L2ParallelBlocks = 32
 
 	#{{ else if eq .ChainName "arbitrum" }}
 	[RpcClient.Arbitrum]
