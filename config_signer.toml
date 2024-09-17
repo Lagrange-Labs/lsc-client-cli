@@ -9,14 +9,14 @@ GRPCPort = "--- Signer GRPC Server PORT like 9091 ---"
 	Type = "local"
 	[ProviderConfigs.LocalConfig]
 		AccountID = "--- Account ID like operator_bls_key ---"
-		KeyType = "--- Key Type like `BN254` or `ECDSA` ---"
-		PrivateKeyPath = "--- Path to Private Key ---"
-		PasswordKeyPath = "--- Path to Keystore Password ---"
+		KeyType = "--- Key Type like BN254 ---"
+		PrivateKeyPath = "--- Path to BLS Private Key ---"
+		PasswordKeyPath = "--- Path to BLS Keystore Password ---"
 
 [[ProviderConfigs]]
 	Type = "local"
 	[ProviderConfigs.LocalConfig]
 		AccountID = "--- Account ID like signer_ecdsa_key ---"
-		KeyType = "--- Key Type like `BN254` or `ECDSA` ---"
-		PrivateKeyPath = "--- Path to Private Key ---"
-		PasswordKeyPath = "--- Path to Keystore Password ---"
+		KeyType = "--- Key Type like ECDSA ---"
+		PrivateKeyPath = "--- Path to ECDSA Private Key ---"
+		PasswordKeyPath = "--- Path to ECDSA Keystore Password ---"
