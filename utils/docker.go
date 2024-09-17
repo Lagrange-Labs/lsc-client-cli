@@ -128,15 +128,17 @@ func GenerateSignerConfigFile(cfg *signer.Config, imageName string) (string, err
 	}
 
 	signerConfig.CertPaths = map[string]string{}
-	certPath := "/app/config/ca-crt.pem"
-	serverKeyPath := "/app/config/server-key.pem"
-	serverCertPath := "/app/config/server-crt.pem"
-	signerConfig.CertPaths[cfg.TLSConfig.CACertPath] = certPath
-	signerConfig.CertPaths[cfg.TLSConfig.NodeKeyPath] = serverKeyPath
-	signerConfig.CertPaths[cfg.TLSConfig.NodeCertPath] = serverCertPath
-	cfg.TLSConfig.CACertPath = certPath
-	cfg.TLSConfig.NodeKeyPath = serverKeyPath
-	cfg.TLSConfig.NodeCertPath = serverCertPath
+	if cfg.TLSConfig != nil && len(cfg.TLSConfig.CACertPath) > 0 {
+		certPath := "/app/config/ca-crt.pem"
+		serverKeyPath := "/app/config/server-key.pem"
+		serverCertPath := "/app/config/server-crt.pem"
+		signerConfig.CertPaths[cfg.TLSConfig.CACertPath] = certPath
+		signerConfig.CertPaths[cfg.TLSConfig.NodeKeyPath] = serverKeyPath
+		signerConfig.CertPaths[cfg.TLSConfig.NodeCertPath] = serverCertPath
+		cfg.TLSConfig.CACertPath = certPath
+		cfg.TLSConfig.NodeKeyPath = serverKeyPath
+		cfg.TLSConfig.NodeCertPath = serverCertPath
+	}
 
 	signerConfigFilePath := filepath.Join(workDir, "config/config_signer.toml")
 	signerConfig.ConfigFilePath = signerConfigFilePath
