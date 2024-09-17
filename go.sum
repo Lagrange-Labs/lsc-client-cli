@@ -1,9 +1,9 @@
 github.com/DataDog/zstd v1.5.2 h1:vUG4lAyuPCXO0TLbXvPv7EB7cNK1QV/luu55UHLrrn8=
 github.com/DataDog/zstd v1.5.2/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwSAmyw=
-github.com/Lagrange-Labs/lagrange-node/core v0.0.0-20240821130114-bf15bfc9b2d3 h1:HEeE10Jy8gbVppowiwY/qIzpJLGt43vgCsyFQ0sqKxI=
-github.com/Lagrange-Labs/lagrange-node/core v0.0.0-20240821130114-bf15bfc9b2d3/go.mod h1:UPxFEPhGMt5i7oJbgrr81rlcWu/LBiVg4fxuhVX2dwc=
-github.com/Lagrange-Labs/lagrange-node/signer v0.0.0-20240821130114-bf15bfc9b2d3 h1:kqrAW3rFXQT7t6aLZptI4Mw0Fee0+jYyAdBCDa8ulgM=
-github.com/Lagrange-Labs/lagrange-node/signer v0.0.0-20240821130114-bf15bfc9b2d3/go.mod h1:bXMD4bnx1kyM+pP0NWkOEZ3fchqdkBi26hrl0rOHaXQ=
+github.com/Lagrange-Labs/lagrange-node/core v0.0.0-20240917211506-ed56fb34350e h1:6zAT3rh7rcZGs2eJTtuML1pMnP/F80SPn6owXouHmYw=
+github.com/Lagrange-Labs/lagrange-node/core v0.0.0-20240917211506-ed56fb34350e/go.mod h1:UPxFEPhGMt5i7oJbgrr81rlcWu/LBiVg4fxuhVX2dwc=
+github.com/Lagrange-Labs/lagrange-node/signer v0.0.0-20240917211506-ed56fb34350e h1:qDVgIWXJdJdyIwtHj+e4bd2iYMqZMA5qdrquiRJi890=
+github.com/Lagrange-Labs/lagrange-node/signer v0.0.0-20240917211506-ed56fb34350e/go.mod h1:bXMD4bnx1kyM+pP0NWkOEZ3fchqdkBi26hrl0rOHaXQ=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=
