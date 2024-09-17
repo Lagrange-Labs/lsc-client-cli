@@ -1,11 +1,12 @@
 go 1.21
+toolchain go1.22.5
 
 module github.com/Lagrange-Labs/client-cli
 
 require (
 	github.com/Lagrange-Labs/lagrange-node/core v0.1.0
 	github.com/Lagrange-Labs/lagrange-node/signer v0.0.0-20240917211506-ed56fb34350e
-	github.com/consensys/gnark-crypto v0.12.1
+	github.com/consensys/gnark-crypto v0.14.0
 	github.com/ethereum/go-ethereum v1.13.15
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/viper v1.19.0
@@ -16,7 +17,7 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/bits-and-blooms/bitset v1.13.0 // indirect
+	github.com/bits-and-blooms/bitset v1.14.2 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.3 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/cockroachdb/pebble v0.0.0-20231018212520-f6cde3fc2fa4 // indirect
@@ -78,7 +79,7 @@ require (
 	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
