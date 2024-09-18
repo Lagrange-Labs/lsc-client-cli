@@ -4,7 +4,7 @@ module github.com/Lagrange-Labs/client-cli
 
 require (
 	github.com/Lagrange-Labs/lagrange-node/core v0.1.0
-	github.com/Lagrange-Labs/lagrange-node/signer v0.0.0-20240917211506-ed56fb34350e
+	github.com/Lagrange-Labs/lagrange-node/signer v0.1.0
 	github.com/consensys/gnark-crypto v0.12.1
 	github.com/ethereum/go-ethereum v1.13.15
 	github.com/mitchellh/mapstructure v1.5.0
