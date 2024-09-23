@@ -28,9 +28,11 @@ services:
       - "/app/lagrange-node run-client -c /app/config/client.toml"
     volumes:
       - {{.ConfigFilePath}}:/app/config/client.toml
+	  {{if .CertConfig}}
       - {{.CertConfig.CACertPath}}:/app/config/ca.crt
       - {{.CertConfig.NodeKeyPath}}:/app/config/node.key
       - {{.CertConfig.NodeCertPath}}:/app/config/node.crt
+	  {{end}}
       - lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}:$HOME/.lagrange
     logging:
       driver: "json-file"
@@ -53,10 +55,10 @@ services:
     volumes:
       - {{.ConfigFilePath}}:/app/config/config_signer.toml
       {{ range $key, $value := .KeyStorePaths }}
-      - {{$key}}:{{$value}}
+      - {{$value}}:{{$key}}
       {{ end }}
       {{ range $key, $value := .PasswordPaths }}
-      - {{$key}}:{{$value}}
+      - {{$value}}:{{$key}}
       {{ end }}
       {{ range $key, $value := .CertPaths }}
       - {{$key}}:{{$value}}
@@ -121,8 +123,8 @@ func GenerateSignerConfigFile(cfg *signer.Config, imageName string) (string, err
 		}
 		keyPath := fmt.Sprintf("/app/config/%s.key", filepath.Base(provider.LocalConfig.AccountID))
 		passPath := fmt.Sprintf("/app/config/%s.pass", filepath.Base(provider.LocalConfig.AccountID))
-		signerConfig.KeyStorePaths[provider.LocalConfig.PrivateKeyPath] = keyPath
-		signerConfig.PasswordPaths[provider.LocalConfig.PasswordKeyPath] = passPath
+		signerConfig.KeyStorePaths[keyPath] = provider.LocalConfig.PrivateKeyPath
+		signerConfig.PasswordPaths[passPath] = provider.LocalConfig.PasswordKeyPath
 		provider.LocalConfig.PrivateKeyPath = keyPath
 		provider.LocalConfig.PasswordKeyPath = passPath
 	}
