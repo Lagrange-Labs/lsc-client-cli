@@ -84,7 +84,7 @@ var (
 	}
 	dockerImageFlag = &cli.StringFlag{
 		Name:    flagDockerImage,
-		Value:   "lagrangelabs/lagrange-node:v1.0.0",
+		Value:   "lagrangelabs/lagrange-node:v1.1.5",
 		Usage:   "Docker `IMAGE`",
 		Aliases: []string{"i"},
 	}
@@ -106,7 +106,7 @@ func main() {
 			Usage: "Prints the version of the Lagrange Client CLI",
 			Action: func(c *cli.Context) error {
 				w := os.Stdout
-				fmt.Fprintf(w, "Version:      %s\n", "v1.1.0")
+				fmt.Fprintf(w, "Version:      %s\n", "v1.1.2")
 				fmt.Fprintf(w, "Go version:   %s\n", runtime.Version())
 				fmt.Fprintf(w, "OS/Arch:      %s/%s\n", runtime.GOOS, runtime.GOARCH)
 				return nil

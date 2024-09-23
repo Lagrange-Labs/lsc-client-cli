@@ -1,0 +1,34 @@
+version: "3.7"
+services:
+  lagrange_signer:
+    container_name: lagrange_signer
+    image: lagrangelabs/lagrange-node:{{.Version}}
+    restart: always
+    ports:
+      - "{{.HostBindingPort}}:{{.SignerGRPCServerPort}}"
+    volumes:
+      - {{.SignerConfigFilePath}}:/app/config/config_signer.toml
+      
+      - {{--- Path to BLS Private Key ---}}:/app/config/{{--- Account ID like operator_bls_key ---}}.key
+      
+      - {{--- Path to BLS Keystore Password ---}}:/app/config/{{--- Account ID like operator_bls_key ---}}.pass
+      
+      - {{--- Path to ECDSA Private Key ---}}:/app/config/{{--- Account ID like signer_ecdsa_key ---}}.key      
+      
+      - {{--- Path to ECDSA Keystore Password ---}}:/app/config/{{--- Account ID like signer_ecdsa_key ---}}.pass
+      
+      
+      - {{--- Path to CA certificate ---}}:/app/config/ca-crt.pem
+      
+      - {{--- Path to Node Certificate ---}}:/app/config/server-crt.pem
+      
+      - {{--- Path to Node Key ---}}:/app/config/server-key.pem
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "/app/lagrange-node run-signer -c /app/config/config_signer.toml"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
