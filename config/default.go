@@ -19,11 +19,12 @@ BLSKeyAccountID = "{{.BLSKeyAccountID}}"
 SignerKeyAccountID = "{{.SignerKeyAccountID}}"
 PullInterval = "1000ms"
 BLSCurve = "{{.BLSCurve}}"
-
+	{{ if .CertConfig }}
 	[Client.TLSConfig]
-	CACertPath = "/app/config/ca.crt"
-	NodeKeyPath = "/app/config/node.key"
-	NodeCertPath = "/app/config/node.crt"
+	CACertPath = "{{.CertConfig.CACertPath}}"
+	NodeKeyPath = "{{.CertConfig.NodeKeyPath}}"
+	NodeCertPath = "{{.CertConfig.NodeCertPath}}"
+	{{ end }}
 
 [RpcClient]
 	{{ if eq .ChainName "optimism" "base" }}

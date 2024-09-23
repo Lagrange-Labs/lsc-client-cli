@@ -173,6 +173,13 @@ func LoadCLIConfig(ctx *cli.Context) (*CLIConfig, error) {
 		return nil, err
 	}
 
+	// check the empty TLS config
+	if cfg.CertConfig != nil {
+		if len(cfg.CertConfig.CACertPath) == 0 || len(cfg.CertConfig.NodeKeyPath) == 0 || len(cfg.CertConfig.NodeCertPath) == 0 {
+			cfg.CertConfig = nil
+		}
+	}
+
 	return &cfg, nil
 }
 
@@ -263,6 +270,13 @@ func LoadCLIBulkConfig(ctx *cli.Context) (*CLIBulkConfig, error) {
 
 	if err := viper.Unmarshal(&cfg, decodeHooks...); err != nil {
 		return nil, err
+	}
+
+	// check the empty TLS config
+	if cfg.CertConfig != nil {
+		if len(cfg.CertConfig.CACertPath) == 0 || len(cfg.CertConfig.NodeKeyPath) == 0 || len(cfg.CertConfig.NodeCertPath) == 0 {
+			cfg.CertConfig = nil
+		}
 	}
 
 	return &cfg, nil
