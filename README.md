@@ -85,6 +85,7 @@ The below commands will allow a developer to run a node and attest to the state 
 - [deploy](https://docs.lagrange.dev/state-committees/run-node/commands#deploy)
 - [deploy-signer](https://docs.lagrange.dev/state-committees/run-node/commands#deploy-signer)
 - [generate-config-deploy](https://docs.lagrange.dev/state-committees/run-node/commands#generate-config-deploy)
+- [bulk-generate-config-deploy](https://docs.lagrange.dev/state-committees/run-node/commands#bulk-generate-config-deploy)
 
 ### Post Deployment
 

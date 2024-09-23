@@ -28,11 +28,11 @@ services:
       - "/app/lagrange-node run-client -c /app/config/client.toml"
     volumes:
       - {{.ConfigFilePath}}:/app/config/client.toml
-	  {{if .CertConfig}}
+{{if .CertConfig}}
       - {{.CertConfig.CACertPath}}:/app/config/ca.crt
       - {{.CertConfig.NodeKeyPath}}:/app/config/node.key
       - {{.CertConfig.NodeCertPath}}:/app/config/node.crt
-	  {{end}}
+{{end}}
       - lagrange_{{.Network}}_{{.ChainName}}_{{.BLSPubKeyPrefix}}:$HOME/.lagrange
     logging:
       driver: "json-file"
