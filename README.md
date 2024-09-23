@@ -59,6 +59,7 @@ Please refer to the detailed [documentation](https://docs.lagrange.dev/state-com
   - [Using CLI](https://docs.lagrange.dev/state-committees/run-node/register-operator)
   - [Using Script](https://docs.lagrange.dev/state-committees/run-node/scripts)
 - Deploy attestation node
+  - [Deploy Remote Signer](https://docs.lagrange.dev/state-committees/run-node/deploy#signer)
   - [Deploy using CLI](https://docs.lagrange.dev/state-committees/run-node/deploy#deploy-using-cli)
   - [Deploy using templates](https://docs.lagrange.dev/state-committees/run-node/deploy#deploy-using-template)
 - [Post deployment](#post-deployment)
@@ -82,6 +83,7 @@ The below commands will allow a developer to run a node and attest to the state 
 - [generate-config](https://docs.lagrange.dev/state-committees/run-node/commands#generate-config)
 - [generate-docker-compose](https://docs.lagrange.dev/state-committees/run-node/commands#generate-docker-compose)
 - [deploy](https://docs.lagrange.dev/state-committees/run-node/commands#deploy)
+- [deploy-signer](https://docs.lagrange.dev/state-committees/run-node/commands#deploy-signer)
 - [generate-config-deploy](https://docs.lagrange.dev/state-committees/run-node/commands#generate-config-deploy)
 
 ### Post Deployment
