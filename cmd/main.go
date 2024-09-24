@@ -268,6 +268,15 @@ func main() {
 			Action: deployWithConfig,
 		},
 		{
+			Name:  "generate-signer-config",
+			Usage: "Generate config and docker-compose files for the signer gRPC server",
+			Flags: []cli.Flag{
+				configFileFlag,
+				dockerImageFlag,
+			},
+			Action: generateSignerConfig,
+		},
+		{
 			Name:  "deploy-signer",
 			Usage: "Deploy the LSC signer gRPC server with the given signer config file",
 			Flags: []cli.Flag{
@@ -608,7 +617,7 @@ func deployWithConfig(c *cli.Context) error {
 	return clientDeploy(c)
 }
 
-func deploySigner(c *cli.Context) error {
+func generateSignerConfig(c *cli.Context) error {
 	cfg, err := signer.Load(c)
 	if err != nil {
 		return fmt.Errorf("failed to load CLI config: %w", err)
@@ -624,6 +633,15 @@ func deploySigner(c *cli.Context) error {
 		return fmt.Errorf("failed to generate signer config file: %w", err)
 	}
 
+	return c.Set(flagDockerImage, dockerComposeFilePath)
+}
+
+func deploySigner(c *cli.Context) error {
+	if err := generateSignerConfig(c); err != nil {
+		return fmt.Errorf("failed to generate signer config: %w", err)
+	}
+
+	dockerComposeFilePath := c.String(flagDockerImage)
 	return utils.RunDockerImage(dockerComposeFilePath)
 }
 
