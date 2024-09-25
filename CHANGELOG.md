@@ -35,7 +35,7 @@ Change Categories
 •  Breaking Changes: For changes that break backward compatibility.
 -->
 
-## Unreleased
+## [v1.1.3](https://github.com/Lagrange-Labs/lsc-client-cli/releases/tag/v1.1.3) *2024-09-25*
 
 ### Features
 
