@@ -10,7 +10,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/viper v1.19.0
 	github.com/urfave/cli/v2 v2.27.4
-	golang.org/x/term v0.24.0
+	golang.org/x/term v0.25.0
 	google.golang.org/grpc v1.67.0
 )
 
@@ -76,7 +76,7 @@ require (
 	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
