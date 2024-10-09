@@ -9,8 +9,7 @@ OPERATOR_PRIVATE_KEY=
 OPERATOR_ADDR=
 SIGNER_ADDR=
 export ETH_RPC_URL= # Put rpc url here
-PUBKEY_X= # Put pubkey X here
-PUBKEY_Y= # Put pubkey Y here
+BLS_PRIVATE_KEY= # Put bls private key here
 SIG_EXPIRY_SECONDS=300
 
 # --- Constants ---
@@ -83,19 +82,56 @@ sign_registration_hash() {
     printf "\nRegistration signature:${SIGNATURE}\n"
 }
 
+calculate_proof_hash() {
+    _LSC_COMMITTEE_ADDR=$(cast call $LAGRANGE_SERVICE_ADDR "committee()")
+    LSC_COMMITTEE_ADDR="0x${_LSC_COMMITTEE_ADDR: -40}"
+
+    printf "\nLSC Committee Address:\n${LSC_COMMITTEE_ADDR}\n"
+
+    # NOTE: Currently, we are using the same salt and expiry timestamp with registeration hash
+    BLS_PROOF_HASH=$(cast call $LSC_COMMITTEE_ADDR \
+        "calculateKeyWithProofHash(address,bytes32,uint256)" \
+        "$OPERATOR_ADDR" \
+        "${SALT}" \
+        "${EXPIRY_TIMESTAMP}")
+    if [ -z "$BLS_PROOF_HASH" ]; then
+        echo "Error: Unable to calculate registration hash."
+        exit 1
+    fi
+    printf "\nBLS Proof hash:\n${BLS_PROOF_HASH}\n"
+}
+
+bls_sign_proof_hash() {
+    printf "${BLS_PROOF_HASH} \n"
+
+    # TODO: neet to call to get BLS_PROOF_SIGNATURE & G2_PUBKEYs
+    PUBKEY_X="0x0FF000"
+    PUBKEY_Y="0x0FF001"
+    G2_PUBKEY_0_1="0x0EE001"
+    G2_PUBKEY_0_0="0x0EE000"
+    G2_PUBKEY_1_1="0x0EE011"
+    G2_PUBKEY_1_0="0x0EE010"
+    BLS_PROOF_SIGNATURE_0="0x0DD001"
+    BLS_PROOF_SIGNATURE_1="0x0DD001"
+    printf "\nG1_PUBKEY:[${PUBKEY_X},${PUBKEY_Y}]\n"
+    printf "\nG2_PUBKEY:[[${G2_PUBKEY_0_0},${G2_PUBKEY_0_1}],[${G2_PUBKEY_1_0},${G2_PUBKEY_1_1}]]\n"
+    printf "\nBLS Proof signature:[${BLS_PROOF_SIGNATURE_0},${BLS_PROOF_SIGNATURE_1}]\n"
+}
+
+
 # === MODIFY ME ! ===
 # Register with State Committee contract using your signature and public key component of your new $LAGR_KEY
 register_operator() {
     printf "cast send $LAGRANGE_SERVICE_ADDR \n"
-    printf "register(address,uint256[2][],(bytes,bytes32,uint256)) \n"
+    printf "register(address,(uint256[2][],uint256[2][2],uint256[2],bytes32,uint256),(bytes,bytes32,uint256)) \n"
     printf "$SIGNER_ADDR \n"
-    printf "[[${PUBKEY_X},${PUBKEY_Y}]] \n"
+    printf "([[${PUBKEY_X},${PUBKEY_Y}]],[[${G2_PUBKEY_0_0},${G2_PUBKEY_0_1}],[${G2_PUBKEY_1_0},${G2_PUBKEY_1_1}]],[${BLS_PROOF_SIGNATURE_0},${BLS_PROOF_SIGNATURE_1}],${SALT},${EXPIRY_TIMESTAMP}) \n"
     printf "(${SIGNATURE},${SALT},${EXPIRY_TIMESTAMP}) \n"
 
     cast send $LAGRANGE_SERVICE_ADDR \
-        "register(address,uint256[2][],(bytes,bytes32,uint256))" \
-        "$SIGNER_ADDR" \
-        "[[${PUBKEY_X},${PUBKEY_Y}]]" \
+        "register(address,(uint256[2][],uint256[2][2],uint256[2],bytes32,uint256),(bytes,bytes32,uint256))" \
+        $SIGNER_ADDR \
+        "([[${PUBKEY_X},${PUBKEY_Y}]],[[${G2_PUBKEY_0_0},${G2_PUBKEY_0_1}],[${G2_PUBKEY_1_0},${G2_PUBKEY_1_1}]],[${BLS_PROOF_SIGNATURE_0},${BLS_PROOF_SIGNATURE_1}],${SALT},${EXPIRY_TIMESTAMP})" \
         "(${SIGNATURE},${SALT},${EXPIRY_TIMESTAMP})" \
         --private-key $OPERATOR_PRIVATE_KEY
 
@@ -105,10 +141,10 @@ register_operator() {
 ## --- Main Script ---
 printf "Step 1: set_contract_addresses\n"
 set_contract_addresses
-sleep 3s
+sleep 1s
 printf "Step 2: calculate_expiry_timestamp\n"
 calculate_expiry_timestamp
-sleep 3s
+sleep 1s
 printf "Step 3: generate_salt\n"
 generate_salt
 
@@ -118,12 +154,22 @@ printf "\nSigner Address: $SIGNER_ADDR\n"
 printf "Salt for signature: $SALT\n"
 printf "Signature expires at: $EXPIRY_TIMESTAMP\n"
 
-sleep 3s
+sleep 1s
 printf "Step 4: calculate_registration_hash\n"
 calculate_registration_hash
-sleep 3s
+
+sleep 1s
 printf "Step 5: sign_registration_hash\n"
 sign_registration_hash
-sleep 3s
-printf "Step 6: register_operator\n"
+
+sleep 1s
+printf "Step 6: calculate_proof_hash\n"
+calculate_proof_hash
+
+sleep 1s
+printf "Step 7: bls_sign_proof_hash\n"
+bls_sign_proof_hash
+
+sleep 1s
+printf "Step 8: register_operator\n"
 register_operator
