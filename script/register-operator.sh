@@ -103,21 +103,25 @@ calculate_proof_hash() {
 
 bls_sign_proof_hash() {
     printf "${BLS_PROOF_HASH} \n"
-
     # TODO: neet to call to get BLS_PROOF_SIGNATURE & G2_PUBKEYs
-    PUBKEY_X="0x0FF000"
-    PUBKEY_Y="0x0FF001"
-    G2_PUBKEY_0_1="0x0EE001"
-    G2_PUBKEY_0_0="0x0EE000"
-    G2_PUBKEY_1_1="0x0EE011"
-    G2_PUBKEY_1_0="0x0EE010"
-    BLS_PROOF_SIGNATURE_0="0x0DD001"
-    BLS_PROOF_SIGNATURE_1="0x0DD001"
+    CURRENT_DIR_PATH=$(dirname "$(realpath "$0")")
+    BLS_RESPONSE=$(go run ${CURRENT_DIR_PATH}/cmd/main.go generate-bls-signature -k ${OPERATOR_PRIVATE_KEY} -d ${BLS_PROOF_HASH})
+
+    mapfile -t LINES <<< "$BLS_RESPONSE"
+
+    PUBKEY_X="0x${LINES[0]}"
+    PUBKEY_Y="0x${LINES[1]}"
+    G2_PUBKEY_0_0="0x${LINES[2]}"
+    G2_PUBKEY_0_1="0x${LINES[3]}"
+    G2_PUBKEY_1_0="0x${LINES[4]}"
+    G2_PUBKEY_1_1="0x${LINES[5]}"
+    BLS_PROOF_SIGNATURE_0="0x${LINES[6]}"
+    BLS_PROOF_SIGNATURE_1="0x${LINES[7]}"
+
     printf "\nG1_PUBKEY:[${PUBKEY_X},${PUBKEY_Y}]\n"
     printf "\nG2_PUBKEY:[[${G2_PUBKEY_0_0},${G2_PUBKEY_0_1}],[${G2_PUBKEY_1_0},${G2_PUBKEY_1_1}]]\n"
     printf "\nBLS Proof signature:[${BLS_PROOF_SIGNATURE_0},${BLS_PROOF_SIGNATURE_1}]\n"
 }
-
 
 # === MODIFY ME ! ===
 # Register with State Committee contract using your signature and public key component of your new $LAGR_KEY
