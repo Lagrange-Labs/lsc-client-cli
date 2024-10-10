@@ -103,7 +103,6 @@ calculate_proof_hash() {
 
 bls_sign_proof_hash() {
     printf "${BLS_PROOF_HASH} \n"
-    # TODO: neet to call to get BLS_PROOF_SIGNATURE & G2_PUBKEYs
     CURRENT_DIR_PATH=$(dirname "$(realpath "$0")")
     BLS_RESPONSE=$(go run ${CURRENT_DIR_PATH}/cmd/main.go generate-bls-signature -k ${OPERATOR_PRIVATE_KEY} -d ${BLS_PROOF_HASH})
 
