@@ -9,9 +9,9 @@ require (
 	github.com/ethereum/go-ethereum v1.14.8
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/viper v1.19.0
-	github.com/urfave/cli/v2 v2.27.4
-	golang.org/x/term v0.24.0
-	google.golang.org/grpc v1.67.0
+	github.com/urfave/cli/v2 v2.27.5
+	golang.org/x/term v0.25.0
+	google.golang.org/grpc v1.67.1
 )
 
 require (
@@ -20,7 +20,7 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/crate-crypto/go-kzg-4844 v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
@@ -76,7 +76,7 @@ require (
 	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
