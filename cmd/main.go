@@ -11,9 +11,9 @@ import (
 
 	"github.com/Lagrange-Labs/client-cli/config"
 	"github.com/Lagrange-Labs/client-cli/utils"
-	"github.com/Lagrange-Labs/lagrange-node/core"
-	"github.com/Lagrange-Labs/lagrange-node/core/logger"
-	"github.com/Lagrange-Labs/lagrange-node/signer"
+	"github.com/Lagrange-Labs/lsc-node/core"
+	"github.com/Lagrange-Labs/lsc-node/core/logger"
+	"github.com/Lagrange-Labs/lsc-node/signer"
 )
 
 const (

@@ -16,8 +16,8 @@ import (
 	"github.com/Lagrange-Labs/client-cli/scinterface/avs"
 	"github.com/Lagrange-Labs/client-cli/scinterface/committee"
 	"github.com/Lagrange-Labs/client-cli/scinterface/lagrange"
-	"github.com/Lagrange-Labs/lagrange-node/core/crypto"
-	"github.com/Lagrange-Labs/lagrange-node/core/logger"
+	"github.com/Lagrange-Labs/lsc-node/core/crypto"
+	"github.com/Lagrange-Labs/lsc-node/core/logger"
 )
 
 var lagrangeAVSSalt = []byte("lagrange-avs")

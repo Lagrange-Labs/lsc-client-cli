@@ -7,9 +7,9 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/Lagrange-Labs/lagrange-node/core"
-	"github.com/Lagrange-Labs/lagrange-node/signer"
-	"github.com/Lagrange-Labs/lagrange-node/signer/types"
+	"github.com/Lagrange-Labs/lsc-node/core"
+	"github.com/Lagrange-Labs/lsc-node/signer"
+	"github.com/Lagrange-Labs/lsc-node/signer/types"
 )
 
 // SignerClient is a wrapper for the signer service client.
