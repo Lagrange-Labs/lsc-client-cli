@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 
-	"github.com/Lagrange-Labs/lagrange-node/core"
-	"github.com/Lagrange-Labs/lagrange-node/core/logger"
-	"github.com/Lagrange-Labs/lagrange-node/signer"
+	"github.com/Lagrange-Labs/lsc-node/core"
+	"github.com/Lagrange-Labs/lsc-node/core/logger"
+	"github.com/Lagrange-Labs/lsc-node/signer"
 )
 
 const signerConfigTemplate = `GRPCPort = "{{.GRPCPort}}"

@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/Lagrange-Labs/client-cli/config"
-	"github.com/Lagrange-Labs/lagrange-node/core/logger"
-	"github.com/Lagrange-Labs/lagrange-node/signer"
+	"github.com/Lagrange-Labs/lsc-node/core/logger"
+	"github.com/Lagrange-Labs/lsc-node/signer"
 )
 
 const dockerComposeTemplate = `version: "3.7"

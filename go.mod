@@ -3,8 +3,8 @@ go 1.21
 module github.com/Lagrange-Labs/client-cli
 
 require (
-	github.com/Lagrange-Labs/lagrange-node/core v0.1.1
-	github.com/Lagrange-Labs/lagrange-node/signer v0.1.1
+	github.com/Lagrange-Labs/lsc-node/core v0.1.2
+	github.com/Lagrange-Labs/lsc-node/signer v0.1.2
 	github.com/consensys/gnark-crypto v0.12.1
 	github.com/ethereum/go-ethereum v1.14.8
 	github.com/mitchellh/mapstructure v1.5.0

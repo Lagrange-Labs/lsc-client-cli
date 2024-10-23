@@ -8,9 +8,9 @@ import (
 
 	ecrypto "github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/Lagrange-Labs/lagrange-node/core"
-	"github.com/Lagrange-Labs/lagrange-node/core/crypto"
-	"github.com/Lagrange-Labs/lagrange-node/core/logger"
+	"github.com/Lagrange-Labs/lsc-node/core"
+	"github.com/Lagrange-Labs/lsc-node/core/crypto"
+	"github.com/Lagrange-Labs/lsc-node/core/logger"
 )
 
 const keystoreDir = ".lagrange/keystore"
